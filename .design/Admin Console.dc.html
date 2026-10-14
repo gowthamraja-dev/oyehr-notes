@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-800:#27384A;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;--ink-300:#A8B2BE;--ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --bg-app:#ECEFEE;--bg-canvas:#F4F6F5;--card:#FFFFFF;--border:#E2E7E6;--border-soft:#EBEEED;
+    --req:#E5534B;--upload:#F2682A;--danger:#DD4A3B;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:#CFD6DD;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#B4BEC8;background-clip:content-box}
+  input::placeholder,textarea::placeholder{color:var(--ink-400)}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal-700)!important;box-shadow:0 0 0 3px var(--teal-50)}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;overflow:hidden;font-family:'Inter',system-ui,-apple-system,sans-serif;font-feature-settings:'ss01','cv11';background:var(--bg-app);color:var(--ink-900);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility">
+
+  <!-- ══════════ RAIL ══════════ -->
+  <aside style="width:250px;flex:none;background:var(--teal-950);display:flex;flex-direction:column;color:#fff">
+    <div style="display:flex;align-items:center;gap:11px;padding:18px 18px 16px">
+      <span style="width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,var(--teal-700),var(--teal-800));display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+      </span>
+      <div style="min-width:0">
+        <div style="font-size:15px;font-weight:700;letter-spacing:-.01em">NanoHealth</div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:1px">HRMS Console</div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 12px 12px">
+      <nav style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ modules }}" as="m" hint-placeholder-count="14">
+          <sc-if value="{{ m.hasSection }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:650;letter-spacing:.13em;color:rgba(255,255,255,.38);text-transform:uppercase;padding:16px 10px 8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.07)">{{ m.sectionLabel }}</div></sc-if>
+          <button onClick="{{ m.onClick }}" style="position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:9px;cursor:{{ m.btnCursor }};font-family:inherit;font-size:13px;font-weight:500" style-hover="background:rgba(255,255,255,.06)">
+            <sc-if value="{{ m.active }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;inset:0;background:var(--teal-800);border-radius:9px"></span>
+              <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:#7FD9C6;border-radius:0 3px 3px 0"></span>
+              <span style="position:relative;display:inline-flex;color:#fff"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:#fff;font-weight:600">{{ m.label }}</span>
+            </sc-if>
+            <sc-if value="{{ m.notActive }}" hint-placeholder-val="{{ true }}">
+              <span style="position:relative;display:inline-flex;color:rgba(255,255,255,.55)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:rgba(255,255,255,.72)">{{ m.label }}</span>
+              <sc-if value="{{ m.soon }}" hint-placeholder-val="{{ false }}"><span style="position:relative;margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.5);background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px">Soon</span></sc-if>
+            </sc-if>
+          </button>
+        </sc-for>
+      </nav>
+    </div>
+
+    <div style="padding:12px;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)">
+        <span style="width:32px;height:32px;border-radius:999px;background:var(--teal-700);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;color:#fff">SG</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sanjay Gupta</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.55)">HR Admin</div>
+        </div>
+        <a href="login.html" title="Sign out" style="width:30px;height:30px;flex:none;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);text-decoration:none" style-hover="background:rgba(255,255,255,.1);color:#fff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"></path></svg></a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ RIGHT COLUMN ══════════ -->
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+
+    <!-- TOP BAR -->
+    <header style="height:60px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 18px">
+      <div style="flex:none;width:320px;display:flex;align-items:center;gap:9px;background:var(--ink-50);border:1px solid var(--border-soft);border-radius:10px;padding:8px 13px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search settings, roles, policies…" style="border:0;outline:0;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:13.5px;color:var(--ink-900)">
+      </div>
+      <button onClick="{{ onAddNew }}" style="flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ hdrPrimIcon }}"></path></svg>{{ hdrPrimLabel }}
+            </button><div style="flex:1"></div>
+      <button style="width:40px;height:40px;flex:none;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas);color:var(--ink-900)" title="Help">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 013.9-2c1 .6 1.6 1.9 1 3-.5 1-1.9 1.2-1.9 2.5"></path><path d="M12 17h.01"></path></svg>
+      </button>
+      <button style="width:40px;height:40px;flex:none;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative" style-hover="background:var(--bg-canvas);color:var(--ink-900)" title="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <span style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--upload);border:1.5px solid #fff;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">3</span>
+      </button>
+    </header>
+
+    <!-- BREADCRUMB STRIP -->
+    <div style="height:44px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 20px;font-size:13px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><path d="M9 21V12h6v9"></path></svg>
+      <span style="color:var(--ink-500)">Home</span>
+      <span style="color:var(--ink-300)">›</span>
+      <sc-if value="{{ showCC }}" hint-placeholder-val="{{ true }}">
+        <span style="color:var(--ink-500)">Control Center</span>
+        <span style="color:var(--ink-300)">›</span>
+      </sc-if>
+      <span style="color:var(--teal-800);font-weight:650">{{ moduleLabel }}</span>
+    </div>
+
+    <!-- BODY: secondary panel + main -->
+    <div style="flex:1;min-height:0;display:flex">
+
+      <!-- SECONDARY PANEL -->
+      <div style="width:280px;flex:none;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0">
+        <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border-soft)">
+          <div style="font-size:14px;font-weight:700;color:var(--ink-900);letter-spacing:-.01em">{{ panelTitle }}</div>
+          <div style="font-size:11.5px;color:var(--ink-500);margin-top:2px">{{ panelSubtitle }}</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:10px 12px 16px">
+
+          <!-- Org settings section list -->
+          <sc-if value="{{ isOrg }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ orgGroups }}" as="g" hint-placeholder-count="3">
+              <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:12px 8px 6px">{{ g.label }}</div>
+              <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+                <button onClick="{{ it.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid {{ it.border }};background:{{ it.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:4px" style-hover="border-color:var(--teal-100)">
+                  <span style="width:30px;height:30px;flex:none;border-radius:8px;background:{{ it.iconBg }};display:inline-flex;align-items:center;justify-content:center;color:{{ it.iconColor }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ it.iconPath }}"></path></svg></span>
+                  <span style="min-width:0;flex:1">
+                    <span style="display:block;font-size:13px;font-weight:{{ it.weight }};color:{{ it.labelColor }}">{{ it.label }}</span>
+                    <span style="display:block;font-size:11px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.desc }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <!-- Payroll configuration section list -->
+          <sc-if value="{{ isPayroll }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ payGroups }}" as="g" hint-placeholder-count="2">
+              <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:12px 8px 6px">{{ g.label }}</div>
+              <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+                <button onClick="{{ it.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid {{ it.border }};background:{{ it.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:4px" style-hover="border-color:var(--teal-100)">
+                  <span style="width:30px;height:30px;flex:none;border-radius:8px;background:{{ it.iconBg }};display:inline-flex;align-items:center;justify-content:center;color:{{ it.iconColor }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ it.iconPath }}"></path></svg></span>
+                  <span style="min-width:0;flex:1">
+                    <span style="display:block;font-size:13px;font-weight:{{ it.weight }};color:{{ it.labelColor }}">{{ it.label }}</span>
+                    <span style="display:block;font-size:11px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.desc }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <!-- Roles list -->
+          <sc-if value="{{ isRoles }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ rolesList }}" as="r" hint-placeholder-count="6">
+              <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid {{ r.border }};background:{{ r.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:4px" style-hover="border-color:var(--teal-100)">
+                <span style="width:9px;height:9px;flex:none;border-radius:999px;background:{{ r.dot }}"></span>
+                <span style="min-width:0;flex:1">
+                  <span style="display:block;font-size:13px;font-weight:{{ r.weight }};color:{{ r.labelColor }}">{{ r.label }}</span>
+                  <span style="display:block;font-size:11px;color:var(--ink-400)">{{ r.count }} members</span>
+                </span>
+                <sc-if value="{{ r.system }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-400);background:var(--ink-50);border:1px solid var(--border-soft);border-radius:5px;padding:2px 6px">System</span></sc-if>
+              </button>
+            </sc-for>
+            <button onClick="{{ onAddRole }}" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;border:1px dashed var(--ink-200);background:transparent;padding:10px;border-radius:9px;cursor:pointer;margin-top:6px;color:var(--teal-800);font-family:inherit;font-size:12.5px;font-weight:600" style-hover="background:var(--teal-50);border-color:var(--teal-100)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New role
+            </button>
+          </sc-if>
+
+          <!-- Policies list -->
+          <sc-if value="{{ isPolicies }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ policyGroups }}" as="g" hint-placeholder-count="2">
+              <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:12px 8px 6px">{{ g.label }}</div>
+              <sc-for list="{{ g.items }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ p.border }};background:{{ p.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:4px" style-hover="border-color:var(--teal-100)">
+                  <span style="width:8px;height:26px;flex:none;border-radius:4px;background:{{ p.dot }}"></span>
+                  <span style="min-width:0;flex:1">
+                    <span style="display:block;font-size:13px;font-weight:{{ p.weight }};color:{{ p.labelColor }}">{{ p.label }}</span>
+                    <span style="display:block;font-size:11px;color:var(--ink-400)">{{ p.meta }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <!-- Workflow list -->
+          <sc-if value="{{ isWorkflow }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ workflowList }}" as="w" hint-placeholder-count="5">
+              <button onClick="{{ w.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid {{ w.border }};background:{{ w.bg }};padding:11px;border-radius:9px;cursor:pointer;margin-bottom:5px" style-hover="border-color:var(--teal-100)">
+                <span style="width:30px;height:30px;flex:none;border-radius:8px;background:{{ w.iconBg }};display:inline-flex;align-items:center;justify-content:center;color:{{ w.iconColor }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ w.iconPath }}"></path></svg></span>
+                <span style="min-width:0;flex:1">
+                  <span style="display:block;font-size:13px;font-weight:{{ w.weight }};color:{{ w.labelColor }}">{{ w.label }}</span>
+                  <span style="display:block;font-size:11px;color:var(--ink-400)">{{ w.stageCount }} stages</span>
+                </span>
+                <sc-if value="{{ w.on }}" hint-placeholder-val="{{ true }}"><span style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1E7A46;background:#E7F3EC;border-radius:5px;padding:2px 6px">Live</span></sc-if>
+              </button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Forms categories -->
+          <sc-if value="{{ isForms }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ formCats }}" as="c" hint-placeholder-count="6">
+              <sc-if value="{{ c.hasSection }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:14px 8px 6px">{{ c.sectionLabel }}</div></sc-if>
+              <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ c.border }};background:{{ c.bg }};padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:3px" style-hover="background:var(--teal-50)">
+                <span style="flex:1;min-width:0;font-size:13px;font-weight:{{ c.weight }};color:{{ c.labelColor }}">{{ c.label }}</span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:{{ c.countColor }};background:{{ c.countBg }};border:1px solid var(--border-soft);border-radius:6px;padding:1px 8px;min-width:26px;text-align:center">{{ c.count }}</span>
+              </button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Departments legend + locations -->
+          <sc-if value="{{ isDepts }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Departments</div>
+            <sc-for list="{{ deptUnits }}" as="d" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;margin-bottom:2px" style-hover="background:var(--bg-canvas)">
+                <span style="width:9px;height:9px;flex:none;border-radius:999px;background:{{ d.dot }}"></span>
+                <span style="min-width:0;flex:1">
+                  <span style="display:block;font-size:13px;font-weight:600;color:var(--ink-800)">{{ d.dept }}</span>
+                  <span style="display:block;font-size:11px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.head }}</span>
+                </span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ d.count }}</span>
+              </div>
+            </sc-for>
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:16px 8px 6px;border-top:1px solid var(--border-soft);margin-top:8px">Locations</div>
+            <sc-for list="{{ locations }}" as="l" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;margin-bottom:2px">
+                <span style="width:28px;height:28px;flex:none;border-radius:8px;background:var(--teal-50);display:inline-flex;align-items:center;justify-content:center;color:var(--teal-800)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
+                <span style="min-width:0;flex:1">
+                  <span style="display:block;font-size:13px;font-weight:600;color:var(--ink-800)">{{ l.name }}</span>
+                  <span style="display:block;font-size:11px;color:var(--ink-400)">{{ l.sub }}</span>
+                </span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ l.depts }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <!-- Holiday calendar filters -->
+          <sc-if value="{{ isHols }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Calendar year</div>
+            <select value="{{ holYear }}" onChange="{{ onHolYear }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer;margin-bottom:10px">
+              <sc-for list="{{ holYears }}" as="y" hint-placeholder-count="3"><option>{{ y }}</option></sc-for>
+            </select>
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Location</div>
+            <select value="{{ holLoc }}" onChange="{{ onHolLoc }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer;margin-bottom:14px">
+              <sc-for list="{{ holLocOptions }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for>
+            </select>
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:8px 8px 6px;border-top:1px solid var(--border-soft)">Holiday types</div>
+            <sc-for list="{{ holTypes }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:9px">
+                <span style="width:11px;height:11px;flex:none;border-radius:4px;background:{{ t.bg }};border:1.5px solid {{ t.color }}"></span>
+                <span style="flex:1;font-size:13px;font-weight:550;color:var(--ink-800)">{{ t.label }}</span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ t.count }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <!-- Notification templates list -->
+          <sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ tmplGroups }}" as="g" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:14px 8px 6px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ g.iconPath }}"></path></svg>{{ g.channel }}
+              </div>
+              <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ t.border }};background:{{ t.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:3px" style-hover="border-color:var(--teal-100)">
+                  <span style="width:8px;height:8px;flex:none;border-radius:999px;background:{{ t.dot }}"></span>
+                  <span style="min-width:0;flex:1">
+                    <span style="display:block;font-size:13px;font-weight:{{ t.weight }};color:{{ t.labelColor }}">{{ t.name }}</span>
+                    <span style="display:block;font-size:11px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.event }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <!-- Dashboard panel: today -->
+          <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 8px">At a glance · today</div>
+            <sc-for list="{{ dashToday }}" as="d" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px">
+                <span style="flex:1;font-size:13px;font-weight:550;color:var(--ink-700)">{{ d.label }}</span>
+                <span style="flex:none;font-size:14px;font-weight:700;color:var(--ink-900)">{{ d.v }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <!-- Directory panel: dept filter -->
+          <sc-if value="{{ isDir }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Departments</div>
+            <sc-for list="{{ dirCats }}" as="c" hint-placeholder-count="8">
+              <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ c.border }};background:{{ c.bg }};padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:2px" style-hover="background:var(--teal-50)">
+                <span style="flex:1;font-size:13px;font-weight:{{ c.weight }};color:{{ c.color }}">{{ c.label }}</span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ c.count }}</span>
+              </button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Insights panel: metrics -->
+          <sc-if value="{{ isIns }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Metrics</div>
+            <sc-for list="{{ insMetrics }}" as="m" hint-placeholder-count="5">
+              <button onClick="{{ m.onClick }}" style="display:flex;align-items:center;width:100%;text-align:left;border:1px solid {{ m.border }};background:{{ m.bg }};padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:2px;font-size:13px;font-weight:{{ m.weight }};color:{{ m.color }}" style-hover="background:var(--teal-50)">{{ m.label }}</button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Integrations panel: category filter -->
+          <sc-if value="{{ isInt }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Category</div>
+            <sc-for list="{{ intCats }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ c.border }};background:{{ c.bg }};padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:2px" style-hover="background:var(--teal-50)">
+                <span style="flex:1;font-size:13px;font-weight:{{ c.weight }};color:{{ c.color }}">{{ c.label }}</span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ c.count }}</span>
+              </button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Audit panel: category filter -->
+          <sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:650;letter-spacing:.11em;color:var(--ink-400);text-transform:uppercase;padding:6px 8px 6px">Event category</div>
+            <sc-for list="{{ auditCats }}" as="c" hint-placeholder-count="5">
+              <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid {{ c.border }};background:{{ c.bg }};padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:2px" style-hover="background:var(--teal-50)">
+                <span style="flex:1;font-size:13px;font-weight:{{ c.weight }};color:{{ c.color }}">{{ c.label }}</span>
+                <span style="flex:none;font-size:11px;font-weight:700;color:var(--ink-500);background:var(--ink-50);border-radius:6px;padding:1px 8px">{{ c.count }}</span>
+              </button>
+            </sc-for>
+          </sc-if>
+
+          <!-- Stub -->
+          <sc-if value="{{ isStub }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:14px 8px;font-size:12px;color:var(--ink-400);line-height:1.6">This module isn't part of the current build. Its configuration panel will appear here.</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;background:var(--bg-canvas)">
+
+        <!-- HEADER STRIP -->
+        
+
+        <!-- CONTENT SCROLL -->
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:24px">
+
+          <!-- ============ FORM VIEW (org + policies) ============ -->
+          <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+            <div style="max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+              <sc-for list="{{ activeGroups }}" as="grp" hint-placeholder-count="2">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow:hidden">
+                  <div style="padding:15px 20px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px">
+                    <div style="font-size:14px;font-weight:700;color:var(--ink-900)">{{ grp.label }}</div>
+                    <sc-if value="{{ grp.hasHint }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--ink-400)">{{ grp.hint }}</div></sc-if>
+                  </div>
+                  <div style="padding:6px 20px 14px">
+                    <sc-for list="{{ grp.fields }}" as="f" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:{{ f.align }};gap:16px 20px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--border-soft)">
+                        <sc-if value="{{ f.hasLabelCol }}" hint-placeholder-val="{{ true }}">
+                        <div style="width:200px;flex:none;padding-top:4px">
+                          <div style="font-size:13px;font-weight:600;color:var(--ink-800)">{{ f.label }}</div>
+                          <sc-if value="{{ f.hasHint }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:var(--ink-400);margin-top:2px;line-height:1.5">{{ f.hint }}</div></sc-if>
+                        </div>
+                        </sc-if>
+                        <div style="flex:1;min-width:240px">
+
+                          <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}">
+                            <input value="{{ f.value }}" onChange="{{ f.onInput }}" placeholder="{{ f.ph }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0">
+                            <sc-if value="{{ f.hasProof }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:9px">
+                                <sc-if value="{{ f.proofAttached }}" hint-placeholder-val="{{ false }}">
+                                  <div style="display:inline-flex;align-items:center;gap:9px;background:#E7F3EC;border:1px solid #CDE6D6;border-radius:9px;padding:7px 11px;flex-wrap:wrap">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1E7A46" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M9 15l2 2 4-4"></path></svg>
+                                    <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-700)">{{ f.proofFile }}</span>
+                                    <button onClick="{{ f.onAttachProof }}" style="border:0;background:transparent;color:var(--ink-500);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px">Replace</button>
+                                  </div>
+                                </sc-if>
+                                <sc-if value="{{ f.proofMissing }}" hint-placeholder-val="{{ true }}">
+                                  <button onClick="{{ f.onAttachProof }}" style="display:inline-flex;align-items:center;gap:7px;border:1px dashed var(--ink-200);background:transparent;color:var(--teal-800);padding:7px 12px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:var(--teal-100);background:var(--teal-50)">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>Attach {{ f.proofName }}
+                                  </button>
+                                </sc-if>
+                              </div>
+                            </sc-if>
+                          </sc-if>
+                          <sc-if value="{{ f.isTextarea }}" hint-placeholder-val="{{ false }}">
+                            <textarea value="{{ f.value }}" onChange="{{ f.onInput }}" rows="3" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;resize:vertical"></textarea>
+                          </sc-if>
+                          <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+                            <select value="{{ f.value }}" onChange="{{ f.onInput }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer">
+                              <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option>{{ o.label }}</option></sc-for>
+                            </select>
+                          </sc-if>
+                          <sc-if value="{{ f.isToggle }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;align-items:center;gap:11px">
+                              <button onClick="{{ f.onToggle }}" style="width:40px;height:23px;flex:none;border-radius:999px;border:0;cursor:pointer;padding:0;position:relative;background:{{ f.toggleBg }};transition:background .15s">
+                                <span style="position:absolute;top:2px;left:{{ f.knobLeft }};width:19px;height:19px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s"></span>
+                              </button>
+                              <span style="font-size:12.5px;color:var(--ink-500)">{{ f.toggleText }}</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isSegment }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:inline-flex;background:var(--ink-50);border:1px solid var(--border-soft);border-radius:9px;padding:3px;gap:2px">
+                              <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3">
+                                <button onClick="{{ o.onClick }}" style="border:0;background:{{ o.bg }};color:{{ o.color }};padding:6px 14px;border-radius:7px;font-family:inherit;font-size:12.5px;font-weight:{{ o.weight }};cursor:pointer;box-shadow:{{ o.shadow }}">{{ o.label }}</button>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isColor }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;gap:9px">
+                              <sc-for list="{{ f.swatches }}" as="sw" hint-placeholder-count="4">
+                                <button onClick="{{ sw.onClick }}" title="{{ sw.hex }}" style="width:34px;height:34px;border-radius:9px;background:{{ sw.hex }};border:2px solid {{ sw.ring }};cursor:pointer;position:relative;padding:0">
+                                  <sc-if value="{{ sw.on }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:7px;left:7px"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+                                </button>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isTime }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;align-items:center;gap:10px">
+                              <input defaultValue="{{ f.val }}" style="width:110px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;text-align:center;outline:0">
+                              <span style="color:var(--ink-400);font-size:13px">to</span>
+                              <input defaultValue="{{ f.val2 }}" style="width:110px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;text-align:center;outline:0">
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isWeekdays }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;gap:6px">
+                              <sc-for list="{{ f.days }}" as="d" hint-placeholder-count="7">
+                                <button onClick="{{ d.onClick }}" style="width:40px;height:38px;border-radius:9px;border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};font-family:inherit;font-size:12px;font-weight:{{ d.weight }};cursor:pointer">{{ d.label }}</button>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isUpload }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;align-items:center;gap:14px">
+                              <div style="width:56px;height:56px;flex:none;border-radius:12px;background:linear-gradient(145deg,var(--teal-700),var(--teal-900));display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(14,94,92,.3)">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+                              </div>
+                              <button style="display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:#fff;color:var(--ink-700);padding:8px 14px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:var(--upload);color:var(--upload)">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>Upload logo
+                              </button>
+                              <span style="font-size:11.5px;color:var(--ink-400)">PNG or SVG · max 1MB</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ f.isDocs }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;flex-direction:column;gap:9px">
+                              <sc-for list="{{ f.docs }}" as="d" hint-placeholder-count="5">
+                                <div style="display:flex;align-items:center;gap:12px;border:1px solid {{ d.rowBorder }};background:{{ d.rowBg }};border-radius:11px;padding:10px 12px">
+                                  <span style="width:38px;height:38px;flex:none;border-radius:9px;background:var(--ink-50);display:inline-flex;align-items:center;justify-content:center;color:{{ d.iconColor }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+                                  <span style="min-width:0;flex:1">
+                                    <span style="display:block;font-size:13px;font-weight:600;color:var(--ink-800)">{{ d.name }}</span>
+                                    <sc-if value="{{ d.hasFile }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-500);margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-8.49 8.49a5 5 0 01-7.07-7.07l8.49-8.49a3 3 0 014.24 4.24l-8.49 8.49a1 1 0 01-1.41-1.41l7.78-7.78"></path></svg>{{ d.file }}</span></sc-if>
+                                    <sc-if value="{{ d.noFile }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11.5px;color:var(--ink-400);margin-top:2px">Verifies {{ d.verifies }}</span></sc-if>
+                                  </span>
+                                  <span style="flex:none;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ d.statusColor }};background:{{ d.statusBg }};border-radius:6px;padding:4px 8px">{{ d.statusText }}</span>
+                                  <button onClick="{{ d.onUpload }}" style="flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;color:var(--ink-700);padding:7px 12px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:var(--upload);color:var(--upload)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>{{ d.btnLabel }}
+                                  </button>
+                                </div>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- ============ ROLES / PERMISSION MATRIX ============ -->
+          <sc-if value="{{ isRoles }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:18px 20px;display:flex;align-items:center;gap:16px">
+                <span style="width:44px;height:44px;flex:none;border-radius:11px;background:{{ roleTintBg }};display:inline-flex;align-items:center;justify-content:center;color:{{ roleTintColor }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:16px;font-weight:700;color:var(--ink-900)">{{ roleName }}</div>
+                  <div style="font-size:12.5px;color:var(--ink-500);margin-top:2px">{{ roleDesc }}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:22px;font-weight:700;color:var(--ink-900);line-height:1">{{ roleMemberCount }}</div>
+                  <div style="font-size:11px;color:var(--ink-400);letter-spacing:.03em;text-transform:uppercase;font-weight:600;margin-top:2px">Members</div>
+                </div>
+              </div>
+
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow-x:auto">
+                <div style="display:grid;grid-template-columns:minmax(200px,1fr) repeat(5,88px);align-items:center;padding:13px 20px;border-bottom:1px solid var(--border);background:var(--ink-50);min-width:640px">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500)">Module</div>
+                  <sc-for list="{{ permCols }}" as="c" hint-placeholder-count="5"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-500);text-align:center">{{ c }}</div></sc-for>
+                </div>
+                <sc-for list="{{ permRows }}" as="row" hint-placeholder-count="7">
+                  <div style="display:grid;grid-template-columns:minmax(200px,1fr) repeat(5,88px);align-items:center;padding:11px 20px;border-bottom:1px solid var(--border-soft);background:{{ row.bg }};min-width:640px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span style="width:28px;height:28px;flex:none;border-radius:7px;background:var(--teal-50);display:inline-flex;align-items:center;justify-content:center;color:var(--teal-800)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ row.iconPath }}"></path></svg></span>
+                      <span style="font-size:13px;font-weight:600;color:var(--ink-800)">{{ row.label }}</span>
+                    </div>
+                    <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="5">
+                      <div style="display:flex;justify-content:center">
+                        <sc-if value="{{ cell.na }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ink-200);font-size:15px">—</span></sc-if>
+                        <sc-if value="{{ cell.avail }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ cell.onToggle }}" style="width:22px;height:22px;border-radius:6px;border:1.5px solid {{ cell.border }};background:{{ cell.bg }};cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center">
+                            <sc-if value="{{ cell.on }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+                          </button>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ WORKFLOW BUILDER ============ -->
+          <sc-if value="{{ isWorkflow }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:1000px;margin:0 auto">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-500)">Approval flow · {{ stageCountLabel }}</div>
+                <div style="flex:1;height:1px;background:var(--border)"></div>
+                <div style="font-size:12px;color:var(--ink-400);font-style:italic">Drag the handle to reorder stages — requests flow top to bottom</div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ stages }}" as="st" hint-placeholder-count="3">
+                  <div onDragOver="{{ st.onDragOver }}" onDrop="{{ st.onDrop }}" style="display:flex;gap:12px;align-items:stretch;opacity:{{ st.opacity }}">
+                    <!-- stage number rail -->
+                    <div style="width:40px;flex:none;display:flex;flex-direction:column;align-items:center;padding-top:16px">
+                      <span style="width:28px;height:28px;border-radius:999px;background:{{ st.badgeBg }};color:{{ st.badgeColor }};border:1.5px solid {{ st.badgeBorder }};display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">{{ st.num }}</span>
+                      <sc-if value="{{ st.notLast }}" hint-placeholder-val="{{ true }}"><span style="flex:1;width:2px;background:var(--border);margin-top:6px;min-height:24px"></span></sc-if>
+                    </div>
+                    <!-- stage card -->
+                    <div style="flex:1;min-width:0;background:{{ st.bg }};border:1px solid {{ st.border }};border-radius:13px;padding:14px 16px">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                        <div style="min-width:0;flex:1">
+                          <div style="font-size:14px;font-weight:700;color:var(--ink-900)">{{ st.title }}</div>
+                          <div style="font-size:12px;color:var(--ink-500);margin-top:1px">{{ st.sub }}</div>
+                        </div>
+                        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:{{ st.slaColor }};background:{{ st.slaBg }};border-radius:7px;padding:4px 9px">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l2.5 1.5"></path></svg>SLA {{ st.sla }}
+                        </span>
+                        <button onClick="{{ st.onRemove }}" title="Remove stage" style="width:28px;height:28px;border:0;background:transparent;color:var(--ink-300);cursor:pointer;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:#fff;color:var(--danger)">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M15 9l-6 6M9 9l6 6"></path></svg>
+                        </button>
+                        <button draggable="true" onDragStart="{{ st.onDragStart }}" onDragEnd="{{ st.onDragEnd }}" title="Drag to reorder" style="width:28px;height:28px;border:0;background:transparent;color:var(--ink-300);cursor:grab;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:#fff;color:var(--ink-700)">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle></svg>
+                        </button>
+                      </div>
+                      <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <sc-for list="{{ st.approvers }}" as="ap" hint-placeholder-count="2">
+                          <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:9px 12px 9px 9px;min-width:180px">
+                            <span style="width:32px;height:32px;flex:none;border-radius:999px;background:{{ ap.avatarBg }};color:{{ ap.avatarColor }};display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700">{{ ap.init }}</span>
+                            <span style="min-width:0">
+                              <span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink-900)">{{ ap.name }}</span>
+                              <span style="display:block;font-size:11px;color:var(--ink-400)">{{ ap.role }}</span>
+                            </span>
+                          </div>
+                        </sc-for>
+                        <button onClick="{{ st.onAddApprover }}" style="display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--ink-200);background:transparent;color:var(--ink-500);padding:9px 14px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:var(--teal-100);color:var(--teal-800);background:#fff">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Approver
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-for>
+
+                <button onClick="{{ onAddStage }}" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-left:52px;border:1px dashed var(--ink-200);background:#fff;color:var(--teal-800);padding:13px;border-radius:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="border-color:var(--teal-100);background:var(--teal-50)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add approval stage
+                </button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ FORM DESIGNER ============ -->
+          <sc-if value="{{ isForms }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+
+              <!-- filter bar -->
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:15px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+                <div style="flex:1;min-width:170px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Form name</div>
+                  <input value="{{ formQuery }}" onChange="{{ onFormQuery }}" placeholder="Search by name" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0">
+                </div>
+                <div style="width:170px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Form type</div>
+                  <select value="{{ formType }}" onChange="{{ onFormType }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer">
+                    <sc-for list="{{ formTypeOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for>
+                  </select>
+                </div>
+                <div style="width:120px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Is group</div>
+                  <select value="{{ formGroup }}" onChange="{{ onFormGroup }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer">
+                    <sc-for list="{{ formGroupOptions }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for>
+                  </select>
+                </div>
+                <button onClick="{{ onSearch }}" style="flex:none;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 18px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">Search</button>
+                <button onClick="{{ onReset }}" style="flex:none;background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:9px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--bg-canvas)">Reset</button>
+              </div>
+
+              <!-- table -->
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow-x:auto">
+                <div style="display:grid;grid-template-columns:52px minmax(200px,1.6fr) 130px 88px 96px 168px 128px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border);background:var(--ink-50);min-width:840px">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">No.</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Form Name</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Form Type</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Is Group</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Questions</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Updated</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);text-align:right">Action</div>
+                </div>
+                <sc-for list="{{ formRows }}" as="r" hint-placeholder-count="8">
+                  <div style="display:grid;grid-template-columns:52px minmax(200px,1.6fr) 130px 88px 96px 168px 128px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--border-soft);background:{{ r.rowBg }};min-width:840px">
+                    <div style="font-size:13px;color:var(--ink-400)">{{ r.no }}</div>
+                    <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                      <span style="font-size:13.5px;font-weight:600;color:var(--teal-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                      <span style="flex:none;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ r.badgeColor }};background:{{ r.badgeBg }};border-radius:5px;padding:2px 7px">{{ r.badge }}</span>
+                    </div>
+                    <div style="font-size:13px;color:var(--ink-700)">{{ r.type }}</div>
+                    <div style="font-size:13px;color:var(--ink-600)">{{ r.group }}</div>
+                    <div style="font-size:13.5px;font-weight:600;color:var(--ink-800)">{{ r.q }}</div>
+                    <div style="min-width:0">
+                      <div style="font-size:12.5px;font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.by }}</div>
+                      <div style="font-size:11px;color:var(--ink-400)">{{ r.when }}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:3px">
+                      <button onClick="{{ r.onEdit }}" title="Edit" style="width:30px;height:30px;border:0;background:transparent;color:var(--ink-500);cursor:pointer;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--teal-50);color:var(--teal-800)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"></path></svg>
+                      </button>
+                      <button onClick="{{ r.onView }}" title="Preview" style="width:30px;height:30px;border:0;background:transparent;color:var(--ink-500);cursor:pointer;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--teal-50);color:var(--teal-800)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      </button>
+                      <button onClick="{{ r.onCopy }}" title="Duplicate" style="width:30px;height:30px;border:0;background:transparent;color:var(--ink-500);cursor:pointer;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--teal-50);color:var(--teal-800)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M4 16V6a2 2 0 012-2h10"></path></svg>
+                      </button>
+                      <sc-if value="{{ r.canDelete }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ r.onDelete }}" title="Delete" style="width:30px;height:30px;border:0;background:transparent;color:var(--ink-400);cursor:pointer;border-radius:7px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:#FBE9E7;color:var(--danger)">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7v13a1 1 0 001 1h10a1 1 0 001-1V7M10 11v6M14 11v6"></path></svg>
+                        </button>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ noFormRows }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:44px;text-align:center;color:var(--ink-400);font-size:13px">No forms match your filters.</div>
+                </sc-if>
+                <div style="padding:13px;text-align:center;font-size:12px;color:var(--ink-400)">All records loaded</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ ORG STRUCTURE ============ -->
+          <sc-if value="{{ isDepts }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px">
+                  <div style="display:flex;align-items:center;gap:8px;color:var(--teal-800)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg><span style="font-size:11.5px;font-weight:600;color:var(--ink-500);letter-spacing:.02em">Employees</span></div>
+                  <div style="font-size:26px;font-weight:700;color:var(--ink-900);margin-top:6px;letter-spacing:-.01em">{{ orgStats.people }}</div>
+                </div>
+                <div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px">
+                  <div style="display:flex;align-items:center;gap:8px;color:var(--teal-800)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"></path></svg><span style="font-size:11.5px;font-weight:600;color:var(--ink-500);letter-spacing:.02em">Departments</span></div>
+                  <div style="font-size:26px;font-weight:700;color:var(--ink-900);margin-top:6px;letter-spacing:-.01em">{{ orgStats.depts }}</div>
+                </div>
+                <div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px">
+                  <div style="display:flex;align-items:center;gap:8px;color:var(--teal-800)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span style="font-size:11.5px;font-weight:600;color:var(--ink-500);letter-spacing:.02em">Locations</span></div>
+                  <div style="font-size:26px;font-weight:700;color:var(--ink-900);margin-top:6px;letter-spacing:-.01em">{{ orgStats.locations }}</div>
+                </div>
+              </div>
+
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow-x:auto">
+                <div style="padding:15px 20px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px">
+                  <div style="font-size:14px;font-weight:700;color:var(--ink-900)">Reporting hierarchy</div>
+                  <div style="font-size:12px;color:var(--ink-400)">Click a manager to collapse their team</div>
+                </div>
+                <div style="padding:12px 16px 18px;min-width:560px">
+                  <sc-for list="{{ treeRows }}" as="n" hint-placeholder-count="8">
+                    <div style="display:flex;align-items:stretch">
+                      <sc-for list="{{ n.guides }}" as="g" hint-placeholder-count="0">
+                        <span style="width:26px;flex:none;position:relative">
+                          <sc-if value="{{ g.line }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:12px;top:0;bottom:0;width:1.5px;background:var(--border)"></span></sc-if>
+                        </span>
+                      </sc-for>
+                      <sc-if value="{{ n.showElbow }}" hint-placeholder-val="{{ false }}">
+                        <span style="width:26px;flex:none;position:relative">
+                          <span style="position:absolute;left:12px;top:0;height:{{ n.elbowV }};width:1.5px;background:var(--border)"></span>
+                          <span style="position:absolute;left:12px;top:calc(50% - 0.75px);width:14px;height:1.5px;background:var(--border)"></span>
+                        </span>
+                      </sc-if>
+                      <div style="flex:1;min-width:0;display:flex;align-items:center;padding:5px 0">
+                        <div style="display:flex;align-items:center;gap:12px;width:100%;background:{{ n.cardBg }};border:1px solid {{ n.cardBorder }};border-radius:12px;padding:10px 14px">
+                          <span style="width:38px;height:38px;flex:none;border-radius:999px;background:{{ n.avatarBg }};color:{{ n.avatarColor }};display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">{{ n.init }}</span>
+                          <span style="min-width:0;flex:1">
+                            <span style="display:block;font-size:13.5px;font-weight:650;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.name }}</span>
+                            <span style="display:block;font-size:12px;color:var(--ink-500)">{{ n.role }}</span>
+                          </span>
+                          <span style="flex:none;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:{{ n.deptColor }};background:{{ n.deptBg }};border-radius:6px;padding:3px 9px">{{ n.dept }}</span>
+                          <sc-if value="{{ n.hasChildren }}" hint-placeholder-val="{{ false }}">
+                            <button onClick="{{ n.onToggle }}" title="Toggle team" style="flex:none;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);background:#fff;color:var(--ink-600);border-radius:7px;padding:4px 9px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer" style-hover="border-color:var(--teal-100);color:var(--teal-800)">
+                              <span>{{ n.reportCount }}</span>
+                              <sc-if value="{{ n.collapsed }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></sc-if>
+                              <sc-if value="{{ n.expanded }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></sc-if>
+                            </button>
+                          </sc-if>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ HOLIDAY CALENDAR ============ -->
+          <sc-if value="{{ isHols }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 18px">
+                <div style="font-size:13px;color:var(--ink-500)"><span style="font-weight:700;color:var(--ink-900);font-size:16px">{{ holTotal }}</span> holidays in {{ holYear }}</div>
+                <div style="flex:1"></div>
+                <sc-for list="{{ holTypes }}" as="t" hint-placeholder-count="3">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-600)"><span style="width:10px;height:10px;border-radius:3px;background:{{ t.bg }};border:1.5px solid {{ t.color }}"></span>{{ t.label }}</span>
+                </sc-for>
+              </div>
+              <sc-for list="{{ holMonths }}" as="m" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow:hidden">
+                  <div style="padding:10px 20px;border-bottom:1px solid var(--border-soft);background:var(--bg-canvas);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-500)">{{ m.month }}</div>
+                  <sc-for list="{{ m.items }}" as="h" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border-soft)">
+                      <div style="width:54px;flex:none;text-align:center">
+                        <div style="font-size:15px;font-weight:700;color:var(--ink-900);line-height:1.15">{{ h.date }}</div>
+                        <div style="font-size:10.5px;color:var(--ink-400)">{{ h.day }}</div>
+                      </div>
+                      <div style="width:1px;height:32px;background:var(--border-soft);flex:none"></div>
+                      <div style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--ink-800)">{{ h.name }}</div>
+                      <span style="flex:none;font-size:11.5px;color:var(--ink-400)">{{ h.locLabel }}</span>
+                      <span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ h.typeColor }};background:{{ h.typeBg }};border-radius:6px;padding:3px 9px">{{ h.type }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- ============ NOTIFICATIONS & TEMPLATES ============ -->
+          <sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <span style="width:46px;height:46px;flex:none;border-radius:11px;background:{{ tmpl.chBg }};color:{{ tmpl.chColor }};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.02em">{{ tmpl.channel }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:16px;font-weight:700;color:var(--ink-900)">{{ tmpl.name }}</div>
+                  <div style="font-size:12.5px;color:var(--ink-500);margin-top:2px">Triggered when: {{ tmpl.event }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px">
+                  <button onClick="{{ tmpl.onToggle }}" style="width:40px;height:23px;flex:none;border-radius:999px;border:0;cursor:pointer;padding:0;position:relative;background:{{ tmpl.toggleBg }}">
+                    <span style="position:absolute;top:2px;left:{{ tmpl.knobLeft }};width:19px;height:19px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span>
+                  </button>
+                  <span style="font-size:12.5px;font-weight:600;color:var(--ink-600)">{{ tmpl.enabledText }}</span>
+                </div>
+              </div>
+
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:6px 20px 18px">
+                <sc-if value="{{ tmpl.hasSubject }}" hint-placeholder-val="{{ true }}">
+                  <div style="padding:14px 0;border-bottom:1px solid var(--border-soft)">
+                    <div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:7px">Subject line</div>
+                    <input value="{{ tmpl.subjectVal }}" onChange="{{ tmpl.onSubject }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0">
+                  </div>
+                </sc-if>
+                <div style="padding:14px 0">
+                  <div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:7px">Message body</div>
+                  <textarea value="{{ tmpl.bodyVal }}" onChange="{{ tmpl.onBody }}" rows="8" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13.5px;line-height:1.65;color:var(--ink-800);background:#fff;outline:0;resize:vertical"></textarea>
+                </div>
+                <div style="padding-top:4px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:8px">Insert merge tags</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:7px">
+                    <sc-for list="{{ tmpl.mergeTags }}" as="mt" hint-placeholder-count="6">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--teal-800);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:7px;padding:4px 9px;cursor:default">{{ mt.tag }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ DASHBOARD ============ -->
+          <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                <sc-for list="{{ dashKpis }}" as="k" hint-placeholder-count="4">
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px">
+                    <div style="display:flex;align-items:center;gap:8px;color:var(--teal-800)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ k.icon }}"></path></svg><span style="font-size:11.5px;font-weight:600;color:var(--ink-500)">{{ k.label }}</span></div>
+                    <div style="font-size:27px;font-weight:700;color:var(--ink-900);margin-top:6px;letter-spacing:-.01em">{{ k.value }}</div>
+                    <div style="font-size:11.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                  <div style="font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:14px">Headcount by department</div>
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <sc-for list="{{ deptBars }}" as="b" hint-placeholder-count="8">
+                      <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--ink-700);font-weight:550">{{ b.dept }}</span><span style="color:var(--ink-500);font-weight:600">{{ b.n }}</span></div>
+                        <div style="height:8px;border-radius:999px;background:var(--ink-50);overflow:hidden"><div style="height:100%;width:{{ b.pct }};background:{{ b.color }};border-radius:999px"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:var(--ink-900)">Pending approvals</div><span style="font-size:10px;font-weight:700;color:#96690F;background:#FBF0DB;border-radius:999px;padding:2px 8px">7</span></div>
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <sc-for list="{{ pendingList }}" as="p" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:11px;border:1px solid var(--border-soft);border-radius:10px;padding:9px 11px">
+                        <span style="width:32px;height:32px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700">{{ p.init }}</span>
+                        <span style="min-width:0;flex:1"><span style="display:block;font-size:13px;font-weight:600;color:var(--ink-800)">{{ p.who }}</span><span style="display:block;font-size:11.5px;color:var(--ink-400)">{{ p.meta }}</span></span>
+                        <button onClick="{{ p.onAct }}" style="flex:none;border:1px solid var(--border);background:#fff;color:var(--teal-800);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-50);border-color:var(--teal-100)">Review</button>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                <div style="font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:12px">Recent activity</div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ recent }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border-soft)">
+                      <span style="width:7px;height:7px;flex:none;border-radius:999px;background:var(--teal-700)"></span>
+                      <span style="flex:1;min-width:0;font-size:13px;color:var(--ink-700)">{{ r.text }}</span>
+                      <span style="flex:none;font-size:11.5px;color:var(--ink-400)">{{ r.time }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ EMPLOYEE DIRECTORY ============ -->
+          <sc-if value="{{ isDir }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:14px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+                <div style="flex:1;min-width:180px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Search</div>
+                  <input value="{{ dirQuery }}" onChange="{{ onDirQuery }}" placeholder="Name, ID, role…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0">
+                </div>
+                <div style="width:150px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Status</div>
+                  <select value="{{ dirStatus }}" onChange="{{ onDirStatus }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer">
+                    <sc-for list="{{ dirStatusOptions }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for>
+                  </select>
+                </div>
+                <div style="font-size:12.5px;color:var(--ink-400);padding-bottom:10px">{{ dirTotal }} shown</div>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow-x:auto">
+                <div style="display:grid;grid-template-columns:minmax(200px,1.5fr) 120px 150px 130px 110px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border);background:var(--ink-50);min-width:760px">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Employee</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">ID</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Department</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Role</div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)">Status</div>
+                </div>
+                <sc-for list="{{ dirRows }}" as="r" hint-placeholder-count="8">
+                  <div style="display:grid;grid-template-columns:minmax(200px,1.5fr) 120px 150px 130px 110px;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border-soft);background:{{ r.rowBg }};min-width:760px">
+                    <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                      <span style="width:34px;height:34px;flex:none;border-radius:999px;background:{{ r.avBg }};color:{{ r.avColor }};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ r.init }}</span>
+                      <span style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-500)">{{ r.empId }}</div>
+                    <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-700)"><span style="width:8px;height:8px;border-radius:999px;background:{{ r.deptColor }}"></span>{{ r.dept }}</div>
+                    <div style="font-size:12.5px;color:var(--ink-600)">{{ r.role }}</div>
+                    <div><span style="font-size:11px;font-weight:700;color:{{ r.stColor }};background:{{ r.stBg }};border-radius:6px;padding:3px 9px">{{ r.status }}</span></div>
+                  </div>
+                </sc-for>
+                <div style="padding:13px;text-align:center;font-size:12px;color:var(--ink-400)">{{ dirTotal }} employees</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ INSIGHTS ============ -->
+          <sc-if value="{{ isIns }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                <sc-for list="{{ insKpis }}" as="k" hint-placeholder-count="4">
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px">
+                    <div style="font-size:11.5px;font-weight:600;color:var(--ink-500)">{{ k.label }}</div>
+                    <div style="font-size:26px;font-weight:700;color:var(--ink-900);margin-top:6px;letter-spacing:-.01em">{{ k.value }}</div>
+                    <div style="font-size:11.5px;color:var(--teal-800);font-weight:600;margin-top:2px">{{ k.sub }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                  <div style="font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:14px">Headcount by department</div>
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <sc-for list="{{ deptBars }}" as="b" hint-placeholder-count="8">
+                      <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--ink-700);font-weight:550">{{ b.dept }}</span><span style="color:var(--ink-500);font-weight:600">{{ b.n }}</span></div>
+                        <div style="height:8px;border-radius:999px;background:var(--ink-50);overflow:hidden"><div style="height:100%;width:{{ b.pct }};background:{{ b.color }};border-radius:999px"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                    <div style="font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:16px">Attendance rate · last 6 months</div>
+                    <div style="display:flex;align-items:flex-end;gap:10px;height:120px">
+                      <sc-for list="{{ attendance }}" as="a" hint-placeholder-count="6">
+                        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                          <div style="width:100%;max-width:34px;height:{{ a.h }};background:linear-gradient(180deg,var(--teal-700),var(--teal-800));border-radius:6px 6px 0 0"></div>
+                          <span style="font-size:10.5px;color:var(--ink-400)">{{ a.m }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px">
+                    <div style="font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:12px">Gender diversity</div>
+                    <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;margin-bottom:12px">
+                      <sc-for list="{{ gender }}" as="g" hint-placeholder-count="3"><div style="width:{{ g.w }};background:{{ g.color }}"></div></sc-for>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:14px">
+                      <sc-for list="{{ gender }}" as="g" hint-placeholder-count="3">
+                        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-600)"><span style="width:10px;height:10px;border-radius:3px;background:{{ g.color }}"></span>{{ g.label }} · {{ g.pctLabel }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ INTEGRATIONS ============ -->
+          <sc-if value="{{ isInt }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <span style="width:44px;height:44px;flex:none;border-radius:11px;background:var(--teal-50);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5a4 4 0 005.66 0l2.83-2.83a4 4 0 10-5.66-5.66L11.5 6.5M13.5 10.5a4 4 0 00-5.66 0L5 13.34a4 4 0 105.66 5.66l1.83-1.84"></path></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:15px;font-weight:700;color:var(--ink-900)">{{ intConnectedCount }} of {{ intTotal }} connected</div>
+                  <div style="font-size:12.5px;color:var(--ink-500);margin-top:2px">Connect NanoHealth to your attendance, payroll, identity and clinical systems.</div>
+                </div>
+              </div>
+              <sc-if value="{{ noIntCards }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:44px;text-align:center;font-size:13px;color:var(--ink-400);background:#fff;border:1px solid var(--border);border-radius:14px">No integrations in this category.</div>
+              </sc-if>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+                <sc-for list="{{ intCards }}" as="i" hint-placeholder-count="6">
+                  <div style="background:#fff;border:1px solid {{ i.cardBorder }};border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                    <div style="display:flex;align-items:flex-start;gap:12px">
+                      <span style="width:42px;height:42px;flex:none;border-radius:11px;background:{{ i.iconBg }};color:{{ i.iconColor }};display:inline-flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ i.iconPath }}"></path></svg></span>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:14px;font-weight:700;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.name }}</div>
+                        <div style="font-size:11px;font-weight:600;color:var(--ink-400);margin-top:2px">{{ i.cat }}</div>
+                      </div>
+                      <span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ i.statusColor }};background:{{ i.statusBg }};border-radius:6px;padding:3px 8px">{{ i.statusText }}</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--ink-500);line-height:1.5;min-height:36px">{{ i.desc }}</div>
+                    <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--border-soft);padding-top:12px">
+                      <span style="flex:1;min-width:0;font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</span>
+                      <button onClick="{{ i.onToggle }}" style="flex:none;border:1px solid {{ i.btnBorder }};background:{{ i.btnBg }};color:{{ i.btnColor }};border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="opacity:.9">{{ i.btnLabel }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ AUDIT LOG ============ -->
+          <sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);padding:14px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+                <div style="flex:1;min-width:200px">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--ink-500);margin-bottom:6px">Search events</div>
+                  <input value="{{ auditQuery }}" onChange="{{ onAuditQuery }}" placeholder="Actor, action or target…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0">
+                </div>
+                <div style="font-size:12.5px;color:var(--ink-400);padding-bottom:10px">{{ auditTotal }} events</div>
+              </div>
+              <sc-if value="{{ noAudit }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:44px;text-align:center;font-size:13px;color:var(--ink-400);background:#fff;border:1px solid var(--border);border-radius:14px">No audit events match your filters.</div>
+              </sc-if>
+              <sc-for list="{{ auditGroups }}" as="g" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);padding:2px 4px 10px">{{ g.day }}</div>
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 12px rgba(11,22,32,.05);overflow:hidden">
+                    <sc-for list="{{ g.items }}" as="a" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--border-soft)">
+                        <span style="width:52px;flex:none;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-500)">{{ a.time }}</span>
+                        <span style="width:34px;height:34px;flex:none;border-radius:999px;background:{{ a.catBg }};color:{{ a.catColor }};display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700">{{ a.init }}</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13.5px;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-weight:650;color:var(--ink-900)">{{ a.actor }}</span> {{ a.action }}</div>
+                          <div style="font-size:12px;color:var(--ink-500);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.target }}</div>
+                        </div>
+                        <span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ a.catColor }};background:{{ a.catBg }};border-radius:6px;padding:3px 9px">{{ a.cat }}</span>
+                        <span style="width:96px;flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-400)">{{ a.ip }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- ============ STUB ============ -->
+          <sc-if value="{{ isStub }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:520px;margin:64px auto 0;text-align:center">
+              <div style="width:76px;height:76px;margin:0 auto 20px;border-radius:20px;background:#fff;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;color:var(--teal-700);box-shadow:0 4px 14px rgba(11,22,32,.06)">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ stubIcon }}"></path></svg>
+              </div>
+              <div style="font-size:19px;font-weight:700;color:var(--ink-900);letter-spacing:-.01em">{{ moduleLabel }}</div>
+              <div style="font-size:13.5px;color:var(--ink-500);margin-top:8px;line-height:1.6">{{ stubText }}</div>
+              <button onClick="{{ onBackToOrg }}" style="margin-top:22px;display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>Back to Organization Settings
+              </button>
+            </div>
+          </sc-if>
+
+        </div>
+
+        <!-- STICKY ACTION BAR -->
+        <sc-if value="{{ showPrimaryAction }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:none;background:#fff;border-top:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 -2px 16px rgba(11,22,32,.05)">
+            <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-500)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+              <span>Changes take effect only after you save.</span>
+            </div>
+            <sc-if value="{{ showSecondaryAction }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ onSecondaryAction }}" style="flex:none;display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:9px 15px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--bg-canvas);border-color:var(--teal-100);color:var(--teal-900)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ secondaryIcon }}"></path></svg>{{ secondaryLabel }}
+              </button>
+            </sc-if>
+            <button onClick="{{ onPrimaryAction }}" style="flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 18px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ primaryIcon }}"></path></svg>{{ primaryLabel }}
+            </button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SAVE TOAST ══════════ -->
+  <sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:11px;background:var(--ink-900);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 12px 32px rgba(11,22,32,.3);font-size:13.5px;font-weight:550">
+      <span style="width:22px;height:22px;border-radius:999px;background:#1E7A46;display:inline-flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span>
+      {{ savedText }}
+    </div>
+  </sc-if>
+
+  <!-- ══════════ MODAL ══════════ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseModal }}" style="position:fixed;inset:0;z-index:70;background:rgba(11,22,32,.42);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:440px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(11,22,32,.28);overflow:hidden">
+        <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px">
+          <span style="width:38px;height:38px;flex:none;border-radius:10px;background:var(--teal-50);display:inline-flex;align-items:center;justify-content:center;color:var(--teal-800)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ modalIcon }}"></path></svg></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:700;color:var(--ink-900)">{{ modalTitle }}</div>
+            <div style="font-size:12px;color:var(--ink-500);margin-top:1px">{{ modalSubtitle }}</div>
+          </div>
+          <button onClick="{{ onCloseModal }}" style="width:30px;height:30px;border:0;background:transparent;color:var(--ink-400);cursor:pointer;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--ink-50);color:var(--ink-900)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div style="padding:18px 22px;display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ modalFields }}" as="mf" hint-placeholder-count="2">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--ink-700);margin-bottom:6px">{{ mf.label }}</div>
+              <sc-if value="{{ mf.isSelect }}" hint-placeholder-val="{{ false }}">
+                <select style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;outline:0;cursor:pointer">
+                  <sc-for list="{{ mf.options }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ mf.isText }}" hint-placeholder-val="{{ true }}">
+                <input placeholder="{{ mf.ph }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;outline:0">
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;gap:10px;background:var(--bg-canvas)">
+          <button onClick="{{ onCloseModal }}" style="border:1px solid var(--border);background:#fff;color:var(--ink-700);padding:9px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--ink-50)">Cancel</button>
+          <button onClick="{{ onModalConfirm }}" style="border:1px solid var(--teal-900);background:var(--teal-800);color:#fff;padding:9px 18px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)">{{ modalConfirmLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+<template id="__bundler_thumbnail" data-bg-color="#093D3C">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#093D3C"></rect><g transform="translate(516,300)" fill="none" stroke="#7FD9C6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"><circle cx="84" cy="84" r="34"></circle><path d="M84 22v-14M84 160v14M22 84h-14M146 84h14M40 40l-10-10M128 128l10 10M128 40l10-10M40 128l-10 10"></path></g><text x="600" y="580" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">Admin Console</text></svg>
+</template>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  state = {
+    activeModule:'orgsettings',
+    orgSection:'profile',
+    paySection:'structure',
+    selectedRole:'hr-admin',
+    selectedPolicy:'annual',
+    selectedWorkflow:'leave',
+    seg:{}, toggles:{}, colors:{}, weekoff:{}, docs:{}, text:{}, // form control state
+    perms:{},
+    stages:null, curStagesKey:null,
+    dragIndex:null,
+    modal:null,
+    saved:false,
+    formCat:'all', formQuery:'', formType:'All', formGroup:'All', addedForms:[], deletedForms:[],
+    collapsed:{},
+    holYear:'2026', holLoc:'All', selectedTemplate:'welcome', tmplEnabled:{},
+    dirQuery:'', dirDept:'All', dirStatus:'All', insMetric:'Headcount',
+    intCat:'All', connected:{}, auditCat:'All', auditQuery:'',
+  };
+
+  // ---------- static data ----------
+  MODULES = [
+    { id:'dashboard',   label:'Dashboard',                iconPath:'M4 13h7V4H4zM13 20h7v-9h-7zM4 20h7v-5H4zM13 9h7V4h-7z' },
+    { id:'directory',   label:'Employee Directory',       iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0' },
+    { id:'insights',    label:'Insights',                 iconPath:'M4 20V4M4 20h16M8 20v-6M13 20V10M18 20v-8' },
+    { id:'orgsettings', label:'Organization Settings',    iconPath:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6h.09A1.65 1.65 0 0011 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9v.09a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z', section:'Control Center' },
+    { id:'roles',       label:'Roles & Permissions',      iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z M9 12l2 2 4-4' },
+    { id:'policies',    label:'Leave & Attendance',       iconPath:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4' },
+    { id:'forms',       label:'Form Designer',            iconPath:'M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-4M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z' },
+    { id:'workflow',    label:'Workflow Builder',         iconPath:'M6 4h4v4H6zM14 16h4v4h-4zM8 8v4a2 2 0 002 2h4M16 8h.01' },
+    { id:'payroll',     label:'Payroll Configuration',    iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+    { id:'departments', label:'Departments & Locations',  iconPath:'M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01M9 17h.01M15 17h.01' },
+    { id:'holidays',    label:'Holiday Calendar',         iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4M9 15l2 2 4-4' },
+    { id:'notifications', label:'Notifications & Templates', iconPath:'M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM3.5 7l8.5 6 8.5-6' },
+    { id:'integrations', label:'Integrations',            iconPath:'M10.5 13.5a4 4 0 005.66 0l2.83-2.83a4 4 0 10-5.66-5.66L11.5 6.5M13.5 10.5a4 4 0 00-5.66 0L5 13.34a4 4 0 105.66 5.66l1.83-1.84' },
+    { id:'audit',       label:'Audit Log',                iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+  ];
+  BUILT = ['orgsettings','roles','policies','workflow','forms','departments','holidays','notifications','dashboard','directory','insights','integrations','audit','payroll'];
+  SOON = [];
+
+  // Payroll configuration sections
+  PAY_GROUPS = [
+    { label:'Compensation', items:[
+      { id:'structure',  label:'Salary Structure',   desc:'CTC breakup & components',   iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+      { id:'statutory',  label:'Statutory & Compliance', desc:'PF, ESI, PT, TDS',       iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z M9 12l2 2 4-4' },
+    ]},
+    { label:'Processing', items:[
+      { id:'schedule',   label:'Pay Schedule',       desc:'Cycle, pay day, disbursement', iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4' },
+      { id:'payslip',    label:'Payslips & Reimbursements', desc:'Delivery & settlement', iconPath:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4' },
+    ]},
+  ];
+  PAY_FORMS = {
+    structure: { context:'Salary Structure', groups:[
+      { label:'Salary components', hint:'How each employee\u2019s CTC is split into earnings', fields:[
+        { id:'basic',   type:'text', label:'Basic pay', hint:'Percentage of gross CTC', val:'50%' },
+        { id:'hra',     type:'text', label:'House Rent Allowance (HRA)', hint:'Percentage of Basic', val:'40%' },
+        { id:'da',      type:'text', label:'Dearness allowance', hint:'Percentage of Basic', val:'12%' },
+        { id:'special', type:'text', label:'Special allowance', hint:'Balancing component, auto-computed', val:'Auto-balanced' },
+      ]},
+      { label:'CTC settings', fields:[
+        { id:'ctcview',  type:'segment', label:'CTC display', val:'Annual', options:['Annual','Monthly'] },
+        { id:'roundoff', type:'toggle', label:'Round net pay to nearest \u20b9', val:true },
+        { id:'gratuity', type:'toggle', label:'Include gratuity in CTC', val:true },
+      ]},
+    ]},
+    statutory: { context:'Statutory & Compliance', groups:[
+      { label:'Provident Fund (EPF)', fields:[
+        { id:'epf',     type:'toggle', label:'Enable EPF deduction', val:true },
+        { id:'epfwage', type:'text', label:'PF wage ceiling', hint:'Statutory limit for PF calculation', val:'\u20b915,000' },
+        { id:'epfemp',  type:'text', label:'Employee contribution', val:'12%' },
+        { id:'epfer',   type:'text', label:'Employer contribution', val:'12%' },
+      ]},
+      { label:'ESI & Professional Tax', fields:[
+        { id:'esi',     type:'toggle', label:'Enable ESI deduction', val:true },
+        { id:'esilimit',type:'text', label:'ESI wage limit', hint:'Gross \u2264 this is ESI-eligible', val:'\u20b921,000 / month' },
+        { id:'pt',      type:'toggle', label:'Deduct Professional Tax', val:true },
+        { id:'ptstate', type:'select', label:'PT state slab', val:'Telangana', options:['Telangana','Karnataka','Maharashtra','Tamil Nadu','West Bengal'] },
+      ]},
+      { label:'Income Tax (TDS)', fields:[
+        { id:'regime',  type:'segment', label:'Default tax regime', val:'New regime', options:['New regime','Old regime'] },
+        { id:'tds',     type:'toggle', label:'Auto-compute monthly TDS', val:true },
+      ]},
+    ]},
+    schedule: { context:'Pay Schedule', groups:[
+      { label:'Pay cycle', fields:[
+        { id:'freq',    type:'segment', label:'Pay frequency', val:'Monthly', options:['Monthly','Bi-weekly'] },
+        { id:'payday',  type:'select', label:'Pay day', val:'Last working day', options:['Last working day','1st of next month','7th of next month','25th of month'] },
+        { id:'cutoff',  type:'text', label:'Attendance cut-off day', hint:'Day of month the cycle locks for changes', val:'25' },
+      ]},
+      { label:'Disbursement', fields:[
+        { id:'method',  type:'select', label:'Disbursement method', val:'Bank transfer (NEFT)', options:['Bank transfer (NEFT)','RazorpayX Payroll','Cheque'] },
+        { id:'holshift',type:'toggle', label:'Advance pay day if it falls on a holiday', val:true },
+        { id:'autorun', type:'toggle', label:'Auto-run payroll on schedule', hint:'Requires a locked pay cycle & no pending approvals', val:false },
+      ]},
+    ]},
+    payslip: { context:'Payslips & Reimbursements', groups:[
+      { label:'Payslip delivery', fields:[
+        { id:'email',   type:'toggle', label:'Email payslips to employees', val:true },
+        { id:'ytd',     type:'toggle', label:'Show year-to-date summary', val:true },
+        { id:'pwd',     type:'segment', label:'Payslip PDF password', val:'Employee ID', options:['None','Employee ID','PAN'] },
+      ]},
+      { label:'Reimbursements', fields:[
+        { id:'settle',  type:'toggle', label:'Settle approved expenses with payroll', val:true },
+        { id:'cap',     type:'text', label:'Monthly reimbursement cap', hint:'Per employee, across all categories', val:'\u20b950,000' },
+        { id:'proof',   type:'text', label:'Receipt mandatory above', hint:'Claims over this need an attachment', val:'\u20b91,000' },
+      ]},
+    ]},
+  };
+
+  // Integrations
+  INT_TONE = { connected:['#E7F3EC','#1E7A46','Connected'], available:['#F1F3F5','#5F6E80','Not connected'] };
+  INTEGRATIONS = [
+    { id:'biotime',   name:'BioTime Access',      cat:'Attendance',    desc:'Biometric attendance terminals across campus', status:'connected', meta:'6 devices \u00b7 last sync 4m ago', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+    { id:'essl',      name:'eSSL SmartOffice',     cat:'Attendance',    desc:'Fingerprint & face-recognition terminals', status:'available', meta:'', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+    { id:'razorpayx', name:'RazorpayX Payroll',    cat:'Payroll',       desc:'Salary disbursement & statutory compliance', status:'connected', meta:'Auto-sync on each pay run', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+    { id:'zoho',      name:'Zoho Payroll',         cat:'Payroll',       desc:'Payroll processing & payslip delivery', status:'available', meta:'', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+    { id:'okta',      name:'Okta SSO',             cat:'Identity',      desc:'Single sign-on & user provisioning (SAML)', status:'connected', meta:'306 users provisioned', iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z' },
+    { id:'entra',     name:'Microsoft Entra ID',   cat:'Identity',      desc:'Azure AD single sign-on & SCIM sync', status:'available', meta:'', iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z' },
+    { id:'clinical',  name:'NanoHealth Clinical',  cat:'Clinical',      desc:'Sync clinician roster & credentials', status:'connected', meta:'Roster synced daily 02:00', iconPath:'M11 3a1 1 0 00-1 1v4H6a1 1 0 00-1 1v2a1 1 0 001 1h4v4a1 1 0 001 1h2a1 1 0 001-1v-4h4a1 1 0 001-1V9a1 1 0 00-1-1h-4V4a1 1 0 00-1-1z' },
+    { id:'gworkspace',name:'Google Workspace',     cat:'Communication', desc:'Calendar sync & interview scheduling', status:'connected', meta:'Calendar linked', iconPath:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z' },
+    { id:'slack',     name:'Slack',                cat:'Communication', desc:'Post HR notifications to channels', status:'available', meta:'', iconPath:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z' },
+    { id:'tally',     name:'Tally Prime',          cat:'Finance',       desc:'Export payroll journals to ledgers', status:'available', meta:'', iconPath:'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6' },
+  ];
+
+  // Audit log
+  AUDIT_TONE = { 'Configuration':['#EAF3F2','#0E5E5C'], 'Records':['#EEF0FB','#3B47A0'], 'Access':['#F1F3F5','#48586A'], 'Security':['#FBE9E7','#C33F2A'] };
+  AUDIT = [
+    { day:'Today \u00b7 4 Jul 2026', time:'09:42', actor:'Sanjay Gupta',   init:'SG', action:'Updated leave policy', target:'Sick Leave \u00b7 accrual rate 1.25\u21921.5/mo', cat:'Configuration', ip:'10.2.4.17' },
+    { day:'Today \u00b7 4 Jul 2026', time:'09:15', actor:'Priya Nair',     init:'PN', action:'Approved leave request', target:'Rohan Desai \u00b7 3 days', cat:'Records', ip:'10.2.4.31' },
+    { day:'Today \u00b7 4 Jul 2026', time:'08:58', actor:'System',         init:'SY', action:'Nightly biometric sync completed', target:'6 devices \u00b7 271 punches', cat:'Access', ip:'\u2014' },
+    { day:'Today \u00b7 4 Jul 2026', time:'08:30', actor:'Sanjay Gupta',   init:'SG', action:'Added employee', target:'Dr. Aarti Rao \u00b7 Cardiology', cat:'Records', ip:'10.2.4.17' },
+    { day:'Yesterday \u00b7 3 Jul 2026', time:'18:22', actor:'Vikram Iyer', init:'VI', action:'Changed role permissions', target:'Recruiter \u00b7 +Edit on Candidates', cat:'Security', ip:'10.2.4.9' },
+    { day:'Yesterday \u00b7 3 Jul 2026', time:'16:05', actor:'Anita Joseph', init:'AJ', action:'Exported payroll report', target:'June 2026 \u00b7 306 records', cat:'Records', ip:'10.2.4.22' },
+    { day:'Yesterday \u00b7 3 Jul 2026', time:'14:40', actor:'Sanjay Gupta', init:'SG', action:'Enabled 2-factor authentication', target:'Org-wide \u00b7 all roles', cat:'Security', ip:'10.2.4.17' },
+    { day:'Yesterday \u00b7 3 Jul 2026', time:'11:12', actor:'Priya Nair',   init:'PN', action:'Published workflow', target:'Leave Approval \u00b7 4 stages', cat:'Configuration', ip:'10.2.4.31' },
+    { day:'2 Jul 2026', time:'19:03', actor:'System',        init:'SY', action:'Blocked failed login attempt', target:'user rkumar \u00b7 3 attempts', cat:'Security', ip:'203.0.113.44' },
+    { day:'2 Jul 2026', time:'15:47', actor:'Meera Krishnan', init:'MK', action:'Updated company profile', target:'Registered address', cat:'Configuration', ip:'10.2.4.5' },
+    { day:'2 Jul 2026', time:'10:20', actor:'Sanjay Gupta',   init:'SG', action:'Deleted form', target:'Old Exit Survey (v1)', cat:'Records', ip:'10.2.4.17' },
+  ];
+
+  // Org settings sections
+  ORG_GROUPS = [
+    { label:'General', items:[
+      { id:'profile',      label:'Company Profile',    desc:'Legal entity, contact, address', iconPath:'M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01' },
+      { id:'branding',     label:'Branding & Identity',desc:'Logo, brand color, theme',       iconPath:'M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z' },
+      { id:'localization', label:'Localization',       desc:'Timezone, currency, formats',    iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18' },
+    ]},
+    { label:'Workplace', items:[
+      { id:'hours',    label:'Working Hours',    desc:'Shift, week-off, grace', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+      { id:'paycycle', label:'Fiscal & Pay Cycle', desc:'Fiscal year, pay dates', iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4' },
+    ]},
+    { label:'Security', items:[
+      { id:'auth',    label:'Authentication', desc:'SSO, 2FA, sessions',    iconPath:'M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1zM8 11V7a4 4 0 018 0v4' },
+      { id:'privacy', label:'Data & Privacy', desc:'Retention, consent',    iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z' },
+    ]},
+  ];
+
+  ORG_FORMS = {
+    profile: { context:'Company Profile', groups:[
+      { label:'Legal entity', fields:[
+        { id:'legal', type:'text', label:'Legal name', val:'NanoHealth Technologies Pvt. Ltd.' },
+        { id:'display', type:'text', label:'Display name', hint:'Shown across the console and in emails', val:'NanoHealth' },
+        { id:'cin', type:'text', label:'Registration / CIN', val:'U72200TG2011PTC074521', proof:'Certificate of Incorporation' },
+        { id:'gstin', type:'text', label:'GSTIN', val:'36AAECN1234F1Z5', proof:'GST Registration Certificate' },
+        { id:'industry', type:'select', label:'Industry', val:'Healthcare & Hospitals', options:['Healthcare & Hospitals','Diagnostics','Pharmaceuticals','Insurance'] },
+      ]},
+      { label:'Primary contact', fields:[
+        { id:'email', type:'text', label:'HR contact email', val:'hr@nanohealth.in' },
+        { id:'phone', type:'text', label:'Phone', val:'+91 40 4455 6677' },
+        { id:'addr', type:'textarea', label:'Registered address', val:'Plot 42, HITEC City, Madhapur, Hyderabad, Telangana 500081' },
+      ]},
+      { label:'Verification documents', hint:'Attach official records that back up the details entered above', fields:[
+        { id:'docs', type:'docs' },
+      ]},
+    ]},
+    branding: { context:'Branding & Identity', groups:[
+      { label:'Visual identity', fields:[
+        { id:'logo', type:'upload', label:'Organization logo', hint:'Appears in the sidebar and on payslips' },
+        { id:'brandcolor', type:'color', label:'Brand color', hint:'Primary accent for the employee app', val:'#14716F' },
+        { id:'theme', type:'segment', label:'Console theme', val:'Light', options:['Light','Dark','System'] },
+      ]},
+      { label:'Emails & documents', fields:[
+        { id:'showlogo', type:'toggle', label:'Show logo in system emails', val:true },
+        { id:'sender', type:'text', label:'Email sender name', val:'NanoHealth HR' },
+      ]},
+    ]},
+    localization: { context:'Localization', groups:[
+      { label:'Region', fields:[
+        { id:'country', type:'select', label:'Country', val:'India', options:['India','United Arab Emirates','Singapore'] },
+        { id:'tz', type:'select', label:'Timezone', val:'(GMT+5:30) Asia/Kolkata', options:['(GMT+5:30) Asia/Kolkata','(GMT+4:00) Asia/Dubai','(GMT+8:00) Asia/Singapore'] },
+        { id:'datefmt', type:'select', label:'Date format', val:'DD MMM YYYY', options:['DD MMM YYYY','DD/MM/YYYY','MM/DD/YYYY','YYYY-MM-DD'] },
+        { id:'currency', type:'select', label:'Currency', val:'₹ Indian Rupee (INR)', options:['₹ Indian Rupee (INR)','$ US Dollar (USD)','د.إ UAE Dirham (AED)'] },
+      ]},
+      { label:'Formatting', fields:[
+        { id:'numsys', type:'segment', label:'Number system', val:'Indian (1,00,000)', options:['Indian (1,00,000)','International (100,000)'] },
+        { id:'lang', type:'select', label:'Default language', val:'English', options:['English','हिन्दी','తెలుగు'] },
+      ]},
+    ]},
+    hours: { context:'Working Hours', groups:[
+      { label:'Standard hours', fields:[
+        { id:'shift', type:'time', label:'Standard shift', val:'09:00', val2:'18:00' },
+        { id:'fullday', type:'text', label:'Full-day hours', hint:'Minimum hours for a full day', val:'8.5' },
+        { id:'halfday', type:'text', label:'Half-day hours', val:'4.5' },
+        { id:'grace', type:'text', label:'Grace period (minutes)', hint:'Late-mark buffer after shift start', val:'10' },
+      ]},
+      { label:'Week-off', fields:[
+        { id:'weekoff', type:'weekdays', label:'Weekly off days', hint:'Applies to full-time staff by default' },
+        { id:'ot', type:'toggle', label:'Enable overtime tracking', val:true },
+      ]},
+    ]},
+    paycycle: { context:'Fiscal & Pay Cycle', groups:[
+      { label:'Fiscal year', fields:[
+        { id:'fystart', type:'select', label:'Fiscal year start', val:'April', options:['January','April','July'] },
+        { id:'cycle', type:'segment', label:'Pay cycle', val:'Monthly', options:['Monthly','Bi-weekly','Weekly'] },
+      ]},
+      { label:'Disbursement', fields:[
+        { id:'payday', type:'select', label:'Salary credited on', val:'1st of month', options:['Last working day','1st of month','5th of month','7th of month'] },
+        { id:'cutoff', type:'select', label:'Attendance cutoff', hint:'Last day counted in the pay run', val:'25th', options:['20th','25th','Last day'] },
+      ]},
+    ]},
+    auth: { context:'Authentication', groups:[
+      { label:'Sign-in', fields:[
+        { id:'sso', type:'toggle', label:'Enforce SSO (SAML)', hint:'Require the corporate identity provider', val:false },
+        { id:'2fa', type:'toggle', label:'Two-factor authentication', val:true },
+        { id:'session', type:'select', label:'Session timeout', val:'30 minutes', options:['15 minutes','30 minutes','1 hour','8 hours'] },
+        { id:'iprange', type:'toggle', label:'Restrict to office IP range', val:false },
+      ]},
+      { label:'Password policy', fields:[
+        { id:'minlen', type:'select', label:'Minimum length', val:'8 characters', options:['6 characters','8 characters','12 characters'] },
+        { id:'symbols', type:'toggle', label:'Require symbols & numbers', val:true },
+      ]},
+    ]},
+    privacy: { context:'Data & Privacy', groups:[
+      { label:'Retention', fields:[
+        { id:'attretain', type:'select', label:'Attendance log retention', val:'24 months', options:['12 months','24 months','36 months'] },
+        { id:'exretain', type:'select', label:'Ex-employee records', val:'7 years', options:['3 years','5 years','7 years'] },
+        { id:'anon', type:'toggle', label:'Auto-anonymize on exit', hint:'Strip personal identifiers after retention window', val:true },
+      ]},
+      { label:'Consent', fields:[
+        { id:'banner', type:'toggle', label:'Show privacy consent banner', val:true },
+      ]},
+    ]},
+  };
+
+  ROLES = [
+    { id:'hr-admin', label:'HR Admin',       count:3,  dot:'#DD4A3B', system:true,  desc:'Full access to every HRMS module and configuration.' },
+    { id:'hr-manager', label:'HR Manager',   count:6,  dot:'#1B8682', system:false, desc:'Manages people operations, leave and attendance across departments.' },
+    { id:'recruiter', label:'Recruiter',     count:4,  dot:'#F2682A', system:false, desc:'Handles recruitment, candidates and onboarding pipelines.' },
+    { id:'dept-head', label:'Department Head', count:11, dot:'#4C6FBF', system:false, desc:'Approves requests and views records for their own department.' },
+    { id:'payroll', label:'Payroll Officer', count:2,  dot:'#7A5AC2', system:false, desc:'Runs pay cycles and manages compensation data.' },
+    { id:'employee', label:'Employee',       count:248, dot:'#5F6E80', system:true,  desc:'Self-service access to own profile, leave and payslips.' },
+    { id:'auditor', label:'Auditor',         count:1,  dot:'#96690F', system:false, desc:'Read-only access for compliance and audit reviews.' },
+  ];
+  PERM_COLS = ['View','Create','Edit','Delete','Approve'];
+  PERM_ROWS = [
+    { id:'directory', label:'Employee Directory', iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0', na:[] },
+    { id:'attendance', label:'Attendance',        iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', na:['delete'] },
+    { id:'leave', label:'Leave',                  iconPath:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17', na:[] },
+    { id:'payroll', label:'Payroll',              iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', na:['create'] },
+    { id:'recruitment', label:'Recruitment',      iconPath:'M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M19 8v6M22 11h-6', na:[] },
+    { id:'reports', label:'Reports & Analytics',  iconPath:'M4 20V4M4 20h16M8 20v-6M13 20V10M18 20v-8', na:['create','delete','approve'] },
+    { id:'settings', label:'Settings',            iconPath:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82 2 2 0 11-2.83 2.83 1.65 1.65 0 00-2.82 1.18 2 2 0 01-4 0 1.65 1.65 0 00-2.82-1.18 2 2 0 11-2.83-2.83A1.65 1.65 0 004.6 15a2 2 0 010-4 1.65 1.65 0 001.4-2.82 2 2 0 112.83-2.83A1.65 1.65 0 0011 4.6a2 2 0 014 0 1.65 1.65 0 002.82 1.18 2 2 0 112.83 2.83A1.65 1.65 0 0019.4 11a2 2 0 010 4z', na:['create','delete'] },
+  ];
+  // default permission presets per role (which of View/Create/Edit/Delete/Approve are on, per module)
+  PERM_PRESETS = {
+    'hr-admin':   'all',
+    'hr-manager': { directory:['view','create','edit'], attendance:['view','edit','approve'], leave:['view','approve','edit'], payroll:['view'], recruitment:['view','create','edit','approve'], reports:['view'], settings:['view','edit'] },
+    'recruiter':  { directory:['view','create'], attendance:['view'], leave:['view'], payroll:[], recruitment:['view','create','edit','delete','approve'], reports:['view'], settings:[] },
+    'dept-head':  { directory:['view'], attendance:['view','approve'], leave:['view','approve'], payroll:[], recruitment:['view','approve'], reports:['view'], settings:[] },
+    'payroll':    { directory:['view'], attendance:['view'], leave:['view'], payroll:['view','edit','approve'], recruitment:[], reports:['view'], settings:['view'] },
+    'employee':   { directory:['view'], attendance:['view'], leave:['view','create'], payroll:['view'], recruitment:[], reports:[], settings:[] },
+    'auditor':    { directory:['view'], attendance:['view'], leave:['view'], payroll:['view'], recruitment:['view'], reports:['view'], settings:['view'] },
+  };
+
+  POLICY_GROUPS = [
+    { label:'Leave types', items:[
+      { id:'annual',   label:'Annual / Earned Leave', meta:'21 days · accrual', dot:'#1B8682' },
+      { id:'sick',     label:'Sick Leave',            meta:'12 days · certificate', dot:'#DD4A3B' },
+      { id:'casual',   label:'Casual Leave',          meta:'12 days · monthly cap', dot:'#F2682A' },
+      { id:'maternity',label:'Maternity Leave',       meta:'26 weeks · statutory', dot:'#C2557A' },
+      { id:'compoff',  label:'Comp-off',              meta:'Earned on holidays', dot:'#4C6FBF' },
+    ]},
+    { label:'Attendance', items:[
+      { id:'regularize', label:'Regularization', meta:'Missed / edited punches', dot:'#7A5AC2' },
+      { id:'latemark',   label:'Late-mark Rules', meta:'3 late = ½ day', dot:'#96690F' },
+    ]},
+  ];
+  POLICY_FORMS = {
+    annual: { name:'Annual / Earned Leave', context:'Leave types', groups:[
+      { label:'Entitlement', fields:[
+        { id:'quota', type:'text', label:'Annual quota (days)', val:'21' },
+        { id:'accrual', type:'segment', label:'Accrual', val:'Monthly', options:['Monthly','Quarterly','Yearly'] },
+        { id:'rate', type:'text', label:'Accrual rate', hint:'Days credited each period', val:'1.75 / month' },
+        { id:'prorate', type:'toggle', label:'Pro-rate for new joiners', val:true },
+      ]},
+      { label:'Rules', fields:[
+        { id:'carry', type:'toggle', label:'Allow carry-forward', val:true },
+        { id:'maxcarry', type:'text', label:'Max carry-forward (days)', val:'10' },
+        { id:'encash', type:'toggle', label:'Encashment allowed', val:true },
+        { id:'notice', type:'text', label:'Minimum notice (days)', val:'3' },
+      ]},
+    ]},
+    sick: { name:'Sick Leave', context:'Leave types', groups:[
+      { label:'Entitlement', fields:[
+        { id:'quota', type:'text', label:'Annual quota (days)', val:'12' },
+        { id:'cert', type:'toggle', label:'Require medical certificate', hint:'For absences beyond the threshold below', val:true },
+        { id:'certafter', type:'text', label:'Certificate needed after (days)', val:'2' },
+        { id:'backdate', type:'toggle', label:'Allow backdated application', val:true },
+      ]},
+    ]},
+    casual: { name:'Casual Leave', context:'Leave types', groups:[
+      { label:'Entitlement', fields:[
+        { id:'quota', type:'text', label:'Annual quota (days)', val:'12' },
+        { id:'monthcap', type:'text', label:'Monthly cap (days)', val:'2' },
+        { id:'clubbing', type:'toggle', label:'Allow clubbing with other leave', val:false },
+      ]},
+    ]},
+    maternity: { name:'Maternity Leave', context:'Leave types', groups:[
+      { label:'Entitlement', fields:[
+        { id:'weeks', type:'text', label:'Duration (weeks)', hint:'Per Maternity Benefit Act', val:'26' },
+        { id:'eligible', type:'text', label:'Eligibility (months of service)', val:'2.5' },
+        { id:'paid', type:'toggle', label:'Fully paid', val:true },
+      ]},
+    ]},
+    compoff: { name:'Comp-off', context:'Leave types', groups:[
+      { label:'Rules', fields:[
+        { id:'enable', type:'toggle', label:'Enable comp-off', val:true },
+        { id:'expiry', type:'select', label:'Expiry window', val:'60 days', options:['30 days','60 days','90 days'] },
+        { id:'approval', type:'toggle', label:'Require manager approval', val:true },
+      ]},
+    ]},
+    regularize: { name:'Attendance Regularization', context:'Attendance', groups:[
+      { label:'Rules', fields:[
+        { id:'window', type:'select', label:'Regularization window', hint:'How far back a punch can be edited', val:'7 days', options:['3 days','7 days','15 days'] },
+        { id:'maxmonth', type:'text', label:'Max requests / month', val:'3' },
+        { id:'approver', type:'segment', label:'Approver', val:'Reporting Manager', options:['Reporting Manager','HR'] },
+      ]},
+    ]},
+    latemark: { name:'Late-mark Rules', context:'Attendance', groups:[
+      { label:'Rules', fields:[
+        { id:'threshold', type:'text', label:'Late-marks = ½ day', hint:'Number of late-marks deducted as half day', val:'3' },
+        { id:'reset', type:'segment', label:'Reset cycle', val:'Monthly', options:['Monthly','Quarterly'] },
+        { id:'notify', type:'toggle', label:'Notify employee on late-mark', val:true },
+      ]},
+    ]},
+  };
+
+  WORKFLOWS = [
+    { id:'leave',      label:'Leave Approval',        iconPath:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17', on:true },
+    { id:'expense',    label:'Expense Approval',      iconPath:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1z', on:true },
+    { id:'onboarding', label:'Onboarding',            iconPath:'M8.5 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-1.5M9 5a1 1 0 011-1h4a1 1 0 011 1v1H9z', on:true },
+    { id:'regularize', label:'Attendance Regularize', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', on:false },
+    { id:'offer',      label:'Offer Approval',        iconPath:'M20 7h-3V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H4a1 1 0 00-1 1v11a1 1 0 001 1h16a1 1 0 001-1V8a1 1 0 00-1-1z', on:false },
+  ];
+  TONES = [
+    { bg:'#EAF3F2', border:'#CDE6E4', badgeBg:'#EAF3F2', badgeColor:'#0E5E5C', badgeBorder:'#9DCFCB' },
+    { bg:'#FBF0DB', border:'#EFE0BC', badgeBg:'#FBF0DB', badgeColor:'#96690F', badgeBorder:'#E3C98A' },
+    { bg:'#EEF0FB', border:'#D8DCF3', badgeBg:'#EEF0FB', badgeColor:'#4C56A8', badgeBorder:'#B9C0EC' },
+    { bg:'#FBE9EC', border:'#F1D3D9', badgeBg:'#FBE9EC', badgeColor:'#B44A5E', badgeBorder:'#E8B6C0' },
+  ];
+  WORKFLOW_DEFAULTS = {
+    leave: [
+      { id:'s1', title:'Reporting Manager', sub:'Direct manager reviews the request', sla:'1 day', approvers:[{ name:'Reporting Manager', role:'Auto-assigned', init:'RM' }] },
+      { id:'s2', title:'Department Head', sub:'Parallel approval — either can act', sla:'2 days', approvers:[{ name:'Dept. Head', role:'By department', init:'DH' },{ name:'Sanjay Gupta', role:'HR Manager', init:'SG' }] },
+      { id:'s3', title:'HR Final Sign-off', sub:'Leave balance updated on approval', sla:'1 day', approvers:[{ name:'HR Admin', role:'Final approval', init:'HR' }] },
+    ],
+    expense: [
+      { id:'e1', title:'Reporting Manager', sub:'Validates the expense claim', sla:'2 days', approvers:[{ name:'Reporting Manager', role:'Auto-assigned', init:'RM' }] },
+      { id:'e2', title:'Finance Review', sub:'Checks against policy & budget', sla:'3 days', approvers:[{ name:'Finance Team', role:'Shared queue', init:'FT' }] },
+      { id:'e3', title:'Payroll Disbursement', sub:'Reimbursed with next pay run', sla:'—', approvers:[{ name:'Payroll Officer', role:'Auto-processed', init:'PO' }] },
+    ],
+    onboarding: [
+      { id:'o1', title:'Offer Acceptance', sub:'Candidate accepts the offer', sla:'—', approvers:[{ name:'Candidate', role:'e-signature', init:'CA' }] },
+      { id:'o2', title:'Document Verification', sub:'HR verifies submitted documents', sla:'2 days', approvers:[{ name:'HR Team', role:'Shared queue', init:'HR' }] },
+      { id:'o3', title:'IT & Access Provisioning', sub:'Accounts and assets created', sla:'1 day', approvers:[{ name:'IT Admin', role:'Auto-assigned', init:'IT' }] },
+    ],
+    regularize: [
+      { id:'r1', title:'Reporting Manager', sub:'Approves the corrected punch', sla:'2 days', approvers:[{ name:'Reporting Manager', role:'Auto-assigned', init:'RM' }] },
+    ],
+    offer: [
+      { id:'f1', title:'Hiring Manager', sub:'Confirms candidate & compensation', sla:'1 day', approvers:[{ name:'Hiring Manager', role:'By requisition', init:'HM' }] },
+      { id:'f2', title:'HR Head Approval', sub:'Final budget sign-off', sla:'2 days', approvers:[{ name:'HR Head', role:'Final approval', init:'HH' }] },
+    ],
+  };
+  AVATARS = [
+    { bg:'#EAF3F2', color:'#0E5E5C' },{ bg:'#FBE9EC', color:'#B44A5E' },{ bg:'#EEF0FB', color:'#4C56A8' },{ bg:'#FBF0DB', color:'#96690F' },
+  ];
+  BRAND_SWATCHES = ['#14716F','#0E5E5C','#4C6FBF','#7A5AC2'];
+  STUB_TEXT = {
+    forms:'Design onboarding, appraisal and custom HR forms with drag-and-drop fields. This connects to the Form Builder module.',
+    payroll:'Configure salary structures, statutory components (PF, ESI, TDS), and reimbursement heads for the pay run.',
+    departments:'Manage the organization tree, cost centers and physical work locations across facilities.',
+    holidays:'Publish the annual holiday calendar per location, including optional and restricted holidays.',
+    notifications:'Author email and in-app notification templates and choose which events trigger them.',
+    integrations:'Connect biometric devices, payroll providers, SSO and the NanoHealth clinical platform.',
+    audit:'Review a chronological, tamper-evident log of every configuration and record change.',
+    dashboard:'The admin dashboard lives outside Control Center.',
+    insights:'Insights lives outside Control Center.',
+    directory:'The Employee Directory is a separate workspace view.',
+  };
+  STUB_ICON = { forms:'M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-4', payroll:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', departments:'M3 21h18M5 21V7l7-4 7 4v14', holidays:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4', notifications:'M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM3.5 7l8.5 6 8.5-6', integrations:'M10.5 13.5a4 4 0 005.66 0l2.83-2.83a4 4 0 10-5.66-5.66', audit:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' };
+
+  WEEKDAYS = [{k:'sun',l:'S'},{k:'mon',l:'M'},{k:'tue',l:'T'},{k:'wed',l:'W'},{k:'thu',l:'T'},{k:'fri',l:'F'},{k:'sat',l:'S'}];
+
+  FORMS = [
+    { id:1, name:'Employee Onboarding',    badge:'Custom',   type:'Onboarding',   group:'No',  q:24, by:'Sanjay Gupta',    when:'03-Jul-26 02:41 PM', del:true,  cat:'onboarding' },
+    { id:2, name:'Offer Letter',           badge:'Template', type:'Recruitment',  group:'No',  q:6,  by:'System',          when:'01-Jul-26 06:34 PM', del:false, cat:'recruitment' },
+    { id:3, name:'Performance Appraisal',  badge:'Template', type:'Appraisal',    group:'Yes', q:18, by:'Meera Krishnan',  when:'28-Jun-26 11:20 AM', del:false, cat:'appraisal' },
+    { id:4, name:'Leave Application',      badge:'Template', type:'Leave',        group:'No',  q:5,  by:'System',          when:'03-Jul-26 06:34 PM', del:false, cat:'leave' },
+    { id:5, name:'Reimbursement Claim',    badge:'Custom',   type:'Expense',      group:'No',  q:9,  by:'Faisal Ahmed',    when:'27-Jun-26 09:15 AM', del:true,  cat:'expense' },
+    { id:6, name:'Exit Interview',         badge:'Template', type:'Exit',         group:'No',  q:12, by:'HR Team',         when:'20-Jun-26 04:02 PM', del:false, cat:'exit' },
+    { id:7, name:'Asset Handover',         badge:'Custom',   type:'Assets',       group:'No',  q:7,  by:'IT Admin',        when:'15-Jun-26 10:48 AM', del:true,  cat:'assets' },
+    { id:8, name:'Probation Confirmation', badge:'Template', type:'Confirmation', group:'No',  q:8,  by:'System',          when:'03-Jul-26 06:34 PM', del:false, cat:'confirmation' },
+    { id:9, name:'Attendance Regularization', badge:'Template', type:'Attendance', group:'No', q:6, by:'System',      when:'04-Jul-26 09:10 AM', del:false, cat:'attendance' },
+  ];
+  FORM_CATS = [
+    { id:'all',          label:'All Forms' },
+    { id:'templates',    label:'Templates' },
+    { id:'custom',       label:'Custom Forms' },
+    { id:'onboarding',   label:'Onboarding', section:'By type' },
+    { id:'recruitment',  label:'Recruitment' },
+    { id:'appraisal',    label:'Appraisal' },
+    { id:'leave',        label:'Leave' },
+    { id:'attendance',   label:'Attendance' },
+    { id:'expense',      label:'Expense' },
+    { id:'exit',         label:'Exit' },
+    { id:'assets',       label:'Assets' },
+    { id:'confirmation', label:'Confirmation' },
+  ];
+
+  ORG_TREE = { id:'root', name:'Dr. Meera Krishnan', role:'Chief Medical Director', dept:'Executive', init:'MK', children:[
+    { id:'vikram', name:'Dr. Vikram Iyer', role:'Head of Department', dept:'Oncology', init:'VI', children:[
+      { id:'ananya', name:'Dr. Ananya Sharma', role:'Senior Consultant', dept:'Cardiology', init:'AS', children:[
+        { id:'kavya', name:'Dr. Kavya Rao', role:'Resident', dept:'Cardiology', init:'KR' },
+      ]},
+      { id:'rajesh', name:'Dr. Rajesh Menon', role:'Consultant', dept:'Emergency', init:'RM', children:[
+        { id:'lakshmi', name:'Lakshmi Pillai', role:'Senior Nurse', dept:'Emergency', init:'LP' },
+      ]},
+    ]},
+    { id:'neha', name:'Dr. Neha Verma', role:'Consultant', dept:'Radiology', init:'NV', children:[
+      { id:'arjun', name:'Arjun Kapoor', role:'Senior Radiographer', dept:'Radiology', init:'AK' },
+      { id:'rohan', name:'Rohan Desai', role:'Lab Technician', dept:'Laboratory', init:'RD' },
+    ]},
+    { id:'sanjay', name:'Sanjay Gupta', role:'HR Manager', dept:'Administration', init:'SG', children:[
+      { id:'faisal', name:'Faisal Ahmed', role:'Pharmacist', dept:'Pharmacy', init:'FA' },
+    ]},
+    { id:'priya', name:'Priya Nair', role:'Head Nurse', dept:'ICU', init:'PN', children:[
+      { id:'sneha', name:'Sneha Rangisetty', role:'Staff Nurse', dept:'Nursing', init:'SR' },
+      { id:'anita', name:'Anita Joseph', role:'Staff Nurse', dept:'Nursing', init:'AJ' },
+      { id:'deepak', name:'Deepak Kumar', role:'Patient Attendant', dept:'ICU', init:'DK' },
+    ]},
+  ]};
+  DEPT_TONE = { 'Executive':['#EAF3F2','#0E5E5C'],'Oncology':['#F1ECFB','#5E42A0'],'Cardiology':['#FBE9E7','#C33F2A'],'Emergency':['#FDEEE3','#C4551C'],'Radiology':['#EEF0FB','#3B47A0'],'Administration':['#F1F3F5','#48586A'],'ICU':['#FBF0DB','#7A5510'],'Nursing':['#EAF3F2','#0E5E5C'],'Pharmacy':['#E9F5EE','#1E7A46'],'Laboratory':['#E8F1F3','#2C6E7A'] };
+  DEPT_LIST = [
+    { dept:'Oncology', head:'Dr. Vikram Iyer', count:4, loc:'Main Campus' },
+    { dept:'Cardiology', head:'Dr. Ananya Sharma', count:2, loc:'Main Campus' },
+    { dept:'Emergency', head:'Dr. Rajesh Menon', count:2, loc:'Main Campus' },
+    { dept:'Radiology', head:'Dr. Neha Verma', count:3, loc:'Main Campus' },
+    { dept:'ICU', head:'Priya Nair', count:4, loc:'West Wing' },
+    { dept:'Administration', head:'Sanjay Gupta', count:2, loc:'Main Campus' },
+  ];
+  LOCATIONS = [ { name:'Main Campus', sub:'Hyderabad · HITEC City', depts:5 }, { name:'West Wing', sub:'Hyderabad · Gachibowli', depts:3 } ];
+
+  EMPLOYEES = [
+    { id:'EMP-0142', name:'Dr. Ananya Sharma', init:'AS', dept:'Cardiology', role:'Senior Consultant',  status:'Active' },
+    { id:'EMP-0098', name:'Dr. Rajesh Menon',  init:'RM', dept:'Emergency',  role:'Consultant',        status:'Active' },
+    { id:'EMP-0210', name:'Priya Nair',         init:'PN', dept:'ICU',        role:'Head Nurse',        status:'Active' },
+    { id:'EMP-0051', name:'Dr. Vikram Iyer',    init:'VI', dept:'Oncology',   role:'Head of Department',status:'Active' },
+    { id:'EMP-0333', name:'Sneha Rangisetty',   init:'SR', dept:'Nursing',    role:'Staff Nurse',       status:'On Leave' },
+    { id:'EMP-0287', name:'Arjun Kapoor',       init:'AK', dept:'Radiology',  role:'Sr. Radiographer',  status:'Active' },
+    { id:'EMP-0176', name:'Dr. Meera Krishnan', init:'MK', dept:'Executive',  role:'Medical Director',  status:'Active' },
+    { id:'EMP-0402', name:'Faisal Ahmed',       init:'FA', dept:'Pharmacy',   role:'Pharmacist',        status:'Active' },
+    { id:'EMP-0355', name:'Rohan Desai',        init:'RD', dept:'Laboratory', role:'Lab Technician',    status:'Active' },
+    { id:'EMP-0264', name:'Anita Joseph',       init:'AJ', dept:'Nursing',    role:'Staff Nurse',       status:'Active' },
+    { id:'EMP-0231', name:'Dr. Neha Verma',     init:'NV', dept:'Radiology',  role:'Consultant',        status:'On Leave' },
+    { id:'EMP-0417', name:'Deepak Kumar',       init:'DK', dept:'ICU',        role:'Patient Attendant', status:'Active' },
+  ];
+  HEADCOUNT = [ {dept:'Nursing',n:78},{dept:'ICU',n:44},{dept:'Emergency',n:39},{dept:'Cardiology',n:31},{dept:'Radiology',n:28},{dept:'Oncology',n:24},{dept:'Administration',n:23},{dept:'Pharmacy',n:19} ];
+
+  HOLIDAYS = [
+    { date:'14 Jan', month:'January',  name:'Makar Sankranti / Pongal', day:'Wednesday', type:'Public',     loc:'All' },
+    { date:'26 Jan', month:'January',  name:'Republic Day',             day:'Monday',    type:'Public',     loc:'All' },
+    { date:'19 Feb', month:'February', name:'Chhatrapati Shivaji Jayanti', day:'Thursday', type:'Restricted', loc:'Main Campus' },
+    { date:'14 Mar', month:'March',    name:'Holi',                     day:'Saturday',  type:'Public',     loc:'All' },
+    { date:'31 Mar', month:'March',    name:'Eid al-Fitr',              day:'Tuesday',   type:'Optional',   loc:'All' },
+    { date:'10 Apr', month:'April',    name:'Mahavir Jayanti',          day:'Friday',    type:'Restricted', loc:'West Wing' },
+    { date:'01 May', month:'May',      name:'Labour Day',               day:'Friday',    type:'Public',     loc:'All' },
+    { date:'15 Aug', month:'August',   name:'Independence Day',         day:'Saturday',  type:'Public',     loc:'All' },
+    { date:'02 Oct', month:'October',  name:'Gandhi Jayanti',           day:'Friday',    type:'Public',     loc:'All' },
+    { date:'20 Oct', month:'October',  name:'Diwali',                   day:'Tuesday',   type:'Public',     loc:'All' },
+    { date:'05 Nov', month:'November', name:'Guru Nanak Jayanti',       day:'Thursday',  type:'Optional',   loc:'All' },
+    { date:'25 Dec', month:'December', name:'Christmas',                day:'Friday',    type:'Public',     loc:'All' },
+  ];
+  HOL_TONE = { 'Public':['#E7F3EC','#1E7A46'], 'Optional':['#EAF3F2','#0E5E5C'], 'Restricted':['#FBF0DB','#96690F'] };
+
+  TEMPLATES = [
+    { id:'welcome',   name:'Welcome / Onboarding',    channel:'Email',  event:'Employee joins',        enabled:true,  subject:'Welcome to NanoHealth, {{first_name}}!', body:'Hi {{first_name}},\n\nWe are delighted to have you join the {{department}} team. Your first day is {{join_date}}. Your reporting manager is {{manager}}.\n\nPlease complete your onboarding checklist in the employee portal before day one.\n\n— People Operations, NanoHealth' },
+    { id:'leaveappr', name:'Leave Approved',           channel:'Email',  event:'Leave request approved', enabled:true,  subject:'Your leave request is approved', body:'Hi {{first_name}},\n\nYour {{leave_type}} from {{start_date}} to {{end_date}} ({{days}} day(s)) has been approved by {{approver}}.\n\nRemaining balance: {{balance}} days.' },
+    { id:'leaverej',  name:'Leave Rejected',           channel:'Email',  event:'Leave request rejected', enabled:true,  subject:'Update on your leave request', body:'Hi {{first_name}},\n\nYour {{leave_type}} request for {{start_date}}–{{end_date}} could not be approved.\n\nReason: {{reason}}\n\nPlease reach out to {{manager}} for alternatives.' },
+    { id:'payslip',   name:'Payslip Published',        channel:'In-app', event:'Pay run completed',      enabled:true,  subject:'Your payslip for {{month}} is ready', body:'Your payslip for {{month}} {{year}} is now available. Net pay: {{net_pay}}. Tap to view the full breakdown.' },
+    { id:'attreg',    name:'Attendance Regularization',channel:'In-app', event:'Punch missed',           enabled:false, subject:'Missing punch on {{date}}', body:'We noticed a missing punch on {{date}}. Please regularize it within {{window}} days.' },
+    { id:'birthday',  name:'Birthday Greeting',        channel:'SMS',    event:'Employee birthday',      enabled:false, subject:'', body:'Happy birthday, {{first_name}}! Wishing you a wonderful year ahead. — Team NanoHealth' },
+    { id:'docexpiry', name:'Document Expiry Reminder', channel:'Email',  event:'License nearing expiry', enabled:true,  subject:'Action needed: {{document}} expires soon', body:'Hi {{first_name}},\n\nYour {{document}} expires on {{expiry_date}}. Please upload a renewed copy in the portal to stay compliant.' },
+  ];
+  TMPL_MERGE = ['{{first_name}}','{{department}}','{{manager}}','{{join_date}}','{{leave_type}}','{{start_date}}','{{end_date}}','{{days}}','{{net_pay}}','{{month}}'];
+  CHANNEL_TONE = { 'Email':['#EAF3F2','#0E5E5C'], 'In-app':['#EEF0FB','#3B47A0'], 'SMS':['#FDEEE3','#C4551C'] };
+  CHANNEL_ICON = { 'Email':'M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM3.5 7l8.5 6 8.5-6', 'In-app':'M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zM11 18h2', 'SMS':'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z' };
+
+  tmplEnabledVal(t){ const o=this.state.tmplEnabled[t.id]; return o===undefined? t.enabled : o; }
+  toggleTmpl(id, cur){ this.setState(s=>({ tmplEnabled:{...s.tmplEnabled,[id]:!cur} })); }
+
+  orgParentIds(){ const ids=[]; const w=(n)=>{ if(n.children&&n.children.length){ ids.push(n.id); n.children.forEach(w);} }; w(this.ORG_TREE); return ids; }
+  orgAllCollapsed(){ return this.orgParentIds().every(id=>this.state.collapsed[id]); }
+  toggleAllOrg(){ if(this.orgAllCollapsed()){ this.setState({collapsed:{}}); } else { const c={}; this.orgParentIds().forEach(id=>c[id]=true); this.setState({collapsed:c}); } }
+  toggleOrg(id){ this.setState(s=>({ collapsed:{...s.collapsed,[id]:!s.collapsed[id]} })); }
+  flattenOrg(){
+    const rows=[]; const collapsed=this.state.collapsed; const tones=this.DEPT_TONE;
+    const walk=(node, guides, isLast, depth)=>{
+      const kids=node.children||[]; const hasKids=kids.length>0; const isCol=hasKids && !!collapsed[node.id];
+      const t=tones[node.dept]||['#EAF3F2','#0E5E5C']; const isRoot=depth===0;
+      rows.push({ id:node.id, name:node.name, role:node.role, dept:node.dept, init:node.init, depth, isRoot,
+        guides:guides.map(g=>({line:g})), showElbow:depth>0, elbowV:isLast?'50%':'100%',
+        hasChildren:hasKids, collapsed:isCol, expanded:(hasKids&&!isCol), reportCount:kids.length,
+        avatarBg:t[0], avatarColor:t[1], deptBg:t[0], deptColor:t[1],
+        cardBg:isRoot?'var(--teal-50)':'#fff', cardBorder:isRoot?'var(--teal-100)':'var(--border)',
+        onToggle: hasKids? (()=>this.toggleOrg(node.id)) : (()=>{}) });
+      if(!isCol){ kids.forEach((k,i)=> walk(k, guides.concat([!isLast]), i===kids.length-1, depth+1)); }
+    };
+    walk(this.ORG_TREE, [], true, 0);
+    return rows;
+  }
+
+  // ---------- helpers ----------
+  fkey(id){ return this.state.activeModule + ':' + (this.state.activeModule==='orgsettings'?this.state.orgSection : this.state.activeModule==='payroll'?this.state.paySection : this.state.selectedPolicy) + ':' + id; }
+  segVal(id, def){ const k=this.fkey(id); return this.state.seg[k] !== undefined ? this.state.seg[k] : def; }
+  togVal(id, def){ const k=this.fkey(id); return this.state.toggles[k] !== undefined ? this.state.toggles[k] : def; }
+  setSeg(id,v){ const k=this.fkey(id); this.setState(s=>({ seg:{...s.seg,[k]:v} })); }
+  setTog(id,v){ const k=this.fkey(id); this.setState(s=>({ toggles:{...s.toggles,[k]:v} })); }
+  textVal(key, def){ return this.state.text[key] !== undefined ? this.state.text[key] : def; }
+  setText(key, v){ this.setState(s=>({ text:{...s.text,[key]:v} })); }
+  colorVal(def){ const k=this.state.orgSection; return this.state.colors[k] !== undefined ? this.state.colors[k] : def; }
+
+  permOn(role, mod, action){
+    const st = this.state.perms[role];
+    if (st && st[mod]) return !!st[mod][action];
+    // fall back to preset
+    const preset = this.PERM_PRESETS[role];
+    if (preset === 'all') return true;
+    return !!(preset && preset[mod] && preset[mod].includes(action));
+  }
+  togglePerm(role, mod, action){
+    const cur = this.permOn(role, mod, action);
+    this.setState(s=>{
+      const perms = {...s.perms};
+      const rp = {...(perms[role]||{})};
+      const mp = {...(rp[mod]||{})};
+      mp[action] = !cur;
+      rp[mod] = mp; perms[role] = rp;
+      return { perms };
+    });
+  }
+
+  getStages(){
+    if (this.state.stages && this.state.curStagesKey === this.state.selectedWorkflow) return this.state.stages;
+    return (this.WORKFLOW_DEFAULTS[this.state.selectedWorkflow] || []).map(x=>({ ...x, approvers:x.approvers.map(a=>({...a})) }));
+  }
+  commitStages(next){ this.setState({ stages: next, curStagesKey: this.state.selectedWorkflow }); }
+
+  weekoffOn(k){
+    const cur = this.state.weekoff;
+    if (cur[k] !== undefined) return cur[k];
+    return k === 'sun'; // default Sunday off
+  }
+  toggleWeekoff(k){ this.setState(s=>({ weekoff:{...s.weekoff, [k]: !this.weekoffOn(k)} })); }
+
+  flash(msg){ this.setState({ saved:msg }); clearTimeout(this._t); this._t = setTimeout(()=>this.setState({saved:false}), 2200); }
+
+  DOC_DEFS = [
+    { id:'inc',     name:'Certificate of Incorporation', verifies:'legal name & CIN',    status:'Verified', file:'certificate-of-incorporation.pdf' },
+    { id:'gst',     name:'GST Registration Certificate', verifies:'GSTIN',               status:'Uploaded', file:'gst-registration-2024.pdf' },
+    { id:'pan',     name:'Company PAN Card',             verifies:'tax identity',        status:'Verified', file:'company-pan.pdf' },
+    { id:'bank',    name:'Cancelled Cheque / Bank Proof',verifies:'payroll account',     status:'Pending',  file:null },
+    { id:'address', name:'Registered Address Proof',     verifies:'the registered address', status:'Pending', file:null },
+  ];
+  uploadDoc(id){ this.setState(st=>({ docs:{...st.docs, [id]:{ status:'Uploaded', file:id+'-document.pdf' } } })); this.flash('Document uploaded — pending verification'); }
+
+  renderVals(){
+    const s = this.state;
+    const am = s.activeModule;
+    const isOrg = am==='orgsettings', isRoles = am==='roles', isPolicies = am==='policies', isWorkflow = am==='workflow', isForms = am==='forms', isDepts = am==='departments', isHols = am==='holidays', isNotif = am==='notifications', isDash = am==='dashboard', isDir = am==='directory', isIns = am==='insights', isInt = am==='integrations', isAudit = am==='audit', isPayroll = am==='payroll';
+    const isBuilt = this.BUILT.includes(am);
+    const isStub = !isBuilt;
+    const isForm = isOrg || isPolicies || isPayroll;
+    const moduleLabel = (this.MODULES.find(m=>m.id===am)||{}).label || '';
+
+    const modules = this.MODULES.map(m=>({
+      ...m,
+      active: m.id===am, notActive: m.id!==am,
+      hasSection: !!m.section, sectionLabel: m.section||'',
+      soon: this.SOON.includes(m.id),
+      btnCursor:'pointer',
+      onClick: ()=>this.setState({ activeModule:m.id }),
+    }));
+
+    // ---- secondary panel ----
+    let panelTitle='', panelSubtitle='';
+    if (isOrg){ panelTitle='Organization Settings'; panelSubtitle='8 setting groups'; }
+    else if (isPayroll){ panelTitle='Payroll Configuration'; panelSubtitle='4 setting groups'; }
+    else if (isRoles){ panelTitle='Roles'; panelSubtitle=this.ROLES.length+' roles defined'; }
+    else if (isPolicies){ panelTitle='Policies'; panelSubtitle='Leave & attendance rules'; }
+    else if (isWorkflow){ panelTitle='Workflows'; panelSubtitle=this.WORKFLOWS.length+' approval flows'; }
+    else if (isForms){ panelTitle='Form Designer'; panelSubtitle=this.FORMS.length+' forms'; }
+    else if (isDepts){ panelTitle='Organization'; panelSubtitle='6 departments · 2 locations'; }
+    else if (isHols){ panelTitle='Holiday Calendar'; panelSubtitle=this.HOLIDAYS.length+' holidays · '+s.holYear; }
+    else if (isNotif){ panelTitle='Notifications'; panelSubtitle=this.TEMPLATES.length+' templates'; }
+    else if (isDash){ panelTitle='Dashboard'; panelSubtitle='HR overview · today'; }
+    else if (isDir){ panelTitle='Employees'; panelSubtitle=this.EMPLOYEES.length+' records'; }
+    else if (isIns){ panelTitle='Insights'; panelSubtitle='People analytics'; }
+    else if (isInt){ panelTitle='Integrations'; panelSubtitle=this.INTEGRATIONS.length+' connectors'; }
+    else if (isAudit){ panelTitle='Audit Log'; panelSubtitle=this.AUDIT.length+' recent events'; }
+    else { panelTitle=moduleLabel; panelSubtitle='Not in this build'; }
+
+    const orgGroups = this.ORG_GROUPS.map(g=>({
+      label:g.label,
+      items:g.items.map(it=>{
+        const sel = it.id===s.orgSection;
+        return { ...it, weight: sel?'700':'550', labelColor: sel?'var(--teal-900)':'var(--ink-800)',
+          bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)',
+          iconBg: sel?'#fff':'var(--ink-50)', iconColor: sel?'var(--teal-800)':'var(--ink-500)',
+          onClick:()=>this.setState({ orgSection:it.id }) };
+      }),
+    }));
+
+    const payGroups = this.PAY_GROUPS.map(g=>({
+      label:g.label,
+      items:g.items.map(it=>{
+        const sel = it.id===s.paySection;
+        return { ...it, weight: sel?'700':'550', labelColor: sel?'var(--teal-900)':'var(--ink-800)',
+          bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)',
+          iconBg: sel?'#fff':'var(--ink-50)', iconColor: sel?'var(--teal-800)':'var(--ink-500)',
+          onClick:()=>this.setState({ paySection:it.id }) };
+      }),
+    }));
+
+    const rolesList = this.ROLES.map(r=>{ const sel=r.id===s.selectedRole; return { ...r,
+      weight: sel?'700':'550', labelColor: sel?'var(--teal-900)':'var(--ink-800)',
+      bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)',
+      onClick:()=>this.setState({ selectedRole:r.id }) };
+    });
+
+    const policyGroups = this.POLICY_GROUPS.map(g=>({
+      label:g.label,
+      items:g.items.map(p=>{ const sel=p.id===s.selectedPolicy; return { ...p,
+        weight: sel?'700':'550', labelColor: sel?'var(--teal-900)':'var(--ink-800)',
+        bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)',
+        onClick:()=>this.setState({ selectedPolicy:p.id }) };
+      }),
+    }));
+
+    const workflowList = this.WORKFLOWS.map(w=>{ const sel=w.id===s.selectedWorkflow;
+      const stages = (this.state.stages && this.state.curStagesKey===w.id) ? this.state.stages : (this.WORKFLOW_DEFAULTS[w.id]||[]);
+      return { ...w, weight: sel?'700':'550', labelColor: sel?'var(--teal-900)':'var(--ink-800)',
+        bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)',
+        iconBg: sel?'#fff':'var(--ink-50)', iconColor: sel?'var(--teal-800)':'var(--ink-500)',
+        stageCount: stages.length,
+        onClick:()=>this.setState({ selectedWorkflow:w.id }) };
+    });
+
+    // ---- header strip ----
+    let contextLabel='', pageTitle='', stripBg='#fff';
+    let showPrimaryAction=false, primaryLabel='', primaryIcon='', onPrimaryAction=()=>{};
+    let showSecondaryAction=false, secondaryLabel='', secondaryIcon='', onSecondaryAction=()=>{};
+    let showHeaderActions=false, showHeaderSec=false, hdrSecLabel='', hdrSecIcon='', onHdrSec=()=>{}, hdrPrimLabel='', hdrPrimIcon='', onAddNew=()=>{};
+    const saveIcon='M20 6L9 17l-5-5';
+    const plusIcon='M12 5v14M5 12h14';
+    if (isOrg){
+      const f=this.ORG_FORMS[s.orgSection]; contextLabel=f.context; pageTitle=f.context; stripBg='#fff';
+      showPrimaryAction=true; primaryLabel='Save'; primaryIcon=saveIcon; onPrimaryAction=()=>this.flash('Organization settings saved');
+    } else if (isRoles){
+      const r=this.ROLES.find(x=>x.id===s.selectedRole); contextLabel='Roles & Permissions'; pageTitle=r.label+' permissions'; stripBg='#fff';
+      showSecondaryAction=true; secondaryLabel='Duplicate'; secondaryIcon='M8 8h11a1 1 0 011 1v11a1 1 0 01-1 1H8a1 1 0 01-1-1V9a1 1 0 011-1zM4 15V4a1 1 0 011-1h11'; onSecondaryAction=()=>this.flash('Role duplicated');
+      showPrimaryAction=true; primaryLabel='Save'; primaryIcon=saveIcon; onPrimaryAction=()=>this.flash('Permissions updated for '+r.label);
+    } else if (isPayroll){
+      const f=this.PAY_FORMS[s.paySection]; contextLabel=f.context; pageTitle=f.context; stripBg='#fff';
+      showPrimaryAction=true; primaryLabel='Save'; primaryIcon=saveIcon; onPrimaryAction=()=>this.flash('Payroll configuration saved');
+    } else if (isPolicies){
+      const f=this.POLICY_FORMS[s.selectedPolicy]; contextLabel=f.context; pageTitle=f.name; stripBg='#fff';
+      showPrimaryAction=true; primaryLabel='Save'; primaryIcon=saveIcon; onPrimaryAction=()=>this.flash(f.name+' policy saved');
+    } else if (isWorkflow){
+      const w=this.WORKFLOWS.find(x=>x.id===s.selectedWorkflow); contextLabel='Workflow Builder'; pageTitle=w.label; stripBg='#F6F2EE';
+      showSecondaryAction=true; secondaryLabel='Preview flow'; secondaryIcon='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 15a3 3 0 100-6 3 3 0 000 6z'; onSecondaryAction=()=>this.flash('Opening flow preview');
+      showPrimaryAction=true; primaryLabel='Publish'; primaryIcon='M12 19V5M5 12l7-7 7 7'; onPrimaryAction=()=>this.flash(w.label+' published');
+    } else if (isForms){
+      contextLabel='Form Designer'; pageTitle='Form Designer';
+      showHeaderActions=true; showHeaderSec=true; hdrSecLabel='Templates'; hdrSecIcon='M4 5h7v7H4zM13 5h7v4h-7zM13 12h7v7h-7zM4 15h7v4H4z'; onHdrSec=()=>this.setState({formCat:'templates'}); hdrPrimLabel='Add new'; hdrPrimIcon='M12 5v14M5 12h14'; onAddNew=()=>this.setState({modal:'form'});
+    } else if (isDepts){
+      contextLabel='Organization'; pageTitle='Organization Structure';
+      showHeaderActions=true; showHeaderSec=true; hdrSecLabel=this.orgAllCollapsed()?'Expand all':'Collapse all'; hdrSecIcon='M9 9L4 4M4 4v4M4 4h4M15 9l5-5M20 4h-4M20 4v4M9 15l-5 5M4 20v-4M4 20h4M15 15l5 5M20 20h-4M20 20v-4'; onHdrSec=()=>this.toggleAllOrg(); hdrPrimLabel='Add department'; hdrPrimIcon='M12 5v14M5 12h14'; onAddNew=()=>this.setState({modal:'dept'});
+    } else if (isHols){
+      contextLabel='Holiday Calendar'; pageTitle=s.holYear+' Holiday Calendar';
+      showHeaderActions=true; hdrPrimLabel='Add holiday'; hdrPrimIcon='M12 5v14M5 12h14'; onAddNew=()=>this.setState({modal:'holiday'});
+    } else if (isNotif){
+      const t=this.TEMPLATES.find(x=>x.id===s.selectedTemplate)||this.TEMPLATES[0];
+      contextLabel='Notifications & Templates'; pageTitle=t.name;
+      showPrimaryAction=true; primaryLabel='Save'; primaryIcon=saveIcon; onPrimaryAction=()=>this.flash('Template saved');
+      showHeaderActions=true; hdrPrimLabel='New template'; hdrPrimIcon='M12 5v14M5 12h14'; onAddNew=()=>this.setState({modal:'template'});
+    } else if (isDash){
+      contextLabel='Overview'; pageTitle='Dashboard';
+    } else if (isDir){
+      contextLabel='People'; pageTitle='Employee Directory';
+      showHeaderActions=true; hdrPrimLabel='Add employee'; hdrPrimIcon='M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M19 8v6M22 11h-6'; onAddNew=()=>this.setState({modal:'employee'});
+    } else if (isIns){
+      contextLabel='Analytics'; pageTitle='Insights';
+      showHeaderActions=true; hdrPrimLabel='Export report'; hdrPrimIcon='M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4'; onAddNew=()=>this.flash('Exporting analytics report');
+    } else if (isInt){
+      contextLabel='Connected apps'; pageTitle='Integrations';
+      showHeaderActions=true; hdrPrimLabel='Browse marketplace'; hdrPrimIcon='M4 5h7v7H4zM13 5h7v4h-7zM13 12h7v7h-7zM4 15h7v4H4z'; onAddNew=()=>this.flash('Opening the integrations marketplace');
+    } else if (isAudit){
+      contextLabel='Activity trail'; pageTitle='Audit Log';
+      showHeaderActions=true; hdrPrimLabel='Export log'; hdrPrimIcon='M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4'; onAddNew=()=>this.flash('Exporting audit log (CSV)');
+    } else {
+      contextLabel='Control Center'; pageTitle=moduleLabel;
+    }
+
+    // ---- form designer ----
+    const notDeleted = this.FORMS.filter(f=>!s.deletedForms.includes(f.id)).concat(s.addedForms);
+    let flist = notDeleted.slice();
+    if (s.formCat==='templates') flist=flist.filter(f=>f.badge==='Template');
+    else if (s.formCat==='custom') flist=flist.filter(f=>f.badge==='Custom');
+    else if (s.formCat!=='all') flist=flist.filter(f=>f.cat===s.formCat);
+    if (s.formType!=='All') flist=flist.filter(f=>f.type===s.formType);
+    if (s.formGroup!=='All') flist=flist.filter(f=>f.group===s.formGroup);
+    const fq=s.formQuery.trim().toLowerCase();
+    if (fq) flist=flist.filter(f=>f.name.toLowerCase().includes(fq));
+    const catCount=(id)=> id==='all'?notDeleted.length : id==='templates'?notDeleted.filter(f=>f.badge==='Template').length : id==='custom'?notDeleted.filter(f=>f.badge==='Custom').length : notDeleted.filter(f=>f.cat===id).length;
+    const formCats = this.FORM_CATS.map(c=>{ const sel=c.id===s.formCat; return { label:c.label, count:catCount(c.id), hasSection:!!c.section, sectionLabel:c.section||'',
+      bg: sel?'var(--teal-50)':'transparent', border: sel?'var(--teal-100)':'transparent', labelColor: sel?'var(--teal-900)':'var(--ink-700)', weight: sel?'700':'550',
+      countColor: sel?'var(--teal-800)':'var(--ink-500)', countBg: sel?'#fff':'var(--ink-50)', onClick:()=>this.setState({formCat:c.id}) }; });
+    const formRows = flist.map((f,i)=>({ no:i+1, name:f.name, type:f.type, group:f.group, q:f.q, by:f.by, when:f.when,
+      badge:f.badge, badgeBg: f.badge==='Template'?'#F2682A':'#14716F', badgeColor:'#fff',
+      rowBg: i%2===1?'#FBFCFC':'#fff', canDelete:f.del,
+      onEdit:()=>this.flash('Opening \u201c'+f.name+'\u201d in the form builder'), onView:()=>this.flash('Previewing \u201c'+f.name+'\u201d'),
+      onCopy:()=>{ this.setState(st=>({ addedForms:[...st.addedForms, {...f, id:Date.now(), name:f.name+' (Copy)', badge:'Custom', del:true, by:'Sanjay Gupta', when:'Just now'}] })); this.flash('\u201c'+f.name+'\u201d duplicated'); },
+      onDelete:()=>{ this.setState(st=>({ deletedForms:[...st.deletedForms, f.id], addedForms:st.addedForms.filter(x=>x.id!==f.id) })); this.flash('Form deleted'); } }));
+    const noFormRows = flist.length===0;
+    const formTypeOptions=['All','Onboarding','Recruitment','Appraisal','Leave','Expense','Exit','Assets','Confirmation'];
+    const formGroupOptions=['All','No','Yes'];
+    const treeRows = isDepts ? this.flattenOrg() : [];
+    const orgStats = { people:'306', depts:'11', locations:'2' };
+    const deptUnits = this.DEPT_LIST.map(d=>{ const t=this.DEPT_TONE[d.dept]||['#EAF3F2','#0E5E5C']; return { dept:d.dept, head:d.head, count:d.count, loc:d.loc, dot:t[1], bg:t[0] }; });
+
+    // ---- holiday calendar ----
+    const holLocOptions=['All','Main Campus','West Wing'];
+    const holYears=['2025','2026','2027'];
+    const holFiltered=this.HOLIDAYS.filter(h=> s.holLoc==='All' || h.loc==='All' || h.loc===s.holLoc);
+    const holTypes=['Public','Optional','Restricted'].map(tp=>{ const t=this.HOL_TONE[tp]; return { label:tp, count:this.HOLIDAYS.filter(h=>h.type===tp).length, color:t[1], bg:t[0] }; });
+    const holMonths=[]; holFiltered.forEach(h=>{ let g=holMonths.find(m=>m.month===h.month); if(!g){ g={month:h.month, items:[]}; holMonths.push(g); } const t=this.HOL_TONE[h.type]; g.items.push({ date:h.date, name:h.name, day:h.day, type:h.type, typeColor:t[1], typeBg:t[0], locLabel: h.loc==='All'?'All locations':h.loc }); });
+    const holTotal=holFiltered.length;
+
+    // ---- notification templates ----
+    const tmplGroups=['Email','In-app','SMS'].map(ch=>({ channel:ch, iconPath:this.CHANNEL_ICON[ch],
+      items:this.TEMPLATES.filter(t=>t.channel===ch).map(t=>{ const sel=t.id===s.selectedTemplate; const en=this.tmplEnabledVal(t);
+        return { name:t.name, event:t.event, dot: en?'#1E7A46':'var(--ink-300)',
+          bg: sel?'var(--teal-50)':'#fff', border: sel?'var(--teal-100)':'var(--border)', labelColor: sel?'var(--teal-900)':'var(--ink-800)', weight: sel?'700':'550',
+          onClick:()=>this.setState({selectedTemplate:t.id}) }; }),
+    })).filter(g=>g.items.length);
+    const at=this.TEMPLATES.find(t=>t.id===s.selectedTemplate)||this.TEMPLATES[0];
+    const atEnabled=this.tmplEnabledVal(at); const atCh=this.CHANNEL_TONE[at.channel];
+    const tmpl={ name:at.name, channel:at.channel, event:at.event, subject:at.subject, body:at.body, hasSubject:!!at.subject,
+      subjectVal:this.textVal('tmpl:'+at.id+':subject', at.subject), onSubject:(e)=>this.setText('tmpl:'+at.id+':subject', e.target.value),
+      bodyVal:this.textVal('tmpl:'+at.id+':body', at.body), onBody:(e)=>this.setText('tmpl:'+at.id+':body', e.target.value),
+      enabled:atEnabled, toggleBg:atEnabled?'var(--teal-700)':'var(--ink-200)', knobLeft:atEnabled?'19px':'2px', enabledText:atEnabled?'Active':'Paused',
+      chColor:atCh[1], chBg:atCh[0], mergeTags:this.TMPL_MERGE.map(m=>({ tag:m })), onToggle:()=>this.toggleTmpl(at.id, atEnabled) };
+
+    // ---- dashboard / directory / insights ----
+    const statusTone={ 'Active':['#E7F3EC','#1E7A46'], 'On Leave':['#FBF0DB','#96690F'], 'Inactive':['#F1F3F5','#5F6E80'] };
+    const maxHc=Math.max.apply(null, this.HEADCOUNT.map(h=>h.n));
+    const deptBars=this.HEADCOUNT.map(h=>{ const t=this.DEPT_TONE[h.dept]||['#EAF3F2','#0E5E5C']; return { dept:h.dept, n:h.n, pct:Math.round(h.n/maxHc*100)+'%', color:t[1], bg:t[0] }; });
+    const dashKpis=[
+      { label:'Total employees', value:'306', sub:'+12 this quarter', accent:false, icon:'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87' },
+      { label:'Present today',   value:'271', sub:'89% attendance', accent:false, icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+      { label:'On leave',        value:'18',  sub:'6 sick · 12 planned', accent:false, icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17' },
+      { label:'Pending approvals', value:'7', sub:'Needs your action', accent:true, icon:'M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    ];
+    const dashToday=[ {label:'Present',v:'271'},{label:'On leave',v:'18'},{label:'Pending approvals',v:'7'},{label:'Interviews today',v:'2'},{label:'Birthdays',v:'1'} ];
+    const pendingList=[
+      { who:'Sneha Rangisetty', meta:'Sick Leave · 4 days', init:'SR', onAct:()=>this.flash('Opened Sneha\u2019s leave request') },
+      { who:'Anita Joseph',     meta:'Expense claim · ₹4,200', init:'AJ', onAct:()=>this.flash('Opened Anita\u2019s expense claim') },
+      { who:'Rohan Desai',      meta:'Regularization · 24 Jun', init:'RD', onAct:()=>this.flash('Opened Rohan\u2019s regularization') },
+    ];
+    const recent=[ {text:'Dr. Kavya Rao completed onboarding', time:'2h ago'},{text:'June payroll finalized — 306 employees', time:'5h ago'},{text:'3 candidates shortlisted for Radiology', time:'1d ago'},{text:'Holiday calendar 2026 published', time:'2d ago'} ];
+    // directory
+    const dq=(s.dirQuery||'').trim().toLowerCase();
+    const dirDeptOptions=['All'].concat(Array.from(new Set(this.EMPLOYEES.map(e=>e.dept))));
+    const dirStatusOptions=['All','Active','On Leave'];
+    let dlist=this.EMPLOYEES.filter(e=>{ if(s.dirDept!=='All'&&e.dept!==s.dirDept) return false; if(s.dirStatus!=='All'&&e.status!==s.dirStatus) return false; if(dq){ const h=(e.name+' '+e.id+' '+e.role+' '+e.dept).toLowerCase(); if(!h.includes(dq)) return false; } return true; });
+    const dirRows=dlist.map((e,i)=>{ const t=this.DEPT_TONE[e.dept]||['#EAF3F2','#0E5E5C']; const st=statusTone[e.status]||statusTone.Active; return { name:e.name, empId:e.id, dept:e.dept, role:e.role, status:e.status, init:e.init, avBg:t[0], avColor:t[1], deptColor:t[1], stColor:st[1], stBg:st[0], rowBg:i%2?'#FBFCFC':'#fff' }; });
+    const dirCats=dirDeptOptions.map(d=>{ const sel=d===s.dirDept; const c= d==='All'? this.EMPLOYEES.length : this.EMPLOYEES.filter(e=>e.dept===d).length; return { label:d, count:c, bg:sel?'var(--teal-50)':'transparent', border:sel?'var(--teal-100)':'transparent', color:sel?'var(--teal-900)':'var(--ink-700)', weight:sel?'700':'550', onClick:()=>this.setState({dirDept:d}) }; });
+    const dirTotal=dlist.length;
+    // insights
+    const insKpis=[ {label:'Headcount',value:'306',sub:'+4.1% YoY'},{label:'Attrition (12m)',value:'4.2%',sub:'−0.6 pts'},{label:'Avg tenure',value:'4.6 yr',sub:'Stable'},{label:'Offer acceptance',value:'87%',sub:'+3 pts'} ];
+    const attendance=[ {m:'Jan',v:91},{m:'Feb',v:93},{m:'Mar',v:90},{m:'Apr',v:94},{m:'May',v:92},{m:'Jun',v:95} ].map(x=>({ m:x.m, label:x.v+'%', h:x.v+'%' }));
+    const gender=[ {label:'Female',pct:58,color:'#0E5E5C'},{label:'Male',pct:41,color:'#3B47A0'},{label:'Other',pct:1,color:'#96690F'} ].map(g=>({ label:g.label, color:g.color, w:g.pct+'%', pctLabel:g.pct+'%' }));
+    const insMetrics=['Headcount','Attendance','Attrition','Diversity','Recruitment'].map(m=>{ const sel=m===s.insMetric; return { label:m, bg:sel?'var(--teal-50)':'transparent', border:sel?'var(--teal-100)':'transparent', color:sel?'var(--teal-900)':'var(--ink-700)', weight:sel?'700':'550', onClick:()=>this.setState({insMetric:m}) }; });
+
+    // ---- integrations ----
+    const intIsOn=(it)=> (s.connected[it.id]!==undefined) ? s.connected[it.id] : (it.status==='connected');
+    const intCatList=['All','Connected'].concat(Array.from(new Set(this.INTEGRATIONS.map(i=>i.cat))));
+    const intCount=(c)=> c==='All'? this.INTEGRATIONS.length : c==='Connected'? this.INTEGRATIONS.filter(intIsOn).length : this.INTEGRATIONS.filter(i=>i.cat===c).length;
+    const intCats=intCatList.map(c=>{ const sel=c===s.intCat; return { label:c, count:intCount(c), bg:sel?'var(--teal-50)':'transparent', border:sel?'var(--teal-100)':'transparent', color:sel?'var(--teal-900)':'var(--ink-700)', weight:sel?'700':'550', onClick:()=>this.setState({intCat:c}) }; });
+    const intFiltered=this.INTEGRATIONS.filter(i=> s.intCat==='All' ? true : s.intCat==='Connected' ? intIsOn(i) : i.cat===s.intCat);
+    const intConnectedCount=this.INTEGRATIONS.filter(intIsOn).length;
+    const intCards=intFiltered.map(i=>{ const on=intIsOn(i); const t=on?this.INT_TONE.connected:this.INT_TONE.available;
+      return { name:i.name, cat:i.cat, desc:i.desc, iconPath:i.iconPath, on, meta: on? (i.meta||'Connected') : 'Not connected',
+        statusText: on?'Connected':'Available', statusColor:t[1], statusBg:t[0],
+        iconBg: on?'var(--teal-50)':'var(--ink-50)', iconColor: on?'var(--teal-800)':'var(--ink-500)',
+        cardBorder: on?'var(--teal-100)':'var(--border)',
+        btnLabel: on?'Manage':'Connect', btnBg: on?'#fff':'var(--teal-800)', btnColor: on?'var(--teal-800)':'#fff', btnBorder: on?'var(--teal-700)':'var(--teal-900)',
+        onToggle:()=>{ const nv=!on; this.setState(st=>({ connected:{...st.connected, [i.id]:nv} })); this.flash(nv? i.name+' connected' : i.name+' disconnected'); } }; });
+    const noIntCards=intFiltered.length===0;
+
+    // ---- audit log ----
+    const aq=(s.auditQuery||'').trim().toLowerCase();
+    const auditCatList=['All'].concat(Array.from(new Set(this.AUDIT.map(a=>a.cat))));
+    const auditFiltered=this.AUDIT.filter(a=>{ if(s.auditCat!=='All'&&a.cat!==s.auditCat) return false; if(aq){ const h=(a.actor+' '+a.action+' '+a.target).toLowerCase(); if(!h.includes(aq)) return false; } return true; });
+    const auditCats=auditCatList.map(c=>{ const sel=c===s.auditCat; const cc= c==='All'? this.AUDIT.length : this.AUDIT.filter(a=>a.cat===c).length; return { label:c, count:cc, bg:sel?'var(--teal-50)':'transparent', border:sel?'var(--teal-100)':'transparent', color:sel?'var(--teal-900)':'var(--ink-700)', weight:sel?'700':'550', onClick:()=>this.setState({auditCat:c}) }; });
+    const auditGroups=[]; auditFiltered.forEach(a=>{ let g=auditGroups.find(x=>x.day===a.day); if(!g){ g={day:a.day, items:[]}; auditGroups.push(g); } const t=this.AUDIT_TONE[a.cat]||this.AUDIT_TONE.Records;
+      g.items.push({ time:a.time, actor:a.actor, init:a.init, action:a.action, target:a.target, cat:a.cat, ip:a.ip, catColor:t[1], catBg:t[0], isSystem:a.actor==='System' }); });
+    const auditTotal=auditFiltered.length;
+    const noAudit=auditFiltered.length===0;
+
+    // ---- form fields (org / policy) ----
+    let activeGroups=[];
+    const formDef = isOrg ? this.ORG_FORMS[s.orgSection] : (isPayroll ? this.PAY_FORMS[s.paySection] : (isPolicies ? this.POLICY_FORMS[s.selectedPolicy] : null));
+    if (formDef){
+      const ctx = isOrg ? ('org:'+s.orgSection) : (isPayroll ? ('pay:'+s.paySection) : ('pol:'+s.selectedPolicy));
+      activeGroups = formDef.groups.map(g=>({
+        label:g.label, hasHint:!!g.hint, hint:g.hint||'',
+        fields: g.fields.map(f=>{
+          const base={ label:f.label, hasHint:!!f.hint, hint:f.hint||'', ph:f.ph||'', val:f.val||'', val2:f.val2||'', align:'flex-start',
+            isText:false,isTextarea:false,isSelect:false,isToggle:false,isSegment:false,isColor:false,isTime:false,isWeekdays:false,isUpload:false,isDocs:false, hasLabelCol:true, hasProof:false };
+          if (f.type==='text'){ base.isText=true; base.align='center'; }
+          else if (f.type==='textarea'){ base.isTextarea=true; }
+          else if (f.type==='select'){ base.isSelect=true; base.align='center'; base.options=(f.options||[]).map(o=>({label:o})); }
+          else if (f.type==='toggle'){ base.isToggle=true; base.align='center';
+            const on=this.togVal(f.id, f.val); base.toggleBg= on?'var(--teal-700)':'var(--ink-200)'; base.knobLeft= on?'19px':'2px'; base.toggleText= on?'Enabled':'Disabled'; base.onToggle=()=>this.setTog(f.id,!on); }
+          else if (f.type==='segment'){ base.isSegment=true; base.align='center';
+            const cur=this.segVal(f.id, f.val);
+            base.options=(f.options||[]).map(o=>({ label:o, bg: o===cur?'#fff':'transparent', color:o===cur?'var(--teal-900)':'var(--ink-500)', weight:o===cur?'650':'550', shadow:o===cur?'0 1px 3px rgba(11,22,32,.12)':'none', onClick:()=>this.setSeg(f.id,o) })); }
+          else if (f.type==='color'){ base.isColor=true; base.align='center';
+            const cur=this.colorVal(f.val); base.swatches=this.BRAND_SWATCHES.map(h=>({ hex:h, on:h===cur, ring:h===cur?'var(--teal-900)':'#fff', onClick:()=>this.setState(st=>({colors:{...st.colors,[s.orgSection]:h}})) })); }
+          else if (f.type==='time'){ base.isTime=true; base.align='center'; }
+          else if (f.type==='weekdays'){ base.isWeekdays=true; base.align='center';
+            base.days=this.WEEKDAYS.map(d=>{ const on=this.weekoffOn(d.k); return { label:d.l, bg:on?'var(--teal-800)':'#fff', border:on?'var(--teal-900)':'var(--border)', color:on?'#fff':'var(--ink-500)', weight:on?'700':'550', onClick:()=>this.toggleWeekoff(d.k) }; }); }
+          else if (f.type==='upload'){ base.isUpload=true; }
+          if (f.type==='text' || f.type==='textarea' || f.type==='select'){ const fk=ctx+':'+f.id; base.value=this.textVal(fk, f.val||''); base.onInput=(e)=>this.setText(fk, e.target.value); }
+          if (f.proof){ const pk='proof:'+ctx+':'+f.id; const pc=s.docs[pk]; base.hasProof=true; base.align='flex-start'; base.proofName=f.proof; base.proofAttached=!!pc; base.proofMissing=!pc; base.proofFile= pc? pc.file : ''; base.onAttachProof=()=>{ this.setState(st=>({ docs:{...st.docs, [pk]:{ file:f.id+'-proof.pdf' } } })); this.flash(f.proof+' uploaded'); }; }
+          else if (f.type==='docs'){ base.isDocs=true; base.hasLabelCol=false;
+            const cm={ 'Verified':['#1E7A46','#E7F3EC'], 'Uploaded':['#0E5E5C','#EAF3F2'], 'Pending':['#96690F','#FBF0DB'] };
+            base.docs=this.DOC_DEFS.map(dd=>{ const cur=s.docs[dd.id]||{status:dd.status,file:dd.file}; const up=!!cur.file; const c=cm[cur.status]||cm.Pending;
+              return { name:dd.name, verifies:dd.verifies, file:cur.file||'', hasFile:up, noFile:!up,
+                statusText: cur.status==='Pending'?'Not uploaded':cur.status, statusColor:c[0], statusBg:c[1],
+                rowBg: up?'#fff':'#FEFBF4', rowBorder: up?'var(--border)':'#EDDFBE', iconColor: up?'var(--teal-700)':'var(--ink-400)',
+                btnLabel: up?'Replace':'Upload', onUpload:()=>this.uploadDoc(dd.id) }; }); }
+          return base;
+        }),
+      }));
+    }
+
+    // ---- roles matrix ----
+    const role = this.ROLES.find(x=>x.id===s.selectedRole)||this.ROLES[0];
+    const roleTintMap = { 'hr-admin':['#FBE9E7','#C33F2A'], 'hr-manager':['#EAF3F2','#0E5E5C'], 'recruiter':['#FDEEE3','#C4551C'], 'dept-head':['#EEF0FB','#3B47A0'], 'payroll':['#F1ECFB','#5E42A0'], 'employee':['#F1F3F5','#48586A'], 'auditor':['#FBF0DB','#7A5510'] };
+    const rt = roleTintMap[role.id]||['#EAF3F2','#0E5E5C'];
+    const actionKey = { 'View':'view','Create':'create','Edit':'edit','Delete':'delete','Approve':'approve' };
+    const permRows = this.PERM_ROWS.map((r,i)=>({
+      label:r.label, iconPath:r.iconPath, bg: i%2===1?'#FBFCFC':'#fff',
+      cells: this.PERM_COLS.map(col=>{
+        const act=actionKey[col]; const na=r.na.includes(act);
+        if (na) return { na:true, avail:false };
+        const on=this.permOn(role.id, r.id, act);
+        return { na:false, avail:true, on, border:on?'var(--teal-800)':'var(--ink-200)', bg:on?'var(--teal-800)':'#fff', onToggle:()=>this.togglePerm(role.id, r.id, act) };
+      }),
+    }));
+
+    // ---- workflow builder ----
+    const stagesRaw = this.getStages();
+    const stages = stagesRaw.map((st,i)=>{
+      const tone=this.TONES[i % this.TONES.length];
+      return { num:i+1, title:st.title, sub:st.sub, sla:st.sla, notLast: i<stagesRaw.length-1,
+        opacity: s.dragIndex===i ? '0.4':'1',
+        bg:tone.bg, border:tone.border, badgeBg:tone.badgeBg, badgeColor:tone.badgeColor, badgeBorder:tone.badgeBorder,
+        slaColor:tone.badgeColor, slaBg:'#fff',
+        approvers: st.approvers.map((a,j)=>{ const av=this.AVATARS[j % this.AVATARS.length]; return { name:a.name, role:a.role, init:a.init, avatarBg:av.bg, avatarColor:av.color }; }),
+        onDragStart:()=>this.setState({ dragIndex:i }),
+        onDragEnd:()=>this.setState({ dragIndex:null }),
+        onDragOver:(e)=>e.preventDefault(),
+        onDrop:(e)=>{ e.preventDefault(); const from=this.state.dragIndex; if(from===null||from===i){ this.setState({dragIndex:null}); return; } const arr=this.getStages().slice(); const [m]=arr.splice(from,1); arr.splice(i,0,m); this.commitStages(arr); this.setState({dragIndex:null}); },
+        onRemove:()=>{ const arr=this.getStages().slice(); arr.splice(i,1); this.commitStages(arr); this.flash('Stage removed'); },
+        onAddApprover:()=>this.setState({ modal:'approver' }),
+      };
+    });
+    const stageCountLabel = stagesRaw.length + (stagesRaw.length===1?' stage':' stages');
+
+    // ---- modal ----
+    let modalOpen=!!s.modal, modalTitle='', modalSubtitle='', modalIcon=plusIcon, modalConfirmLabel='Create', modalFields=[], onModalConfirm=()=>this.setState({modal:null});
+    if (s.modal==='role'){ modalTitle='New role'; modalSubtitle='Define a role, then set its permissions'; modalIcon='M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z';
+      modalFields=[ {label:'Role name', isText:true, ph:'e.g. Facility Manager'}, {label:'Copy permissions from', isSelect:true, options:this.ROLES.map(r=>r.label)} ];
+      onModalConfirm=()=>{ this.setState({modal:null}); this.flash('Role created'); };
+    } else if (s.modal==='approver'){ modalTitle='Add approver'; modalSubtitle='Choose who acts at this stage'; modalIcon='M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M19 8v6M22 11h-6';
+      modalFields=[ {label:'Approver type', isSelect:true, options:['Reporting Manager','Department Head','Specific person','Role','Shared queue']}, {label:'Assignee', isText:true, ph:'Search person or role…'} ];
+      onModalConfirm=()=>{
+        const arr=this.getStages().slice();
+        if(arr.length){ const last=arr.map(x=>({...x,approvers:x.approvers.slice()})); last[last.length-1].approvers.push({name:'New Approver', role:'Manually added', init:'NA'}); this.commitStages(last); }
+        this.setState({modal:null}); this.flash('Approver added');
+      };
+    } else if (s.modal==='form'){ modalTitle='New form'; modalSubtitle='Name it and pick a type to start building'; modalIcon='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4';
+      modalFields=[ {label:'Form name', isText:true, ph:'e.g. Exit Clearance Checklist'}, {label:'Form type', isSelect:true, options:['Onboarding','Recruitment','Appraisal','Leave','Expense','Exit','Assets','Confirmation']}, {label:'Start from', isSelect:true, options:['Blank form','Copy of a template']} ];
+      modalConfirmLabel='Create form';
+      onModalConfirm=()=>{ this.setState(st=>({ addedForms:[...st.addedForms, { id:Date.now(), name:'Untitled Form', badge:'Custom', type:'Onboarding', group:'No', q:0, by:'Sanjay Gupta', when:'Just now', del:true, cat:'onboarding' }], modal:null, formCat:'all', formQuery:'', formType:'All', formGroup:'All' })); this.flash('Form created — opening the builder'); };
+    } else if (s.modal==='dept'){ modalTitle='Add department'; modalSubtitle='Create a unit in the organization tree'; modalIcon='M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01';
+      modalFields=[ {label:'Department name', isText:true, ph:'e.g. Physiotherapy'}, {label:'Reports to', isSelect:true, options:['Dr. Meera Krishnan — Chief Medical Director','Dr. Vikram Iyer — Oncology','Sanjay Gupta — HR']}, {label:'Primary location', isSelect:true, options:['Main Campus','West Wing']} ];
+      modalConfirmLabel='Add department';
+      onModalConfirm=()=>{ this.setState({modal:null}); this.flash('Department added'); };
+    } else if (s.modal==='holiday'){ modalTitle='Add holiday'; modalSubtitle='Add a day to the '+s.holYear+' calendar'; modalIcon='M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4';
+      modalFields=[ {label:'Date', isText:true, ph:'e.g. 15 Aug 2026'}, {label:'Holiday name', isText:true, ph:'e.g. Founder\u2019s Day'}, {label:'Type', isSelect:true, options:['Public','Optional','Restricted']}, {label:'Applies to', isSelect:true, options:['All locations','Main Campus','West Wing']} ];
+      modalConfirmLabel='Add holiday';
+      onModalConfirm=()=>{ this.setState({modal:null}); this.flash('Holiday added'); };
+    } else if (s.modal==='template'){ modalTitle='New template'; modalSubtitle='Create a notification template'; modalIcon='M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM3.5 7l8.5 6 8.5-6';
+      modalFields=[ {label:'Template name', isText:true, ph:'e.g. Probation Completed'}, {label:'Channel', isSelect:true, options:['Email','In-app','SMS']}, {label:'Trigger event', isSelect:true, options:['Employee joins','Leave approved','Pay run completed','Document nearing expiry','Custom']} ];
+      modalConfirmLabel='Create template';
+      onModalConfirm=()=>{ this.setState({modal:null}); this.flash('Template created'); };
+    } else if (s.modal==='employee'){ modalTitle='Add employee'; modalSubtitle='Create a new employee record'; modalIcon='M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M19 8v6M22 11h-6';
+      modalFields=[ {label:'Full name', isText:true, ph:'e.g. Dr. Aarti Rao'}, {label:'Department', isSelect:true, options:['Cardiology','Emergency','ICU','Oncology','Nursing','Radiology','Pharmacy','Laboratory','Administration']}, {label:'Role', isText:true, ph:'e.g. Consultant'} ];
+      modalConfirmLabel='Add employee';
+      onModalConfirm=()=>{ this.setState({modal:null}); this.flash('Employee added'); };
+    }
+
+    return {
+      modules, moduleLabel,
+      panelTitle, panelSubtitle,
+      isOrg, isRoles, isPolicies, isWorkflow, isStub, isForm, isPayroll,
+      orgGroups, payGroups, rolesList, policyGroups, workflowList,
+      contextLabel, pageTitle, stripBg,
+      showPrimaryAction, primaryLabel, primaryIcon, onPrimaryAction,
+      showSecondaryAction, secondaryLabel, secondaryIcon, onSecondaryAction,
+      activeGroups,
+      // roles
+      roleName:role.label, roleDesc:role.desc, roleMemberCount:role.count, roleTintBg:rt[0], roleTintColor:rt[1],
+      permCols:this.PERM_COLS, permRows,
+      onAddRole:()=>this.setState({modal:'role'}),
+      // workflow
+      stages, stageCountLabel, onAddStage:()=>{ const arr=this.getStages().slice(); arr.push({ id:'new'+Date.now(), title:'New Stage', sub:'Configure this approval step', sla:'1 day', approvers:[{name:'Reporting Manager', role:'Auto-assigned', init:'RM'}] }); this.commitStages(arr); this.flash('Stage added'); },
+      // form designer
+      isForms, formCats, formRows, noFormRows, formQuery:s.formQuery, formType:s.formType, formGroup:s.formGroup, formTypeOptions, formGroupOptions,
+      onFormQuery:(e)=>this.setState({formQuery:e.target.value}), onFormType:(e)=>this.setState({formType:e.target.value}), onFormGroup:(e)=>this.setState({formGroup:e.target.value}),
+      onReset:()=>this.setState({formQuery:'',formType:'All',formGroup:'All',formCat:'all'}), onSearch:()=>this.flash('Filters applied'),
+      showHeaderActions, showHeaderSec, hdrSecLabel, hdrSecIcon, onHdrSec, hdrPrimLabel, hdrPrimIcon, onAddNew,
+      // org structure
+      isDepts, treeRows, orgStats, deptUnits, locations:this.LOCATIONS,
+      // holiday calendar
+      isHols, holYears, holLocOptions, holYear:s.holYear, holLoc:s.holLoc, holTypes, holMonths, holTotal,
+      onHolYear:(e)=>this.setState({holYear:e.target.value}), onHolLoc:(e)=>this.setState({holLoc:e.target.value}),
+      // notifications
+      isNotif, tmplGroups, tmpl,
+      // dashboard / directory / insights
+      isDash, isDir, isIns, showCC: !(isDash||isDir||isIns),
+      dashKpis, dashToday, deptBars, pendingList, recent,
+      dirRows, dirCats, dirTotal, dirQuery:s.dirQuery, dirStatus:s.dirStatus, dirStatusOptions,
+      onDirQuery:(e)=>this.setState({dirQuery:e.target.value}), onDirStatus:(e)=>this.setState({dirStatus:e.target.value}),
+      insKpis, attendance, gender, insMetrics,
+      // integrations
+      isInt, intCats, intCards, noIntCards, intConnectedCount, intTotal:this.INTEGRATIONS.length,
+      // audit log
+      isAudit, auditCats, auditGroups, auditTotal, noAudit, auditQuery:s.auditQuery,
+      onAuditQuery:(e)=>this.setState({auditQuery:e.target.value}),
+      // stub
+      stubText:this.STUB_TEXT[am]||'', stubIcon:this.STUB_ICON[am]||'M12 8v8M8 12h8', onBackToOrg:()=>this.setState({activeModule:'orgsettings'}),
+      // toast
+      saved:!!s.saved, savedText: s.saved||'',
+      // modal
+      modalOpen, modalTitle, modalSubtitle, modalIcon, modalConfirmLabel, modalFields, onModalConfirm,
+      onCloseModal:()=>this.setState({modal:null}), stop:(e)=>e.stopPropagation(),
+    };
+  }
+}
+</script>
+</body>
+</html>

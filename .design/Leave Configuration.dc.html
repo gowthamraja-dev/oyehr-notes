@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+  body { margin:0; background:#FAFAF9; font-family:'Instrument Sans', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#C2410C; text-decoration:none; }
+  a:hover { color:#9A3412; text-decoration:underline; }
+  input, select, button { font-family:inherit; }
+  input:focus-visible, select:focus-visible { outline:2px solid #FDBA74; outline-offset:1px; }
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;color:#1C1917">
+
+  <aside style="width:212px;flex:0 0 auto;background:#ffffff;border-right:1px solid #E7E5E4;padding:18px 12px;display:none">
+  </aside>
+
+  <main style="flex:1;min-width:0;padding:22px 26px 0;display:grid;gap:16px;align-content:start">
+
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12.5px;color:#A8A29E">Operations</span>
+      <span style="font-size:12.5px;color:#D6D3D1">/</span>
+      <span style="font-size:12.5px;color:#57534E;font-weight:550">Leave</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start">
+
+      <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden;position:sticky;top:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 16px 14px">
+          <div>
+            <div style="font-size:14.5px;font-weight:650">Leave types</div>
+            <div style="font-size:12px;color:#A8A29E;margin-top:2px">{{ typeCount }} configured</div>
+          </div>
+          <button onClick="{{ startAdd }}" style="border:0;background:#EA580C;color:#fff;font-size:13px;font-weight:600;padding:8px 13px;border-radius:8px;cursor:pointer" style-hover="background:#C2410C">+ Add</button>
+        </div>
+        <div style="display:grid;gap:1px;background:#F5F5F4;border-top:1px solid #F5F5F4">
+          <sc-for list="{{ rail }}" as="r" hint-placeholder-count="4">
+            <div onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:{{ r.bg }}" style-hover="background:#FAFAF9">
+              <div style="width:7px;height:7px;border-radius:999px;flex:0 0 auto;background:{{ r.dot }}"></div>
+              <div style="min-width:0">
+                <div style="font-size:13.5px;font-weight:600;color:{{ r.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                <div style="font-size:11.5px;color:#A8A29E;margin-top:2px">{{ r.meta }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:grid;gap:14px;min-width:0">
+
+        <sc-if value="{{ isWizard }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;gap:14px">
+
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;padding:14px 18px">
+              <div style="font-size:15px;font-weight:650">New leave type</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+                <span style="font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;background:{{ s1.bg }};color:{{ s1.fg }}">1 · The leave type</span>
+                <span style="color:#D6D3D1;font-size:12px">→</span>
+                <span style="font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;background:{{ s2.bg }};color:{{ s2.fg }}">2 · Entitlement</span>
+              </div>
+            </div>
+
+            <sc-if value="{{ atPreset }}" hint-placeholder-val="{{ true }}">
+              <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+                <div style="padding:18px 18px 4px">
+                  <div style="font-size:15px;font-weight:650">Start from a standard type</div>
+                  <div style="font-size:13px;color:#78716C;margin-top:4px;max-width:52ch;text-wrap:pretty">Presets fill in the usual rules and accrual for Indian statutory practice. You can change every field afterwards.</div>
+                </div>
+                <div style="padding:16px 18px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
+                  <sc-for list="{{ presets }}" as="p" hint-placeholder-count="6">
+                    <div onClick="{{ p.onClick }}" style="border:1px solid #E7E5E4;border-radius:10px;padding:14px;cursor:pointer;background:#FCFCFB;display:grid;gap:6px;align-content:start" style-hover="border-color:#FDBA74;background:#FFF7ED">
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:5px;background:#F5F5F4;color:#57534E">{{ p.code }}</span>
+                        <span style="font-size:13.5px;font-weight:650">{{ p.name }}</span>
+                      </div>
+                      <div style="font-size:12px;color:#78716C;line-height:1.45;text-wrap:pretty">{{ p.desc }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+
+            <sc-if value="{{ atStep1 }}" hint-placeholder-val="{{ false }}">
+              <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+                <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4">
+                  <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                  <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">The Leave Type</span>
+                </div>
+                <div style="padding:18px;display:grid;gap:16px">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Name</span>
+                      <input value="{{ f.name.value }}" onChange="{{ f.name.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;color:#1C1917;background:#fff">
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Code</span>
+                      <input value="{{ f.code.value }}" onChange="{{ f.code.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#1C1917;background:#fff">
+                    </label>
+                    <div style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Counted in</span>
+                      <div style="display:flex;gap:6px;background:#F5F5F4;padding:3px;border-radius:9px;width:max-content">
+                        <button onClick="{{ unitSeg.day.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ unitSeg.day.bg }};color:{{ unitSeg.day.fg }}">Days</button>
+                        <button onClick="{{ unitSeg.hour.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ unitSeg.hour.bg }};color:{{ unitSeg.hour.fg }}">Hours</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:10px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div>
+                        <div style="font-size:13.5px;font-weight:600">Paid leave</div>
+                        <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Off means loss of pay</div>
+                      </div>
+                      <dc-import name="Toggle" st="{{ tg.is_paid }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div style="font-size:13.5px;font-weight:600">Half day allowed</div>
+                      <dc-import name="Toggle" st="{{ tg.allow_half_day }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div style="font-size:13.5px;font-weight:600">Needs approval</div>
+                      <dc-import name="Toggle" st="{{ tg.requires_approval }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                  </div>
+
+                  <div style="font-size:12.5px;color:#A8A29E;text-wrap:pretty">Notice periods, document rules and eligibility gates come with the preset — review them on the next screen or after saving.</div>
+                </div>
+              </section>
+            </sc-if>
+
+            <sc-if value="{{ atStep2 }}" hint-placeholder-val="{{ false }}">
+              <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+                <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4">
+                  <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                  <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">How Much Is Earned</span>
+                </div>
+                <div style="padding:18px;display:grid;gap:16px">
+                  <label style="display:grid;gap:6px;max-width:280px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Total per year</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <input value="{{ f.total_per_year.value }}" onChange="{{ f.total_per_year.onChange }}" style="width:92px;padding:10px 12px;border:1px solid #D6D3D1;border-radius:8px;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;background:#fff">
+                      <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                    </div>
+                    <span style="font-size:11.5px;color:#A8A29E">Drives the quantity per cycle and the balance cap below. Both stay editable.</span>
+                  </label>
+                  <div style="display:grid;gap:6px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Credited</span>
+                    <div style="display:flex;gap:6px;background:#F5F5F4;padding:3px;border-radius:9px;width:max-content;flex-wrap:wrap">
+                      <button onClick="{{ seg.Monthly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Monthly.bg }};color:{{ seg.Monthly.fg }}">Monthly</button>
+                      <button onClick="{{ seg.Quarterly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Quarterly.bg }};color:{{ seg.Quarterly.fg }}">Quarterly</button>
+                      <button onClick="{{ seg.Yearly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Yearly.bg }};color:{{ seg.Yearly.fg }}">Yearly</button>
+                      <button onClick="{{ seg.OnJoining.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.OnJoining.bg }};color:{{ seg.OnJoining.fg }}">On joining</button>
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Quantity each time</span>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <input value="{{ f.accrual_quantity.value }}" onChange="{{ f.accrual_quantity.onChange }}" style="width:86px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                        <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                      </div>
+                      <span style="font-size:11.5px;color:#A8A29E">{{ qtyHint }}</span>
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Balance cap</span>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <input value="{{ f.max_balance.value }}" onChange="{{ f.max_balance.onChange }}" style="width:86px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                        <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                      </div>
+                      <span style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#A8A29E">{{ capHint }}<sc-if value="{{ capManual }}" hint-placeholder-val="{{ false }}"><button onClick="{{ resetCap }}" style="cursor:pointer;font-size:11.5px;font-weight:600;color:#C2410C;background:transparent;border:0;padding:0">Reset to {{ autoTotal }}</button></sc-if></span>
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Leave year starts</span>
+                      <select value="{{ f.reset_month.value }}" onChange="{{ f.reset_month.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;background:#fff;color:#1C1917">
+                        <option value="1">January</option>
+                        <option value="4">April</option>
+                        <option value="7">July</option>
+                        <option value="10">October</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:10px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div>
+                        <div style="font-size:13.5px;font-weight:600">Pro-rate new joiners</div>
+                        <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">By joining date</div>
+                      </div>
+                      <dc-import name="Toggle" st="{{ tg.prorate_on_joining }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div style="font-size:13.5px;font-weight:600">Carry forward</div>
+                      <dc-import name="Toggle" st="{{ tg.carry_forward }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <sc-if value="{{ showCarry }}" hint-placeholder-val="{{ false }}">
+                      <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border:1px solid #FED7AA;border-radius:10px;background:#FFF7ED">
+                        <span style="font-size:13px;font-weight:550;color:#7C2D12">Max carried over</span>
+                        <div style="display:flex;align-items:center;gap:7px">
+                          <input value="{{ f.max_carry_forward.value }}" onChange="{{ f.max_carry_forward.onChange }}" style="width:70px;padding:8px 10px;border:1px solid #FDBA74;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                          <span style="font-size:12.5px;color:#9A3412">{{ unitLabel }}</span>
+                        </div>
+                      </label>
+                    </sc-if>
+                  </div>
+
+                  <sc-if value="{{ showProjection }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:14px 16px;display:grid;gap:10px">
+                    <div style="font-size:13px;color:#7C2D12;line-height:1.5;text-wrap:pretty">{{ projection }}</div>
+                    <div style="display:flex;gap:26px;flex-wrap:wrap">
+                      <div>
+                        <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ perYear }}</div>
+                        <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Per year</div>
+                      </div>
+                      <div>
+                        <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ capLabel }}</div>
+                        <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Balance cap</div>
+                      </div>
+                      <div>
+                        <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ carryLabel }}</div>
+                        <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Carried over</div>
+                      </div>
+                    </div>
+                  </div>
+                  </sc-if>
+                </div>
+              </section>
+            </sc-if>
+
+            <sc-if value="{{ atDone }}" hint-placeholder-val="{{ false }}">
+              <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;padding:26px 22px;display:grid;gap:12px;justify-items:start">
+                <div style="font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#15803D">Saved</div>
+                <div style="font-size:17px;font-weight:650">{{ draftName }} is ready to use</div>
+                <div style="font-size:13px;color:#78716C;max-width:54ch;text-wrap:pretty">{{ projection }} Everything else — notice period, documents, eligibility, encashment — sits on the full settings page and can stay as it is.</div>
+                <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+                  <button onClick="{{ finish }}" style="border:0;background:#EA580C;color:#fff;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:9px;cursor:pointer">Review full settings</button>
+                  <button onClick="{{ startAdd }}" style="background:#fff;border:1px solid #D6D3D1;color:#44403C;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:9px;cursor:pointer">Add another type</button>
+                </div>
+              </section>
+            </sc-if>
+
+            <sc-if value="{{ showWizNav }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;padding-bottom:22px">
+                <button onClick="{{ back }}" style="background:#fff;border:1px solid #D6D3D1;color:#44403C;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:9px;cursor:pointer">Back</button>
+                <button onClick="{{ next }}" style="margin-left:auto;border:0;background:#EA580C;color:#fff;font-size:13.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer" style-hover="background:#C2410C">{{ nextLabel }}</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;gap:14px">
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;padding:18px;display:grid;gap:16px">
+              <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                <div style="min-width:0;flex:1 1 260px;display:grid;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <input value="{{ f.name.value }}" onChange="{{ f.name.onChange }}" style="font-size:22px;font-weight:700;color:#1C1917;border:1px solid transparent;border-radius:8px;padding:4px 8px;margin-left:-8px;background:transparent;width:min(100%,320px)" style-hover="border-color:#E7E5E4">
+                    <input value="{{ f.code.value }}" onChange="{{ f.code.onChange }}" style="width:66px;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#57534E;background:#F5F5F4;border:1px solid #F5F5F4;border-radius:6px;padding:5px 7px;text-align:center">
+                  </div>
+                  <div style="font-size: 12.5px; color: #A8A29E; width: 362px; height: 12px">{{ summaryLine }}</div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <div style="display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <span style="font-size:13px;font-weight:600">Paid</span>
+                    <dc-import name="Toggle" st="{{ tg.is_paid }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <span style="font-size:13px;font-weight:600">Active</span>
+                    <dc-import name="Toggle" st="{{ tg.is_active }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                </div>
+              </div><a href="#archive" style="font-size: 12.5px; font-weight: 600; color: #B91C1C; width: 376px; height: 8px">Archive this leave type</a>
+            </section>
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4" data-comment-anchor="be644e15bc-div">
+                <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">Who Is Eligible</span>
+              </div>
+              <div style="padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+                <label style="display:grid;gap:6px">
+                  <span style="font-size:12.5px;font-weight:550;color:#57534E">Only for</span>
+                  <select value="{{ f.gender_applicable.value }}" onChange="{{ f.gender_applicable.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;background:#fff;color:#1C1917">
+                    <option value="All">Everyone</option>
+                    <option value="Female">Female employees</option>
+                    <option value="Male">Male employees</option>
+                  </select>
+                </label>
+                <label style="display:grid;gap:6px">
+                  <span style="font-size:12.5px;font-weight:550;color:#57534E">Available after joining</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input value="{{ f.applicable_after_days.value }}" onChange="{{ f.applicable_after_days.onChange }}" style="width:80px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                    <span style="font-size:13px;color:#78716C">days</span>
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4">
+                <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">Entitlement Policies</span>
+              </div>
+              <div style="padding:14px 18px 0;display:grid;gap:12px">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ policyTabs }}" as="p" hint-placeholder-count="2">
+                    <button onClick="{{ p.onClick }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;padding:8px 12px;border-radius:9px;border:1px solid {{ p.border }};background:{{ p.bg }}">
+                      <span style="font-size:13px;font-weight:600;color:{{ p.fg }}">{{ p.label }}</span>
+                      <span style="font-size:11.5px;color:{{ p.sub }};font-variant-numeric:tabular-nums">{{ p.total }}</span>
+                    </button>
+                  </sc-for>
+                  <button onClick="{{ addPolicy }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#C2410C;background:#fff;border:1px dashed #FDBA74;padding:8px 12px;border-radius:9px">+ Policy</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:end">
+                  <label style="display:grid;gap:6px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Corporation</span>
+                    <select value="{{ f.corp.value }}" onChange="{{ f.corp.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;background:#fff;color:#1C1917">
+                      <option value="all">All corporations</option>
+                      <option value="nlc">Next Life Care</option>
+                      <option value="nld">Next Life Diagnostics</option>
+                    </select>
+                  </label>
+                  <label style="display:grid;gap:6px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Employee type</span>
+                    <select value="{{ f.emp_type.value }}" onChange="{{ f.emp_type.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;background:#fff;color:#1C1917">
+                      <option value="all">All employee types</option>
+                      <option value="perm">Permanent</option>
+                      <option value="contract">Contract</option>
+                      <option value="intern">Intern</option>
+                    </select>
+                  </label>
+                  <sc-if value="{{ canRemovePolicy }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <button onClick="{{ removePolicy }}" style="cursor:pointer;font-size:12.5px;font-weight:600;color:#B91C1C;background:#fff;border:1px solid #E7E5E4;padding:9px 13px;border-radius:8px" style-hover="background:#FEF2F2;border-color:#FCA5A5">Remove this policy</button>
+                      <sc-if value="{{ isArchived }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ unarchivePolicy }}" style="cursor:pointer;font-size:12.5px;font-weight:600;color:#57534E;background:#fff;border:1px solid #E7E5E4;padding:9px 13px;border-radius:8px">Restore</button>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ policyOverlap }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12.5px;color:#9A3412;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:9px 12px">Two policies cover the same corporation and employee type. The first match wins.</div>
+                </sc-if>
+                <sc-if value="{{ confirmRemove }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:fixed;inset:0;background:rgba(28,25,23,.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50">
+                    <div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:22px;box-shadow:0 18px 48px rgba(28,25,23,.28)">
+                      <div style="font-size:16px;font-weight:650;color:#1C1917">Remove {{ policyLabel }}?</div>
+                      <div style="font-size:13.5px;color:#57534E;line-height:1.55;margin-top:8px;text-wrap:pretty">Archiving stops new accrual but keeps past balances and history for reporting. Deleting wipes the policy and its accrual rules for good.</div>
+                      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap">
+                        <button onClick="{{ closeRemove }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#57534E;background:#fff;border:1px solid #E7E5E4;padding:9px 14px;border-radius:8px">Cancel</button>
+                        <button onClick="{{ archivePolicy }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#44403C;background:#F5F5F4;border:1px solid #E7E5E4;padding:9px 14px;border-radius:8px">Archive</button>
+                        <button onClick="{{ deletePolicy }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#fff;background:#B91C1C;border:1px solid #B91C1C;padding:9px 14px;border-radius:8px">Delete permanently</button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="padding: 18px; display: grid; gap: 16px; position: relative" data-comment-anchor="f84cf04e17-div">
+                <label style="display:grid;gap:6px;max-width:280px">
+                  <span style="font-size:12.5px;font-weight:550;color:#57534E">Total per year</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input value="{{ f.total_per_year.value }}" onChange="{{ f.total_per_year.onChange }}" style="width:92px;padding:10px 12px;border:1px solid #D6D3D1;border-radius:8px;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;background:#fff">
+                    <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                  </div>
+                  <span style="font-size:11.5px;color:#A8A29E">Drives the quantity per cycle and the balance cap below. Both stay editable.</span>
+                </label>
+                <div style="display:grid;gap:6px">
+                  <span style="font-size:12.5px;font-weight:550;color:#57534E">Credited</span>
+                  <div style="display:flex;gap:6px;background:#F5F5F4;padding:3px;border-radius:9px;width:max-content;flex-wrap:wrap">
+                    <button onClick="{{ seg.Monthly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Monthly.bg }};color:{{ seg.Monthly.fg }}">Monthly</button>
+                    <button onClick="{{ seg.Quarterly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Quarterly.bg }};color:{{ seg.Quarterly.fg }}">Quarterly</button>
+                    <button onClick="{{ seg.Yearly.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.Yearly.bg }};color:{{ seg.Yearly.fg }}">Yearly</button>
+                    <button onClick="{{ seg.OnJoining.onClick }}" style="border:0;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;background:{{ seg.OnJoining.bg }};color:{{ seg.OnJoining.fg }}">On joining</button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+                  <label style="display:grid;gap:6px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Quantity each time</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <input value="{{ f.accrual_quantity.value }}" onChange="{{ f.accrual_quantity.onChange }}" style="width:86px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                      <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                    </div>
+                    <span style="font-size:11.5px;color:#A8A29E">{{ qtyHint }}</span>
+                  </label>
+                  <label style="display:grid;gap:6px">
+                    <span style="font-size:12.5px;font-weight:550;color:#57534E">Balance cap</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <input value="{{ f.max_balance.value }}" onChange="{{ f.max_balance.onChange }}" style="width:86px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                      <span style="font-size:13px;color:#78716C">{{ unitLabel }}</span>
+                    </div>
+                    <span style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#A8A29E">{{ capHint }}<sc-if value="{{ capManual }}" hint-placeholder-val="{{ false }}"><button onClick="{{ resetCap }}" style="cursor:pointer;font-size:11.5px;font-weight:600;color:#C2410C;background:transparent;border:0;padding:0">Reset to {{ autoTotal }}</button></sc-if></span>
+                  </label>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div>
+                      <div style="font-size:13.5px;font-weight:600">Pro-rate new joiners</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">By joining date</div>
+                    </div>
+                    <dc-import name="Toggle" st="{{ tg.prorate_on_joining }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                </div>
+                <sc-if value="{{ showProjection }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:14px 16px;display:grid;gap:10px">
+                  <div style="font-size:13px;color:#7C2D12;line-height:1.5;text-wrap:pretty">{{ projection }}</div>
+                  <div style="display:flex;gap:26px;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ perYear }}</div>
+                      <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Per year</div>
+                    </div>
+                    <div>
+                      <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ capLabel }}</div>
+                      <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Balance cap</div>
+                    </div>
+                    <div>
+                      <div style="font-size:20px;font-weight:700;color:#9A3412;font-variant-numeric:tabular-nums">{{ carryLabel }}</div>
+                      <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C2410C;margin-top:2px">Carried over</div>
+                    </div>
+                  </div>
+                </div>
+                </sc-if>
+              </div>
+            </section>
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4">
+                <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">How It Can Be Taken</span>
+              </div>
+              <div style="padding:18px">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;align-items:stretch">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Half day allowed</div>
+                    </div>
+                    <dc-import name="Toggle" st="{{ tg.allow_half_day }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Skip week-offs</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Week-offs inside a range are not counted</div>
+                    </div>
+                    <dc-import name="Toggle" st="{{ tg.exclude_week_offs }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Skip holidays</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Public holidays are not counted</div>
+                    </div>
+                    <dc-import name="Toggle" st="{{ tg.exclude_holidays }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Allow negative balance</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Lets staff go below zero</div>
+                    </div>
+                    <dc-import name="Toggle" st="{{ tg.allow_negative_balance }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Apply at least</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Notice before the first day</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:7px;flex:0 0 auto">
+                      <input value="{{ f.min_notice_days.value }}" onChange="{{ f.min_notice_days.onChange }}" style="width:78px;padding:8px 10px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                      <span style="font-size:12.5px;color:#78716C">days</span>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="flex:1 1 auto;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Longest single stretch</div>
+                      <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Blank means no limit</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:7px;flex:0 0 auto">
+                      <input value="{{ f.max_consecutive_days.value }}" onChange="{{ f.max_consecutive_days.onChange }}" placeholder="No limit" style="width:78px;padding:8px 10px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                      <span style="font-size:12.5px;color:#78716C">{{ unitLabel }}</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #F5F5F4">
+                <div style="width:3px;height:14px;background:#EA580C;border-radius:2px"></div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#57534E">At Year End · {{ policyLabel }}</span>
+              </div>
+              <div style="padding:18px;display:grid;gap:10px">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:10px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="font-size:13.5px;font-weight:600">Carry forward</div>
+                    <dc-import name="Toggle" st="{{ tg.carry_forward }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <sc-if value="{{ showCarry }}" hint-placeholder-val="{{ true }}">
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border:1px solid #FED7AA;border-radius:10px;background:#FFF7ED">
+                      <span style="font-size:13px;font-weight:550;color:#7C2D12">Max carried over</span>
+                      <div style="display:flex;align-items:center;gap:7px">
+                        <input value="{{ f.max_carry_forward.value }}" onChange="{{ f.max_carry_forward.onChange }}" style="width:70px;padding:8px 10px;border:1px solid #FDBA74;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                        <span style="font-size:12.5px;color:#9A3412">{{ unitLabel }}</span>
+                      </div>
+                    </label>
+                  </sc-if>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                    <div style="font-size:13.5px;font-weight:600">Encashable</div>
+                    <dc-import name="Toggle" st="{{ tg.encashable }}" hint-size="42px,24px"></dc-import>
+                  </div>
+                  <sc-if value="{{ showEncash }}" hint-placeholder-val="{{ false }}">
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border:1px solid #FED7AA;border-radius:10px;background:#FFF7ED">
+                      <span style="font-size:13px;font-weight:550;color:#7C2D12">Max encashed</span>
+                      <div style="display:flex;align-items:center;gap:7px">
+                        <input value="{{ f.max_encashment.value }}" onChange="{{ f.max_encashment.onChange }}" style="width:70px;padding:8px 10px;border:1px solid #FDBA74;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                        <span style="font-size:12.5px;color:#9A3412">{{ unitLabel }}</span>
+                      </div>
+                    </label>
+                  </sc-if>
+                </div>
+                <label style="display:grid;gap:6px;max-width:220px;margin-top:4px">
+                  <span style="font-size:12.5px;font-weight:550;color:#57534E">Leave year starts</span>
+                  <select value="{{ f.reset_month.value }}" onChange="{{ f.reset_month.onChange }}" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;background:#fff;color:#1C1917">
+                    <option value="1">January</option>
+                    <option value="4">April</option>
+                    <option value="7">July</option>
+                    <option value="10">October</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section style="background:#ffffff;border:1px solid #E7E5E4;border-radius:12px;overflow:hidden">
+              <div onClick="{{ toggleAdvanced }}" style="display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer">
+                <div style="width:3px;height:14px;background:#D6D3D1;border-radius:2px"></div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.02em;color:#78716C">Advanced</span>
+                <span style="font-size:12px;color:#A8A29E;margin-left:auto">{{ advLabel }}</span>
+              </div>
+              <sc-if value="{{ showAdvanced }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:4px 18px 18px;display:grid;gap:14px;border-top:1px solid #F5F5F4">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;align-items:stretch;margin-top:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div>
+                        <div style="font-size:13.5px;font-weight:600">Needs approval</div>
+                        <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Off means auto-approved</div>
+                      </div>
+                      <dc-import name="Toggle" st="{{ tg.requires_approval }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #E7E5E4;border-radius:10px;background:#FCFCFB">
+                      <div>
+                        <div style="font-size:13.5px;font-weight:600">Document required</div>
+                        <div style="font-size:11.5px;color:#A8A29E;margin-top:1px">Certificate or proof on request</div>
+                      </div>
+                      <dc-import name="Toggle" st="{{ tg.requires_document }}" hint-size="42px,24px"></dc-import>
+                    </div>
+                    <sc-if value="{{ showDocDays }}" hint-placeholder-val="{{ false }}">
+                      <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border:1px solid #FED7AA;border-radius:10px;background:#FFF7ED">
+                        <div style="flex:1 1 auto;min-width:0">
+                          <div style="font-size:13px;font-weight:600;color:#7C2D12">Only when longer than</div>
+                          <div style="font-size:11.5px;color:#9A3412;margin-top:1px">Shorter requests need no upload</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:7px;flex:0 0 auto">
+                          <input value="{{ f.doc_required_after_days.value }}" onChange="{{ f.doc_required_after_days.onChange }}" style="width:70px;padding:8px 10px;border:1px solid #FDBA74;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                          <span style="font-size:12.5px;color:#9A3412">days</span>
+                        </div>
+                      </label>
+                    </sc-if>
+                  </div>
+                  
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Display order</span>
+                      <input value="{{ f.display_order.value }}" onChange="{{ f.display_order.onChange }}" style="width:80px;padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums;background:#fff">
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Calendar colour</span>
+                      <input type="color" value="{{ f.color_code.value }}" onChange="{{ f.color_code.onChange }}" style="width:56px;height:38px;padding:3px;border:1px solid #D6D3D1;border-radius:8px;background:#fff">
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Effective from</span>
+                      <input value="{{ f.effctv_dt.value }}" onChange="{{ f.effctv_dt.onChange }}" type="date" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:13.5px;background:#fff">
+                    </label>
+                    <label style="display:grid;gap:6px">
+                      <span style="font-size:12.5px;font-weight:550;color:#57534E">Ends on</span>
+                      <input value="{{ f.trmntn_dt.value }}" onChange="{{ f.trmntn_dt.onChange }}" type="date" style="padding:9px 11px;border:1px solid #D6D3D1;border-radius:8px;font-size:13.5px;background:#fff">
+                    </label>
+                  </div>
+                  <div></div>
+                </div>
+              </sc-if>
+            </section>
+
+            <div style="position:sticky;bottom:0;display:flex;align-items:center;gap:12px;padding:14px 0 22px;background:linear-gradient(to top, #FAFAF9 62%, rgba(250,250,249,0))">
+              <span style="font-size:12.5px;color:#A8A29E">{{ dirtyLabel }}</span>
+              <button style="margin-left:auto;background:#fff;border:1px solid #D6D3D1;color:#44403C;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:9px;cursor:pointer">Discard</button>
+              <button style="border:0;background:#EA580C;color:#fff;font-size:13.5px;font-weight:600;padding:10px 20px;border-radius:9px;cursor:pointer" style-hover="background:#C2410C">Save changes</button>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;advancedOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;showProjection&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+const FREQ_MULT = { Monthly: 12, Quarterly: 4, Yearly: 1, OnJoining: 1 };
+
+const POLICY_KEYS = ['corp','emp_type','accrual_frequency','accrual_quantity','max_balance',
+  'carry_forward','max_carry_forward','encashable','max_encashment','prorate_on_joining','reset_month'];
+
+const CORPS = { all: 'All corporations', nlc: 'Next Life Care', nld: 'Next Life Diagnostics' };
+const EMPS = { all: 'All employee types', perm: 'Permanent', contract: 'Contract', intern: 'Intern' };
+
+function polLabel(p) {
+  if (p.corp === 'all' && p.emp_type === 'all') return 'Everyone';
+  const bits = [];
+  if (p.emp_type !== 'all') bits.push(EMPS[p.emp_type]);
+  if (p.corp !== 'all') bits.push(CORPS[p.corp]);
+  return bits.join(' · ');
+}
+
+function split(flat) {
+  const type = Object.assign({}, flat);
+  const pol = {};
+  POLICY_KEYS.forEach(k => { pol[k] = type[k]; delete type[k]; });
+  type.policies = [pol];
+  return type;
+}
+
+function mk(o) {
+  return Object.assign({
+    name: '', code: '', unit: 'Day', is_paid: true, allow_half_day: true,
+    requires_approval: true, requires_document: false, doc_required_after_days: 2,
+    max_consecutive_days: '', min_notice_days: 0, allow_negative_balance: false,
+    gender_applicable: 'All', applicable_after_days: 0, exclude_week_offs: true,
+    exclude_holidays: true, display_order: 0, color_code: '#0F766E', is_active: true,
+    effctv_dt: '2026-01-01', trmntn_dt: '',
+    corp: 'all', emp_type: 'all',
+    accrual_frequency: 'Monthly', accrual_quantity: 1, max_balance: 12,
+    carry_forward: false, max_carry_forward: '', encashable: false, max_encashment: '',
+    prorate_on_joining: true, reset_month: 1
+  }, o);
+}
+
+function mkType(o) { return split(mk(o)); }
+
+const PRESETS = [
+  { name: 'Casual Leave', code: 'CL', desc: '12 a year, monthly credit, no document, 1 day notice.',
+    v: { accrual_frequency: 'Monthly', accrual_quantity: 1, max_balance: 12, min_notice_days: 1, color_code: '#2563EB' } },
+  { name: 'Sick Leave', code: 'SL', desc: '12 a year, certificate after 2 days, no notice needed.',
+    v: { accrual_frequency: 'Monthly', accrual_quantity: 1, max_balance: 12, requires_document: true, doc_required_after_days: 2, min_notice_days: 0, color_code: '#DC2626' } },
+  { name: 'Earned Leave', code: 'EL', desc: '18 a year, carries forward, encashable, 7 day notice.',
+    v: { accrual_frequency: 'Monthly', accrual_quantity: 1.5, max_balance: 30, carry_forward: true, max_carry_forward: 15, encashable: true, max_encashment: 10, min_notice_days: 7, color_code: '#0F766E' } },
+  { name: 'Maternity Leave', code: 'ML', desc: '182 days on joining the policy, female staff, document required.',
+    v: { accrual_frequency: 'OnJoining', accrual_quantity: 182, max_balance: 182, gender_applicable: 'Female', requires_document: true, doc_required_after_days: 0, unit: 'Day', applicable_after_days: 80, color_code: '#DB2777' } },
+  { name: 'Loss of Pay', code: 'LOP', desc: 'Unpaid, no accrual, negative balance allowed.',
+    v: { is_paid: false, accrual_frequency: 'Yearly', accrual_quantity: 0, max_balance: '', allow_negative_balance: true, color_code: '#78716C' } },
+  { name: 'Custom type', code: '—', desc: 'Empty form. Set the rules yourself.', v: {} }
+];
+
+class Component extends DCLogic {
+  state = {
+    mode: 'edit',
+    step: 0,
+    sel: 0,
+    showAdvanced: null,
+    draft: null,
+    selPol: 0,
+    types: [
+      mkType({ name: 'Earned Leave', code: 'EL', accrual_quantity: 1, max_balance: 12, carry_forward: true, max_carry_forward: 6, encashable: true, max_encashment: 6, min_notice_days: 7, color_code: '#0F766E', display_order: 1 }),
+      mkType({ name: 'Sick Leave', code: 'SL', requires_document: true, doc_required_after_days: 2, color_code: '#DC2626', display_order: 2 }),
+      mkType({ name: 'Casual Leave', code: 'CL', min_notice_days: 1, color_code: '#2563EB', display_order: 3 }),
+      mkType({ name: 'Emergency Leave', code: 'EML', accrual_frequency: 'OnJoining', accrual_quantity: 2, max_balance: 2, requires_approval: true, color_code: '#CA8A04', display_order: 4 })
+    ]
+  };
+
+  constructor(props) {
+    super(props);
+    const el = this.state.types[0];
+    el.policies.push(Object.assign({}, el.policies[0], {
+      emp_type: 'contract', accrual_frequency: 'Monthly', accrual_quantity: 0.5,
+      max_balance: 6, carry_forward: false, max_carry_forward: '', encashable: false, max_encashment: ''
+    }));
+  }
+
+  polIndex() {
+    const t = this.state.types[this.state.sel];
+    return Math.min(this.state.selPol, t.policies.length - 1);
+  }
+
+  cur() {
+    if (this.state.mode === 'wizard' && this.state.draft) return this.state.draft;
+    const t = this.state.types[this.state.sel];
+    return Object.assign({}, t, t.policies[this.polIndex()]);
+  }
+
+  upd(k, v) { this.updMany({ [k]: v }); }
+
+  num(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+  updMany(obj) {
+    if (this.state.mode === 'wizard' && this.state.draft) {
+      this.setState(s => ({ draft: Object.assign({}, s.draft, obj) }));
+      return;
+    }
+    const typeBits = {}, polBits = {};
+    Object.keys(obj).forEach(k => {
+      (POLICY_KEYS.indexOf(k) === -1 ? typeBits : polBits)[k] = obj[k];
+    });
+    const pi = this.polIndex();
+    this.setState(s => {
+      const types = s.types.slice();
+      const t = Object.assign({}, types[s.sel], typeBits);
+      if (Object.keys(polBits).length) {
+        const policies = t.policies.slice();
+        policies[pi] = Object.assign({}, policies[pi], polBits);
+        t.policies = policies;
+      }
+      types[s.sel] = t;
+      return { types };
+    });
+  }
+
+  round2(n) { return Math.round(n * 100) / 100; }
+
+  renderVals() {
+    const c = this.cur();
+    const mode = this.state.mode;
+    const step = this.state.step;
+    const unitLabel = c.unit === 'Hour' ? 'hours' : 'days';
+
+    const f = {};
+    ['name','code','accrual_quantity','max_balance','max_carry_forward','max_encashment',
+     'min_notice_days','max_consecutive_days','applicable_after_days','doc_required_after_days',
+     'display_order','color_code','effctv_dt','trmntn_dt','reset_month','gender_applicable',
+     'corp','emp_type'].forEach(k => {
+      f[k] = { value: c[k] === null || c[k] === undefined ? '' : String(c[k]), onChange: e => this.upd(k, e.target.value) };
+    });
+
+    const tg = {};
+    ['is_paid','is_active','allow_half_day','requires_approval','requires_document',
+     'allow_negative_balance','exclude_week_offs','exclude_holidays','carry_forward',
+     'encashable','prorate_on_joining'].forEach(k => {
+      tg[k] = { on: !!c[k], toggle: () => this.upd(k, !this.cur()[k]) };
+    });
+
+    const curTotal = c.accrual_frequency === 'OnJoining'
+      ? this.num(c.accrual_quantity)
+      : this.round2(this.num(c.accrual_quantity) * FREQ_MULT[c.accrual_frequency]);
+
+    const seg = {};
+    ['Monthly','Quarterly','Yearly','OnJoining'].forEach(k => {
+      const on = c.accrual_frequency === k;
+      seg[k] = {
+        bg: on ? '#ffffff' : 'transparent', fg: on ? '#C2410C' : '#78716C',
+        onClick: () => {
+          const t = curTotal;
+          const mult = k === 'OnJoining' ? 1 : FREQ_MULT[k];
+          this.updMany({ accrual_frequency: k, accrual_quantity: this.round2(t / mult) });
+        }
+      };
+    });
+    const unitSeg = {};
+    [['day','Day'],['hour','Hour']].forEach(([key, val]) => {
+      const on = c.unit === val;
+      unitSeg[key] = { bg: on ? '#ffffff' : 'transparent', fg: on ? '#C2410C' : '#78716C', onClick: () => this.upd('unit', val) };
+    });
+
+    const cycleWord = { Monthly: 'month', Quarterly: 'quarter', Yearly: 'year', OnJoining: 'credit' }[c.accrual_frequency];
+    const cycles = c.accrual_frequency === 'OnJoining' ? 1 : FREQ_MULT[c.accrual_frequency];
+    f.total_per_year = {
+      value: String(curTotal),
+      onChange: e => {
+        const t = this.num(e.target.value);
+        const mult = c.accrual_frequency === 'OnJoining' ? 1 : FREQ_MULT[c.accrual_frequency];
+        this.updMany({ accrual_quantity: this.round2(t / mult), max_balance: t });
+      }
+    };
+    const capNum = c.max_balance === '' || c.max_balance === null ? null : this.num(c.max_balance);
+    const capAuto = capNum !== null && capNum === curTotal;
+    f.accrual_quantity = {
+      value: c.accrual_quantity === null || c.accrual_quantity === undefined ? '' : String(c.accrual_quantity),
+      onChange: e => {
+        const mult = c.accrual_frequency === 'OnJoining' ? 1 : FREQ_MULT[c.accrual_frequency];
+        const bits = { accrual_quantity: e.target.value };
+        if (capAuto) bits.max_balance = this.round2(this.num(e.target.value) * mult);
+        this.updMany(bits);
+      }
+    };
+    const resetCap = () => this.upd('max_balance', curTotal);
+    const qtyHint = c.accrual_frequency === 'OnJoining'
+      ? 'Credited in full when the policy starts'
+      : 'Auto: ' + curTotal + ' ÷ ' + cycles + ' ' + cycleWord + 's';
+    const capHint = capNum === null ? 'No cap — balance can keep growing'
+      : (capAuto ? 'Auto: same as the yearly total' : 'Manually set, ' + (capNum > curTotal ? 'above' : 'below') + ' the yearly total of ' + curTotal);
+
+    const qty = this.num(c.accrual_quantity);
+    const perYearN = c.accrual_frequency === 'OnJoining' ? qty : qty * FREQ_MULT[c.accrual_frequency];
+    const cap = c.max_balance === '' || c.max_balance === null ? null : this.num(c.max_balance);
+    const freqWord = { Monthly: 'every month', Quarterly: 'every quarter', Yearly: 'once a year', OnJoining: 'once, on joining' }[c.accrual_frequency];
+    const u = n => (Math.abs(this.num(n)) === 1 ? (c.unit === 'Hour' ? 'hour' : 'day') : unitLabel);
+    let projection;
+    if (perYearN === 0) {
+      projection = 'No balance accrues for this type — requests are recorded without a quota.';
+    } else {
+      const head = (c.name || 'This type') + ': ' + qty + ' ' + u(qty) + ' credited ' + freqWord;
+      const yearly = c.accrual_frequency === 'OnJoining' ? '' : ' — about ' + perYearN + ' ' + u(perYearN) + ' a year';
+      projection = head + yearly +
+        (cap ? ', with the balance never going past ' + cap + '.' : ', with no balance cap.') +
+        (c.carry_forward ? ' Up to ' + (c.max_carry_forward || 0) + ' ' + u(c.max_carry_forward || 0) + ' roll into the next year.' : ' Unused balance lapses at year end.');
+    }
+
+    const rail = this.state.types.map((t, i) => {
+      const on = i === this.state.sel && mode === 'edit';
+      return {
+        name: t.name, dot: t.color_code || '#A8A29E',
+        meta: (function (p0, n) {
+          const q = p0.max_balance === '' ? 'no quota' : p0.max_balance + ' ' + (t.unit === 'Hour' ? 'hrs' : 'days');
+          return q + (n > 1 ? ' · ' + n + ' policies' : ' · ' + (p0.accrual_frequency === 'OnJoining' ? 'on joining' : p0.accrual_frequency.toLowerCase()));
+        })(t.policies[0], t.policies.length),
+        bg: on ? '#FFF7ED' : '#ffffff',
+        fg: on ? '#9A3412' : '#1C1917',
+        onClick: () => this.setState({ sel: i, selPol: 0, mode: 'edit', step: 0, draft: null })
+      };
+    });
+
+    const presets = PRESETS.map(p => ({
+      name: p.name, code: p.code, desc: p.desc,
+      onClick: () => this.setState({ draft: mk(Object.assign({ name: p.name === 'Custom type' ? '' : p.name, code: p.code === '—' ? '' : p.code }, p.v)), step: 1 })
+    }));
+
+    const inWizard = mode === 'wizard';
+    const pols = inWizard ? [] : this.state.types[this.state.sel].policies;
+    const pi = inWizard ? 0 : this.polIndex();
+    const policyLabel = inWizard ? 'this policy' : polLabel(pols[pi]);
+    const policyTabs = pols.map((p, idx) => {
+      const on = idx === pi;
+      const tot = p.accrual_frequency === 'OnJoining'
+        ? this.num(p.accrual_quantity)
+        : this.round2(this.num(p.accrual_quantity) * FREQ_MULT[p.accrual_frequency]);
+      return {
+        label: polLabel(p) + (p.archived ? ' (archived)' : ''),
+        total: tot + ' ' + (c.unit === 'Hour' ? 'hrs' : 'days') + '/yr',
+        bg: on ? '#FFF7ED' : '#ffffff',
+        border: on ? '#FDBA74' : '#E7E5E4',
+        fg: on ? '#9A3412' : '#44403C',
+        sub: on ? '#C2410C' : '#A8A29E',
+        onClick: () => this.setState({ selPol: idx })
+      };
+    });
+    const seen = {};
+    let policyOverlap = false;
+    pols.forEach(p => {
+      const key = p.corp + '|' + p.emp_type;
+      if (seen[key]) policyOverlap = true;
+      seen[key] = true;
+    });
+    const addPolicy = () => this.setState(s => {
+      const types = s.types.slice();
+      const t = Object.assign({}, types[s.sel]);
+      t.policies = t.policies.concat([Object.assign({}, t.policies[t.policies.length - 1], { emp_type: 'contract' })]);
+      types[s.sel] = t;
+      return { types, selPol: t.policies.length - 1 };
+    });
+    const canRemovePolicy = pols.length > 1;
+    const editPolicy = (fn, extra) => this.setState(s => {
+      const types = s.types.slice();
+      const t = Object.assign({}, types[s.sel]);
+      if (t.policies.length < 2) return { confirmRemove: false };
+      t.policies = fn(t.policies);
+      types[s.sel] = t;
+      return Object.assign({ types, confirmRemove: false }, extra);
+    });
+    const removePolicy = () => this.setState({ confirmRemove: true });
+    const closeRemove = () => this.setState({ confirmRemove: false });
+    const archivePolicy = () => editPolicy(ps => ps.map((p, idx) => (idx === pi ? Object.assign({}, p, { archived: true }) : p)));
+    const deletePolicy = () => editPolicy(ps => ps.filter((_, idx) => idx !== pi), { selPol: Math.max(0, pi - 1) });
+    const unarchivePolicy = () => editPolicy(ps => ps.map((p, idx) => (idx === pi ? Object.assign({}, p, { archived: false }) : p)));
+    const isArchived = !!(pols[pi] && pols[pi].archived);
+
+    const gate = on => ({ bg: on ? '#FFF7ED' : '#F5F5F4', fg: on ? '#C2410C' : '#A8A29E' });
+    const adv = this.state.showAdvanced === null ? !!this.props.advancedOpen : this.state.showAdvanced;
+
+    return {
+      f, tg, seg, unitSeg, rail, presets, unitLabel, projection, qtyHint, capHint,
+      capManual: capNum !== null && !capAuto, resetCap, autoTotal: curTotal,
+      policyTabs, policyLabel, addPolicy, removePolicy, canRemovePolicy, policyOverlap,
+      confirmRemove: !!this.state.confirmRemove, closeRemove, archivePolicy, deletePolicy,
+      unarchivePolicy, isArchived,
+      typeCount: this.state.types.length,
+      isEdit: mode === 'edit',
+      isWizard: mode === 'wizard',
+      atPreset: mode === 'wizard' && step === 0,
+      atStep1: mode === 'wizard' && step === 1,
+      atStep2: mode === 'wizard' && step === 2,
+      atDone: mode === 'wizard' && step === 3,
+      showWizNav: mode === 'wizard' && (step === 1 || step === 2),
+      nextLabel: step === 2 ? 'Save leave type' : 'Continue',
+      s1: gate(step >= 1 && step < 3),
+      s2: gate(step === 2),
+      draftName: (this.state.draft && this.state.draft.name) || 'The leave type',
+      perYear: perYearN === 0 ? '—' : String(perYearN),
+      capLabel: cap ? String(cap) : '—',
+      carryLabel: c.carry_forward ? String(this.num(c.max_carry_forward)) : '—',
+      summaryLine: (c.is_paid ? 'Paid' : 'Unpaid') + ' · counted in ' + unitLabel +
+        ' · ' + (c.requires_approval ? 'approval required' : 'auto-approved') +
+        ' · ' + (inWizard ? 'one policy' : pols.length + (pols.length === 1 ? ' entitlement policy' : ' entitlement policies')),
+      showDocDays: !!c.requires_document,
+      showCarry: !!c.carry_forward,
+      showEncash: !!c.encashable,
+      showProjection: this.props.showProjection !== false,
+      showAdvanced: adv,
+      advLabel: adv ? 'Hide' : 'Approval, documents, ordering, colour, dates',
+      dirtyLabel: 'Changes apply from the next leave year',
+      toggleAdvanced: () => this.setState({ showAdvanced: !adv }),
+      startAdd: () => this.setState({ mode: 'wizard', step: 0, draft: null }),
+      back: () => this.setState(s => ({ step: s.step - 1 })),
+      next: () => this.setState(s => {
+        if (s.step === 2) {
+          const types = s.types.concat([split(s.draft)]);
+          return { types, step: 3, sel: types.length - 1, selPol: 0 };
+        }
+        return { step: s.step + 1 };
+      }),
+      finish: () => this.setState({ mode: 'edit', step: 0, draft: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;--ink-300:#A8B2BE;--ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --bg-app:#ECEFEE;--bg-canvas:#F4F6F5;--card:#FFFFFF;--border:#E2E7E6;--border-soft:#EBEEED;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  a{color:var(--teal-800);text-decoration:none}
+  a:hover{color:var(--teal-900)}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:#CFD6DD;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#B4BEC8;background-clip:content-box}
+  input::placeholder,textarea::placeholder{color:var(--ink-400)}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal-700)!important;box-shadow:0 0 0 3px var(--teal-50)}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;overflow:hidden;font-family:'Inter',system-ui,-apple-system,sans-serif;font-feature-settings:'ss01','cv11';background:var(--bg-app);color:var(--ink-900);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside style="width:248px;flex:none;background:var(--teal-950);display:flex;flex-direction:column;color:#fff">
+    <div style="display:flex;align-items:center;gap:11px;padding:18px 18px 16px">
+      <span style="width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,var(--teal-700),var(--teal-800));display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+      </span>
+      <div style="min-width:0">
+        <div style="font-size:15px;font-weight:700;letter-spacing:-.01em">NanoHealth</div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:1px">Front Desk</div>
+      </div>
+    </div>
+
+    <div style="margin:0 12px 4px;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:9px 11px">
+      <span style="width:8px;height:8px;border-radius:999px;background:#3ED598;box-shadow:0 0 0 3px rgba(62,213,152,.2);flex:none"></span>
+      <div style="min-width:0"><div style="font-size:11.5px;font-weight:600;color:#fff">Main Gate · Reception</div><div style="font-size:10.5px;color:rgba(255,255,255,.5)">Shift open · 08:00–16:00</div></div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:6px 12px 12px">
+      <div style="font-size:10px;font-weight:650;letter-spacing:.13em;color:rgba(255,255,255,.38);text-transform:uppercase;padding:12px 10px 8px">Desk</div>
+      <nav style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ nav }}" as="m" hint-placeholder-count="7">
+          <button onClick="{{ m.onClick }}" style="position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500" style-hover="background:rgba(255,255,255,.06)">
+            <sc-if value="{{ m.active }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;inset:0;background:var(--teal-800);border-radius:9px"></span>
+              <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:#7FD9C6;border-radius:0 3px 3px 0"></span>
+              <span style="position:relative;display:inline-flex;color:#fff"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:#fff;font-weight:600">{{ m.label }}</span>
+              <sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:relative;margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#fff;color:var(--teal-900);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ m.badge }}</span></sc-if>
+            </sc-if>
+            <sc-if value="{{ m.notActive }}" hint-placeholder-val="{{ true }}">
+              <span style="position:relative;display:inline-flex;color:rgba(255,255,255,.6)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:rgba(255,255,255,.72)">{{ m.label }}</span>
+              <sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:relative;margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ m.badge }}</span></sc-if>
+            </sc-if>
+          </button>
+        </sc-for>
+      </nav>
+    </div>
+
+    <div style="padding:12px;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)">
+        <span style="width:32px;height:32px;border-radius:999px;background:var(--teal-700);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;color:#fff">MI</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Meena Iyer</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.55)">Front Desk Executive</div>
+        </div>
+        <a href="login.html" title="Sign out" style="width:30px;height:30px;flex:none;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);text-decoration:none" style-hover="background:rgba(255,255,255,.1);color:#fff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"></path></svg></a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+
+    <header style="height:64px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 18px">
+      <div style="flex:none;width:296px;display:flex;align-items:center;gap:9px;background:var(--ink-50);border:1px solid var(--border-soft);border-radius:10px;padding:9px 13px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search visitor · phone · pass no." style="border:0;outline:0;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:13.5px;color:var(--ink-900)" />
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:8px 13px;font-size:13px;font-weight:550;color:var(--ink-700)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4"></path></svg>Wed, 2 Jul 2026</div>
+      <button title="Alerts" style="position:relative;width:40px;height:40px;flex:none;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink-600);display:inline-flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--bg-canvas);color:var(--ink-900)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <span style="position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:999px;background:#DD4A3B;border:1.5px solid #fff"></span>
+      </button>
+      <button onClick="{{ onOpenPreReg }}" style="flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:10px 16px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.28)" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Pre-register</button>
+    </header>
+
+    <main style="flex:1;min-height:0;overflow-y:auto;background:var(--bg-canvas)">
+      <div style="max-width:1440px;margin:0 auto;padding:22px 26px 34px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- ═════ LIVE BOARD ═════ -->
+        <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:14px">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <span style="width:42px;height:42px;border-radius:11px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2"></path></svg></span>
+            <div><div style="font-size:22px;font-weight:700;line-height:1;letter-spacing:-.01em">{{ visKpis.today }}</div><div style="font-size:12px;color:var(--ink-500);margin-top:4px">Visitors today</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <span style="width:42px;height:42px;border-radius:11px;background:#E7F3EC;color:#1E7A46;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M16 3.5a4 4 0 010 7"></path></svg></span>
+            <div><div style="font-size:22px;font-weight:700;line-height:1;letter-spacing:-.01em">{{ visKpis.onPrem }}</div><div style="font-size:12px;color:var(--ink-500);margin-top:4px">On premises now</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <span style="width:42px;height:42px;border-radius:11px;background:#E9EEFA;color:#4C6FBF;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2"></path></svg></span>
+            <div><div style="font-size:22px;font-weight:700;line-height:1;letter-spacing:-.01em">{{ visKpis.expected }}</div><div style="font-size:12px;color:var(--ink-500);margin-top:4px">Expected</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <span style="width:42px;height:42px;border-radius:11px;background:#FBF0DB;color:#96690F;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16.5v.5M12 21a9 9 0 100-18 9 9 0 000 18z"></path></svg></span>
+            <div><div style="font-size:22px;font-weight:700;line-height:1;letter-spacing:-.01em">{{ visKpis.pending }}</div><div style="font-size:12px;color:var(--ink-500);margin-top:4px">Awaiting host</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <span style="width:42px;height:42px;border-radius:11px;background:#FBE7E3;color:#B3372A;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3zM12 9v4M12 16v.5"></path></svg></span>
+            <div><div style="font-size:22px;font-weight:700;line-height:1;letter-spacing:-.01em">{{ visKpis.watch }}</div><div style="font-size:12px;color:var(--ink-500);margin-top:4px">Security alerts</div></div>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasVisWatch }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:13px;background:#FCEDEB;border:1px solid #F3C9C1;border-radius:12px;padding:13px 16px">
+          <span style="width:36px;height:36px;flex:none;border-radius:9px;background:#FBE0DB;color:#B3372A;display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.3a2 2 0 00-3.4 0zM12 9v4M12 17v.5"></path></svg></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:650;color:#8F2B20">{{ visWatchCount }} watchlist alert flagged at the gate today</div><div style="font-size:12px;color:#A85246;margin-top:2px">Review flagged entries under Security Gate before allowing entry.</div></div>
+          <button onClick="{{ onGoSecurity }}" style="flex:none;background:#fff;color:#B3372A;border:1px solid #F3C9C1;padding:7px 13px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#FBE7E3">Review</button>
+        </div>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:7px;height:7px;border-radius:999px;background:#2E9E5B"></span>On premises now</span><span style="font-size:12px;font-weight:700;color:var(--teal-800)">{{ visOnPremCount }}</span></div>
+            <sc-for list="{{ visOnPrem }}" as="v" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border-soft)">
+                <span style="width:32px;height:32px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">In {{ v.ci }} · → {{ v.hostName }}</div></div>
+                <button onClick="{{ v.onCheckOut }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer" style-hover="background:#FBE7E3;border-color:#F3C9C1;color:#B3372A">Check out</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#4C6FBF;border-radius:2px"></span>Expected arrivals</span><span style="font-size:12px;font-weight:700;color:#4C6FBF">{{ visExpectedCount }}</span></div>
+              <sc-for list="{{ visExpected }}" as="v" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">→ {{ v.hostName }} · ETA {{ v.etaShown }}</div></div>
+                  <button onClick="{{ v.onCheckIn }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:6px 12px;border-radius:8px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">Check in</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#96690F;border-radius:2px"></span>Awaiting host approval</span><span style="font-size:12px;font-weight:700;color:#96690F">{{ visPendingCount }}</span></div>
+              <sc-for list="{{ visPending }}" as="v" hint-placeholder-count="1">
+                <button onClick="{{ v.onOpen }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:11px 16px;border-bottom:1px solid var(--border-soft);cursor:pointer;font-family:inherit" style-hover="background:var(--bg-canvas)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.purpose }}</div></div>
+                  <span style="flex:none;display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:{{ v.sBg }};color:{{ v.sColor }}">Pending</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ CHECK-IN / OUT ═════ -->
+        <sc-if value="{{ isCheckin }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>New check-in</div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:9px;background:var(--ink-50);border:1px solid var(--border-soft);border-radius:10px;padding:10px 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><input placeholder="Search pre-registered visitor by name / phone / pass" style="border:0;outline:0;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:13px;color:var(--ink-900)" /></div>
+              <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:1px;background:var(--border-soft)"></div><span style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-400)">or register walk-in</span><div style="flex:1;height:1px;background:var(--border-soft)"></div></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Full name</span><input placeholder="Visitor name" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Mobile</span><input placeholder="+91" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Purpose</span><select style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0;background:#fff;cursor:pointer"><sc-for list="{{ visTypeOptions }}" as="vto" hint-placeholder-count="6"><option>{{ vto }}</option></sc-for></select></label>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Whom to meet (host)</span><select style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0;background:#fff;cursor:pointer"><sc-for list="{{ hostNameOptions }}" as="hno" hint-placeholder-count="8"><option>{{ hno }}</option></sc-for></select></label>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="border:1px dashed var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;background:var(--bg-canvas)"><span style="width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--border);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h3l1.5-2h5L20 5h-1M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M12 16a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"></path></svg></span><span style="font-size:12px;font-weight:600;color:var(--ink-800)">Capture photo</span><span style="font-size:11px;color:var(--ink-400)">Webcam · required</span></div>
+                <div style="border:1px dashed var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;background:var(--bg-canvas)"><span style="width:38px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--border);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM7 8h5M7 12h8M7 16h6"></path></svg></span><span style="font-size:12px;font-weight:600;color:var(--ink-800)">Scan ID proof</span><span style="font-size:11px;color:var(--ink-400)">Aadhaar / DL / Co. ID</span></div>
+              </div>
+              <button style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:11px 17px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.28)" style-hover="background:var(--teal-900)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5M6 18H4a1 1 0 01-1-1v-5a2 2 0 012-2h14a2 2 0 012 2v5a1 1 0 01-1 1h-2M8 14h8v6H8z"></path></svg>Check in &amp; print badge</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#4C6FBF;border-radius:2px"></span>Expected arrivals</span><span style="font-size:12px;font-weight:700;color:#4C6FBF">{{ visExpectedCount }}</span></div>
+              <sc-for list="{{ visExpected }}" as="v" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">→ {{ v.hostName }} · ETA {{ v.etaShown }}</div></div>
+                  <button onClick="{{ v.onCheckIn }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:6px 12px;border-radius:8px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">Check in</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:7px;height:7px;border-radius:999px;background:#2E9E5B"></span>Currently on premises</span><span style="font-size:12px;font-weight:700;color:var(--teal-800)">{{ visOnPremCount }}</span></div>
+              <sc-for list="{{ visOnPrem }}" as="v" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }} · <span style="font-weight:500;color:var(--ink-500);font-family:'JetBrains Mono',monospace;font-size:11.5px">{{ v.badgeShown }}</span></div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">In {{ v.ci }} · → {{ v.hostName }}</div></div>
+                  <button onClick="{{ v.onCheckOut }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer" style-hover="background:#FBE7E3;border-color:#F3C9C1;color:#B3372A">Check out</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ PRE-REGISTERED ═════ -->
+        <sc-if value="{{ isPrereg }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft)"><span style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#4C6FBF;border-radius:2px"></span>Pre-registered &amp; expected today</span><button onClick="{{ onOpenPreReg }}" style="display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--teal-800);border:1px solid var(--teal-100);padding:7px 13px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-50)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>New invite</button></div>
+          <sc-for list="{{ visExpected }}" as="v" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:13px;padding:13px 18px;border-bottom:1px solid var(--border-soft)">
+              <span style="width:36px;height:36px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+              <div style="min-width:0;flex:1"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900)">{{ v.name }} · <span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:{{ v.typeBg }};color:{{ v.typeColor }}">{{ v.type }}</span></div><div style="font-size:11.5px;color:var(--ink-400);margin-top:2px">{{ v.purpose }} · → {{ v.hostName }}</div></div>
+              <span style="flex:none;font-size:12px;color:var(--ink-500);font-family:'JetBrains Mono',monospace">ETA {{ v.etaShown }}</span>
+              <button onClick="{{ v.onCheckIn }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:7px 13px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">Check in</button>
+            </div>
+          </sc-for>
+          <div style="padding:12px 18px;background:#FCFDFC;font-size:12px;color:var(--ink-500)">Invites send a QR gate pass by SMS/WhatsApp · host is notified on arrival</div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ VISITOR LOG ═════ -->
+        <sc-if value="{{ isLog }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+          <div style="overflow-x:auto">
+          <div style="display:grid;grid-template-columns:minmax(180px,1.8fr) 1.1fr 1.3fr .8fr .8fr .9fr;gap:8px;padding:11px 18px;min-width:860px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500)">
+            <span>Visitor</span><span>Type</span><span>Host</span><span>In</span><span>Out</span><span>Status</span>
+          </div>
+          <sc-for list="{{ visLog }}" as="v" hint-placeholder-count="10">
+            <div onClick="{{ v.onOpen }}" style="display:grid;grid-template-columns:minmax(180px,1.8fr) 1.1fr 1.3fr .8fr .8fr .9fr;gap:8px;padding:12px 18px;min-width:860px;border-bottom:1px solid var(--border-soft);cursor:pointer;align-items:center" style-hover="background:var(--teal-50)">
+              <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                <span style="width:34px;height:34px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span>
+                <div style="min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11.5px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.companyShown }}</div></div>
+              </div>
+              <div><span style="display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ v.typeBg }};color:{{ v.typeColor }}">{{ v.type }}</span></div>
+              <div style="min-width:0"><div style="font-size:12.5px;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.hostName }}</div><div style="display:flex;align-items:center;gap:5px;margin-top:1px"><span style="width:7px;height:7px;border-radius:999px;flex:none;background:{{ v.deptColor }}"></span><span style="font-size:11px;color:var(--ink-400)">{{ v.hostDept }}</span></div></div>
+              <div style="font-size:12.5px;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ v.ci }}</div>
+              <div style="font-size:12.5px;color:var(--ink-700);font-family:'JetBrains Mono',monospace">{{ v.co }}</div>
+              <div><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ v.sBg }};color:{{ v.sColor }}"><span style="width:6px;height:6px;border-radius:999px;background:{{ v.sDot }}"></span>{{ v.status }}</span></div>
+            </div>
+          </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border-soft);background:#FCFDFC;font-size:12px;color:var(--ink-500)"><span>Live log · auto-refreshed</span><span style="color:var(--ink-400)">Retained 90 days per policy</span></div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ DELIVERIES ═════ -->
+        <sc-if value="{{ isDeliveries }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#F2682A;border-radius:2px"></span>Today's deliveries &amp; couriers</div>
+            <sc-for list="{{ visDeliveries }}" as="v" hint-placeholder-count="2">
+              <button onClick="{{ v.onOpen }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:13px 18px;border-bottom:1px solid var(--border-soft);cursor:pointer;font-family:inherit" style-hover="background:var(--bg-canvas)">
+                <span style="width:36px;height:36px;flex:none;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#F2682A;background:#FCEBE0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h9v9H3zM14 10h3l3 3v2h-6zM7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path></svg></span>
+                <div style="min-width:0;flex:1"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900)">{{ v.company }}</div><div style="font-size:11.5px;color:var(--ink-400)">{{ v.purpose }} · → {{ v.hostName }}</div></div>
+                <span style="flex:none;display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:{{ v.sBg }};color:{{ v.sColor }}">{{ v.status }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Log an incoming delivery</div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+              <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Courier / company</span><input placeholder="e.g. Blue Dart, Amazon" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Deliver to (dept/host)</span><select style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0;background:#fff;cursor:pointer"><sc-for list="{{ hostNameOptions }}" as="hn3" hint-placeholder-count="8"><option>{{ hn3 }}</option></sc-for></select></label>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Tracking / AWB</span><input placeholder="Optional" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+              </div>
+              <button style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:10px 16px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Log delivery &amp; notify host</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ SECURITY GATE ═════ -->
+        <sc-if value="{{ isSecurity }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:16px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+              <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Verify gate pass</div>
+              <div style="padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center">
+                <div style="width:104px;height:104px;border-radius:14px;border:2px dashed var(--teal-100);background:var(--teal-50);display:flex;align-items:center;justify-content:center;color:var(--teal-800)"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2M18 14h2M14 18h2M18 18h2M16 16h0"></path></svg></div>
+                <span style="font-size:12.5px;color:var(--ink-500);text-align:center">Scan the visitor's QR pass or enter the pass number</span>
+                <div style="display:flex;gap:8px;width:100%"><input placeholder="V-XXXX" style="flex:1;font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:.08em;text-align:center;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:10px 12px;outline:0" /><button style="flex:none;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:0 18px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)">Verify</button></div>
+                <div style="display:flex;gap:8px;width:100%"><button style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#E7F3EC;color:#1E7A46;border:1px solid #C5E4D2;padding:10px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:650;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Allow entry</button><button style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#FBE7E3;color:#B3372A;border:1px solid #F3C9C1;padding:10px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:650;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>Deny</button></div>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:#4C6FBF;border-radius:2px"></span>Vehicle log</div>
+              <sc-for list="{{ visOnPrem }}" as="v" hint-placeholder-count="3">
+                <sc-if value="{{ v.hasVehicle }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:9px;background:#E9EEFA;color:#4C6FBF;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 012-1.5h10A2 2 0 0119 8l2 5v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1zM6.5 16.5a1 1 0 100-2 1 1 0 000 2zM17.5 16.5a1 1 0 100-2 1 1 0 000 2z"></path></svg></span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ v.vehicle }}</div><div style="font-size:11.5px;color:var(--ink-400)">{{ v.name }} · {{ v.gate }}</div></div>
+                  <span style="flex:none;font-size:11.5px;color:var(--ink-500);font-family:'JetBrains Mono',monospace">{{ v.ci }}</span>
+                </div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #F3C9C1;border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#FCEDEB;border-bottom:1px solid #F3C9C1;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:#8F2B20"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.3a2 2 0 00-3.4 0zM12 9v4M12 17v.5"></path></svg>Watchlist &amp; security alerts · {{ visWatchCount }}</div>
+              <sc-for list="{{ visWatch }}" as="v" hint-placeholder-count="1">
+                <div style="display:flex;align-items:flex-start;gap:11px;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:34px;height:34px;flex:none;border-radius:999px;background:#FBE0DB;color:#B3372A;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650">{{ v.initials }}</span>
+                  <div style="min-width:0;flex:1"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900)">{{ v.name }}</div><div style="font-size:11.5px;color:#B3372A;margin-top:2px;line-height:1.4">{{ v.watchReason }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:3px">Attempted at {{ v.gate }} · host {{ v.hostName }}</div></div>
+                  <span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ v.sBg }};color:{{ v.sColor }}"><span style="width:6px;height:6px;border-radius:999px;background:{{ v.sDot }}"></span>{{ v.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Recent gate movements</div>
+              <div style="overflow-x:auto">
+              <div style="display:grid;grid-template-columns:minmax(150px,1.6fr) 1fr 1fr .9fr;gap:8px;padding:10px 16px;min-width:520px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)"><span>Visitor</span><span>Gate</span><span>Pass</span><span>Time</span></div>
+              <sc-for list="{{ visLog }}" as="v" hint-placeholder-count="8">
+                <div style="display:grid;grid-template-columns:minmax(150px,1.6fr) 1fr 1fr .9fr;gap:8px;padding:11px 16px;min-width:520px;border-bottom:1px solid var(--border-soft);align-items:center">
+                  <div style="display:flex;align-items:center;gap:9px;min-width:0"><span style="width:28px;height:28px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:650;color:{{ v.avColor }};background:{{ v.avBg }}">{{ v.initials }}</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</span></div>
+                  <span style="font-size:12px;color:var(--ink-600)">{{ v.gate }}</span>
+                  <span style="font-size:12px;color:var(--ink-500);font-family:'JetBrains Mono',monospace">{{ v.badgeShown }}</span>
+                  <span style="font-size:12px;color:var(--ink-700);font-family:'JetBrains Mono',monospace">{{ v.ci }}</span>
+                </div>
+              </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ═════ SELF KIOSK ═════ -->
+        <sc-if value="{{ isKiosk }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0 4px">
+          <div style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-500);background:#fff;border:1px solid var(--border);border-radius:999px;padding:7px 14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zM9 21h6M12 17v4"></path></svg>Lobby kiosk — visitor self check-in (tablet preview)</div>
+          <div style="width:560px;max-width:100%;background:#0B2E2D;border-radius:26px;padding:16px;box-shadow:0 30px 70px rgba(9,61,60,.35)">
+            <div style="background:linear-gradient(180deg,#F7FAF9,#EEF4F3);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.4)">
+              <div style="background:linear-gradient(120deg,var(--teal-900),var(--teal-700));padding:22px 24px;color:#fff;display:flex;align-items:center;gap:12px">
+                <span style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg></span>
+                <div><div style="font-size:17px;font-weight:700;letter-spacing:-.01em">Welcome to NanoHealth</div><div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px">Please check in below · कृपया चेक-इन करें</div></div>
+              </div>
+              <div style="padding:22px 24px 26px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                  <div style="background:#fff;border:1.5px solid #B7DAD7;border-radius:14px;padding:18px 16px;text-align:center;box-shadow:0 3px 12px rgba(11,22,32,.06)"><span style="width:46px;height:46px;margin:0 auto 10px;border-radius:12px;background:var(--teal-50);color:var(--teal-800);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v5H4zM4 13l3 7h10l3-7M9 16h6"></path></svg></span><div style="font-size:14px;font-weight:650;color:var(--ink-900)">I have an invite</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:3px">Enter code / scan QR</div></div>
+                  <div style="background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center;box-shadow:0 3px 12px rgba(11,22,32,.06)"><span style="width:46px;height:46px;margin:0 auto 10px;border-radius:12px;background:var(--ink-50);color:var(--ink-600);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></span><div style="font-size:14px;font-weight:650;color:var(--ink-900)">New walk-in</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:3px">Register yourself</div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <input placeholder="Your full name" style="font-family:inherit;font-size:14px;color:var(--ink-900);border:1px solid var(--border);border-radius:11px;padding:13px 15px;outline:0;background:#fff" />
+                  <input placeholder="Mobile number" style="font-family:inherit;font-size:14px;color:var(--ink-900);border:1px solid var(--border);border-radius:11px;padding:13px 15px;outline:0;background:#fff" />
+                  <select style="font-family:inherit;font-size:14px;color:var(--ink-700);border:1px solid var(--border);border-radius:11px;padding:13px 15px;outline:0;background:#fff;cursor:pointer"><option>Reason for visit — attending a patient</option><option>Meeting a staff member</option><option>Vendor / delivery</option><option>Interview</option></select>
+                  <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px dashed var(--border);border-radius:11px;padding:13px 15px"><span style="width:40px;height:40px;flex:none;border-radius:10px;background:var(--teal-50);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h3l1.5-2h5L20 5h-1M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M12 16a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"></path></svg></span><div><div style="font-size:12.5px;font-weight:600;color:var(--ink-800)">Take your photo</div><div style="font-size:11px;color:var(--ink-400)">Tap to capture · for your gate pass</div></div></div>
+                </div>
+                <button style="width:100%;margin-top:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:15px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 4px 14px rgba(14,94,92,.3)" style-hover="background:var(--teal-900)">Check in &amp; get gate pass</button>
+                <div style="text-align:center;font-size:11px;color:var(--ink-400);margin-top:12px">Your host will be notified instantly · By continuing you accept the visitor policy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═════ VISITOR DETAIL DRAWER ═════ -->
+  <sc-if value="{{ visDrawerSel.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseVisDrawer }}" style="position:fixed;inset:0;background:rgba(11,22,32,.34);z-index:60"></div>
+    <aside style="position:fixed;top:0;right:0;bottom:0;width:432px;max-width:94vw;background:var(--bg-canvas);z-index:61;display:flex;flex-direction:column;box-shadow:-16px 0 48px rgba(11,22,32,.22)">
+      <div style="flex:none;background:#fff;border-bottom:1px solid var(--border)">
+        <div style="height:74px;background:linear-gradient(120deg,var(--teal-900),var(--teal-700));display:flex;align-items:center;justify-content:flex-end;padding:0 14px">
+          <button onClick="{{ onCloseVisDrawer }}" title="Close" style="width:32px;height:32px;border:0;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.28)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <div style="padding:0 20px 15px;display:flex;gap:14px;align-items:flex-end">
+          <span style="width:66px;height:66px;flex:none;margin-top:-33px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;font-weight:700;border:4px solid #fff;box-shadow:0 4px 12px rgba(11,22,32,.14);color:{{ visDrawerSel.avColor }};background:{{ visDrawerSel.avBg }}">{{ visDrawerSel.initials }}</span>
+          <div style="flex:1;min-width:0;padding-bottom:2px">
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><h2 style="margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink-950)">{{ visDrawerSel.name }}</h2><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:{{ visDrawerSel.sBg }};color:{{ visDrawerSel.sColor }}"><span style="width:6px;height:6px;border-radius:999px;background:{{ visDrawerSel.sDot }}"></span>{{ visDrawerSel.status }}</span></div>
+            <div style="font-size:12.5px;color:var(--ink-500);margin-top:4px">{{ visDrawerSel.companyShown }} · {{ visDrawerSel.type }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 20px 26px;display:flex;flex-direction:column;gap:14px">
+        <sc-if value="{{ visDrawerSel.isDenied }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-start;gap:11px;background:#FCEDEB;border:1px solid #F3C9C1;border-radius:12px;padding:13px 15px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B3372A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M10.3 3.3L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.3a2 2 0 00-3.4 0zM12 9v4M12 17v.5"></path></svg>
+          <div style="font-size:12.5px;color:#8F2B20;line-height:1.45">{{ visDrawerSel.watchReason }}</div>
+        </div>
+        </sc-if>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Visit details</div>
+          <div style="padding:6px 15px 12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Purpose</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);text-align:right;max-width:60%">{{ visDrawerSel.purpose }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Host</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900)">{{ visDrawerSel.hostName }} · {{ visDrawerSel.hostDept }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Mobile</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ visDrawerSel.phone }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">ID proof</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900)">{{ visDrawerSel.idType }} ····{{ visDrawerSel.idLast4 }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0"><span style="font-size:12.5px;color:var(--ink-500)">Gate pass</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ visDrawerSel.badgeShown }}</span></div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:#4C6FBF;border-radius:2px"></span>Movement</div>
+          <div style="padding:6px 15px 12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Checked in</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ visDrawerSel.ci }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Checked out</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ visDrawerSel.co }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span style="font-size:12.5px;color:var(--ink-500)">Gate</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900)">{{ visDrawerSel.gate }}</span></div>
+            <sc-if value="{{ visDrawerSel.hasVehicle }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0"><span style="font-size:12.5px;color:var(--ink-500)">Vehicle</span><span style="font-size:12.5px;font-weight:550;color:var(--ink-900);font-family:'JetBrains Mono',monospace">{{ visDrawerSel.vehicle }}</span></div></sc-if>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <sc-if value="{{ visDrawerSel.showBadge }}" hint-placeholder-val="{{ false }}"><button onClick="{{ visDrawerSel.onBadge }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;color:var(--teal-800);border:1px solid var(--teal-100);padding:10px 14px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-50)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5M6 18H4a1 1 0 01-1-1v-5a2 2 0 012-2h14a2 2 0 012 2v5a1 1 0 01-1 1h-2M8 14h8v6H8z"></path></svg>View badge</button></sc-if>
+          <sc-if value="{{ visDrawerSel.showCheckOut }}" hint-placeholder-val="{{ false }}"><button onClick="{{ visDrawerSel.onCheckOut }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:10px 14px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"></path></svg>Check out</button></sc-if>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <!-- ═════ PRE-REGISTER MODAL ═════ -->
+  <sc-if value="{{ preOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onClosePreReg }}" style="position:fixed;inset:0;background:rgba(11,22,32,.34);z-index:70"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px);overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(11,22,32,.28);z-index:71">
+      <div style="display:flex;align-items:flex-start;gap:13px;padding:20px 22px 16px;border-bottom:1px solid var(--border-soft)">
+        <span style="width:40px;height:40px;flex:none;border-radius:11px;background:var(--teal-800);color:#fff;display:inline-flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2"></path></svg></span>
+        <div style="flex:1"><h3 style="margin:0;font-size:16px;font-weight:700;color:var(--ink-950)">Pre-register a visitor</h3><p style="margin:4px 0 0;font-size:12.5px;color:var(--ink-500)">An invite with a QR gate pass is sent to the visitor and the host is notified.</p></div>
+        <button onClick="{{ onClosePreReg }}" style="width:30px;height:30px;flex:none;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div style="padding:18px 22px 8px;display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Visitor name</span><input placeholder="Full name" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Mobile</span><input placeholder="+91" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Purpose</span><select style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0;background:#fff;cursor:pointer"><sc-for list="{{ visTypeOptions }}" as="vt2" hint-placeholder-count="6"><option>{{ vt2 }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Host</span><select style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0;background:#fff;cursor:pointer"><sc-for list="{{ hostNameOptions }}" as="hn2" hint-placeholder-count="8"><option>{{ hn2 }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Date</span><input type="date" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11.5px;font-weight:600;color:var(--ink-600)">Expected time</span><input type="time" style="font-family:inherit;font-size:13px;color:var(--ink-900);border:1px solid var(--border);border-radius:9px;padding:9px 11px;outline:0" /></label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:9px;padding:12px 22px 20px">
+        <button onClick="{{ onClosePreReg }}" style="background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:9px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:550;cursor:pointer" style-hover="background:var(--bg-canvas)">Cancel</button>
+        <button onClick="{{ onClosePreReg }}" style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 17px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>Send invite</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═════ GATE PASS / BADGE MODAL ═════ -->
+  <sc-if value="{{ visBadgeSel.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseBadge }}" style="position:fixed;inset:0;background:rgba(11,22,32,.34);z-index:80"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:340px;max-width:calc(100vw - 32px);background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(11,22,32,.30);z-index:81;overflow:hidden">
+      <div style="background:linear-gradient(120deg,var(--teal-900),var(--teal-700));padding:16px 18px;display:flex;align-items:center;gap:10px;color:#fff">
+        <span style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg></span>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700">NanoHealth · Visitor Pass</div><div style="font-size:11px;color:rgba(255,255,255,.8)">Wear at all times · return at exit</div></div>
+        <button onClick="{{ onCloseBadge }}" style="width:28px;height:28px;border:0;border-radius:7px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.28)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div style="padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:12px">
+        <span style="width:70px;height:70px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:23px;font-weight:700;color:{{ visBadgeSel.avColor }};background:{{ visBadgeSel.avBg }}">{{ visBadgeSel.initials }}</span>
+        <div style="text-align:center"><div style="font-size:17px;font-weight:700;color:var(--ink-950)">{{ visBadgeSel.name }}</div><div style="font-size:12.5px;color:var(--ink-500);margin-top:2px">{{ visBadgeSel.type }} · → {{ visBadgeSel.hostName }}</div></div>
+        <span style="display:inline-block;font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--teal-900);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:8px;padding:5px 14px;font-family:'JetBrains Mono',monospace">{{ visBadgeSel.badgeShown }}</span>
+        <div style="width:120px;height:120px;border-radius:12px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-900)"><svg width="86" height="86" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2M18 14h2M14 18h2M18 18h2M16 16h0M20 20h0"></path></svg></div>
+        <div style="font-size:11px;color:var(--ink-400)">Valid for today · {{ visBadgeSel.gate }}</div>
+        <button onClick="{{ onCloseBadge }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:10px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5M6 18H4a1 1 0 01-1-1v-5a2 2 0 012-2h14a2 2 0 012 2v5a1 1 0 01-1 1h-2M8 14h8v6H8z"></path></svg>Print pass</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <template id="__bundler_thumbnail" data-bg-color="#093D3C">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#093D3C"/><g transform="translate(480,300)" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"><rect x="0" y="8" width="240" height="200" rx="20" stroke="#7FD9C6"/><circle cx="82" cy="92" r="30"/><path d="M36 168c8-26 30-40 66-40s58 14 66 40"/><path d="M150 84h54M150 116h54"/></g><text x="600" y="580" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">Front Desk</text></svg>
+  </template>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    view:'board',
+    visOut:[], visIn:[], visDec:{},
+    visDrawerId:null, preOpen:false, visBadgeId:null,
+  };
+
+  renderVals(){
+    const s = this.state;
+
+    const DEPT_COLORS = {
+      'Cardiology':'#DD4A3B','Emergency':'#F2682A','ICU':'#B4791F','Oncology':'#7A5AC2','Nursing':'#1B8682',
+      'Radiology':'#4C6FBF','Pediatrics':'#C2557A','Pharmacy':'#2E8B57','Laboratory':'#3F8E9E','IT':'#2A6FDB','Administration':'#5F6E80'
+    };
+    const HOSTS = {
+      3:{name:'Priya Nair',dept:'ICU'}, 4:{name:'Dr. Vikram Iyer',dept:'Oncology'}, 6:{name:'Arjun Kapoor',dept:'Radiology'},
+      7:{name:'Dr. Meera Krishnan',dept:'Pediatrics'}, 8:{name:'Faisal Ahmed',dept:'Pharmacy'}, 11:{name:'Anita Joseph',dept:'Nursing'},
+      12:{name:'Sanjay Gupta',dept:'Administration'}, 14:{name:'Deepak Kumar',dept:'ICU'}
+    };
+    const findE = (id) => HOSTS[id] || { name:'—', dept:'—' };
+
+    const VIS_TYPE_META = {
+      'Patient Attendant': { color:'#1B8682', bg:'#EAF3F2' },
+      'Vendor':            { color:'#4C6FBF', bg:'#E9EEFA' },
+      'Interview':         { color:'#7A5AC2', bg:'#EEE9FA' },
+      'Business':          { color:'#2E8B57', bg:'#E7F3EC' },
+      'Contractor':        { color:'#B4791F', bg:'#FBF0DB' },
+      'Delivery':          { color:'#F2682A', bg:'#FCEBE0' },
+    };
+    const VIS_STATUS_META = {
+      'On premises': { color:'#1E7A46', bg:'#E7F3EC', dot:'#2E9E5B' },
+      'Expected':    { color:'#4C6FBF', bg:'#E9EEFA', dot:'#4C6FBF' },
+      'Checked out': { color:'#5F6E80', bg:'#F1F3F5', dot:'#8390A0' },
+      'Pending':     { color:'#96690F', bg:'#FBF0DB', dot:'#C99212' },
+      'Denied':      { color:'#B3372A', bg:'#FBE7E3', dot:'#D0503F' },
+    };
+    const VISITORS = [
+      { id:1,  name:'Ramesh Reddy',    type:'Patient Attendant', company:'—',                  purpose:'Attending patient · ICU Room 412', hostId:3,  phone:'+91 90000 11223', idType:'Aadhaar',        idLast4:'6721', checkIn:'08:42', checkOut:null, badge:'V-2041', gate:'Main Gate',    vehicle:'TS09 AB 1123', watch:false, status:'On premises' },
+      { id:2,  name:'Sunita Rao',      type:'Patient Attendant', company:'—',                  purpose:'Attending patient · Ward 3B',      hostId:11, phone:'+91 90000 22110', idType:'Aadhaar',        idLast4:'2310', checkIn:'09:05', checkOut:null, badge:'V-2042', gate:'Main Gate',    vehicle:null,           watch:false, status:'On premises' },
+      { id:3,  name:'Anil Kumar',      type:'Vendor',            company:'MedEquip Solutions', purpose:'Service call — MRI unit',          hostId:6,  phone:'+91 90000 33221', idType:'Driving License', idLast4:'8842', checkIn:'10:12', checkOut:null, badge:'V-2043', gate:'Service Gate', vehicle:'TS07 CJ 9087', watch:false, status:'On premises' },
+      { id:4,  name:'Pooja Malhotra',  type:'Interview',         company:'—',                  purpose:'Interview — Staff Nurse (ICU)',   hostId:12, phone:'+91 90000 44332', idType:'Aadhaar',        idLast4:'5590', checkIn:'11:00', checkOut:null, badge:'V-2044', gate:'Main Gate',    vehicle:null,           watch:false, status:'On premises' },
+      { id:11, name:'Sanjeev Bhat',    type:'Contractor',        company:'CoolAir HVAC',       purpose:'AC maintenance — West Wing',      hostId:12, phone:'+91 90000 21109', idType:'Driving License', idLast4:'7734', checkIn:'08:15', checkOut:null, badge:'V-2040', gate:'Service Gate', vehicle:'TS10 EM 3345', watch:false, status:'On premises' },
+      { id:5,  name:'David Fernandes', type:'Business',          company:'Apollo Diagnostics', purpose:'Partnership review',              hostId:7,  phone:'+91 90000 55443', idType:'Company ID',     idLast4:'1120', checkIn:null,    checkOut:null, badge:null,     gate:null,           vehicle:null,           watch:false, status:'Expected', eta:'14:30' },
+      { id:10, name:'Lata Menon',      type:'Patient Attendant', company:'—',                  purpose:'Attending patient · Oncology',    hostId:4,  phone:'+91 90000 10098', idType:'Aadhaar',        idLast4:'2245', checkIn:null,    checkOut:null, badge:null,     gate:null,           vehicle:null,           watch:false, status:'Expected', eta:'15:00' },
+      { id:12, name:'Anjali Verma',    type:'Interview',         company:'—',                  purpose:'Interview — HR Executive',        hostId:12, phone:'+91 90000 33110', idType:'Aadhaar',        idLast4:'8890', checkIn:null,    checkOut:null, badge:null,     gate:null,           vehicle:null,           watch:false, status:'Expected', eta:'16:00' },
+      { id:8,  name:'Vikas Sethi',     type:'Business',          company:'—',                  purpose:'Walk-in — wishes to meet HR',     hostId:12, phone:'+91 90000 88776', idType:'Aadhaar',        idLast4:'4471', checkIn:null,    checkOut:null, badge:null,     gate:'Main Gate',    vehicle:null,           watch:false, status:'Pending', requestedAt:'11:20' },
+      { id:6,  name:'Blue Dart Courier', type:'Delivery',        company:'Blue Dart',          purpose:'Pharma consignment',              hostId:8,  phone:'+91 90000 66554', idType:'Company ID',     idLast4:'3390', checkIn:'09:48', checkOut:'09:56', badge:'V-2039', gate:'Service Gate', vehicle:'TS08 DL 4521', watch:false, status:'Checked out' },
+      { id:7,  name:'Mohan Das',       type:'Patient Attendant', company:'—',                  purpose:'Discharge assistance',            hostId:14, phone:'+91 90000 77665', idType:'Aadhaar',        idLast4:'9902', checkIn:'07:30', checkOut:'12:10', badge:'V-2035', gate:'Main Gate',    vehicle:null,           watch:false, status:'Checked out' },
+      { id:13, name:'Star Health Rep', type:'Business',          company:'Star Health',        purpose:'Group policy review',             hostId:12, phone:'+91 90000 44221', idType:'Company ID',     idLast4:'5512', checkIn:'Yst 15:20', checkOut:'Yst 16:40', badge:'V-1998', gate:'Main Gate', vehicle:null,        watch:false, status:'Checked out' },
+      { id:9,  name:'Rahul Grover',    type:'Business',          company:'—',                  purpose:'Unscheduled — flagged at gate',   hostId:12, phone:'+91 90000 99887', idType:'—',              idLast4:'—',    checkIn:null,    checkOut:null, badge:null,     gate:'Main Gate',    vehicle:null,           watch:true,  status:'Denied', watchReason:'Watchlist match — prior trespass incident (12 Feb 2026)' },
+    ];
+
+    const visOut = s.visOut || [], visIn = s.visIn || [], visDec = s.visDec || {};
+    const effStatus = (v) => {
+      if (visOut.includes(v.id)) return 'Checked out';
+      if (visDec[v.id] === 'declined') return 'Denied';
+      if (visDec[v.id] === 'approved') return 'On premises';
+      if (v.status === 'Expected' && visIn.includes(v.id)) return 'On premises';
+      return v.status;
+    };
+    const visInitials = (n) => n.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const openVisDrawer = (id) => () => this.setState({ visDrawerId:id });
+    const decorate = (v) => {
+      const st = effStatus(v); const sm = VIS_STATUS_META[st]; const tm = VIS_TYPE_META[v.type];
+      const host = findE(v.hostId);
+      const ci = (visIn.includes(v.id) || visDec[v.id]==='approved') && !v.checkIn ? 'Just now' : (v.checkIn || '—');
+      const co = visOut.includes(v.id) && !v.checkOut ? 'Just now' : (v.checkOut || '—');
+      return { ...v, status:st, initials:visInitials(v.name), avColor:tm.color, avBg:tm.bg,
+        typeColor:tm.color, typeBg:tm.bg, sColor:sm.color, sBg:sm.bg, sDot:sm.dot,
+        hostName:host.name, hostDept:host.dept, deptColor:DEPT_COLORS[host.dept]||'#5F6E80',
+        ci, co, companyShown: v.company==='—' ? 'Individual' : v.company,
+        badgeShown: v.badge || '—', etaShown: v.eta || '—',
+        onOpen: openVisDrawer(v.id),
+        onCheckOut: () => this.setState(x => ({ visOut:[...(x.visOut||[]), v.id] })),
+        onCheckIn:  () => this.setState(x => ({ visIn:[...(x.visIn||[]), v.id] })),
+        onApprove:  () => this.setState(x => ({ visDec:{...(x.visDec||{}), [v.id]:'approved'} })),
+        onDecline:  () => this.setState(x => ({ visDec:{...(x.visDec||{}), [v.id]:'declined'} })),
+        onBadge:    () => this.setState({ visBadgeId:v.id }),
+      };
+    };
+    const visAll = VISITORS.map(decorate);
+    const byStatus = (st) => visAll.filter(v => v.status === st);
+    const visLog = visAll.slice();
+    const visOnPrem = byStatus('On premises');
+    const visExpected = byStatus('Expected');
+    const visPending = byStatus('Pending');
+    const visDeliveries = visAll.filter(v => v.type === 'Delivery');
+    const visWatch = visAll.filter(v => v.watch || v.status === 'Denied');
+    const visKpis = {
+      today: visAll.filter(v => v.checkIn || v.status==='On premises').length + visExpected.length,
+      onPrem: visOnPrem.length, expected: visExpected.length,
+      pending: visPending.length, deliveries: visDeliveries.length, watch: visWatch.length,
+    };
+
+    const hostNameOptions = Object.values(HOSTS).map(h => h.name);
+    const visTypeOptions = Object.keys(VIS_TYPE_META);
+
+    const NAV = [
+      { id:'board',      label:'Live Board',    iconPath:'M4 13h7V4H4zM13 20h7v-9h-7zM4 20h7v-5H4zM13 9h7V4h-7z' },
+      { id:'checkin',    label:'Check-in / out',iconPath:'M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3' },
+      { id:'prereg',     label:'Pre-registered',iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4M9 15l2 2 4-4' },
+      { id:'log',        label:'Visitor Log',   iconPath:'M4 6h16M4 12h16M4 18h10' },
+      { id:'deliveries', label:'Deliveries',    iconPath:'M3 8a2 2 0 012-2h9v9H3zM14 10h3l3 3v2h-6zM7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z', badge: String(visKpis.deliveries) },
+      { id:'security',   label:'Security Gate', iconPath:'M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3zM9 12l2 2 4-4', badge: String(visKpis.watch) },
+      { id:'kiosk',      label:'Self Kiosk',    iconPath:'M4 4h16a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zM9 21h6M12 17v4' },
+    ];
+    const nav = NAV.map(m => ({ ...m, active: s.view===m.id, notActive: s.view!==m.id,
+      hasBadge: !!m.badge && m.badge !== '0', onClick: () => this.setState({ view:m.id }) }));
+
+    const visBadgeSel = (() => { const v = visAll.find(x => x.id === s.visBadgeId); return v ? { open:true, ...v } : { open:false }; })();
+    const visDrawerSel = (() => { const v = visAll.find(x => x.id === s.visDrawerId); return v ? { open:true, ...v,
+      showCheckOut: v.status==='On premises', showBadge: !!v.badge, isDenied: v.status==='Denied', hasVehicle: !!v.vehicle } : { open:false }; })();
+
+    return {
+      nav,
+      isBoard: s.view==='board', isCheckin: s.view==='checkin', isPrereg: s.view==='prereg',
+      isLog: s.view==='log', isDeliveries: s.view==='deliveries', isSecurity: s.view==='security', isKiosk: s.view==='kiosk',
+      visKpis, visLog, visOnPrem, visExpected, visPending, visDeliveries, visWatch,
+      visOnPremCount: visOnPrem.length, visExpectedCount: visExpected.length, visPendingCount: visPending.length,
+      visWatchCount: visWatch.length, hasVisWatch: visWatch.length>0,
+      hostNameOptions, visTypeOptions,
+      onGoSecurity: () => this.setState({ view:'security' }),
+      preOpen: s.preOpen, onOpenPreReg: () => this.setState({ preOpen:true }), onClosePreReg: () => this.setState({ preOpen:false }),
+      visBadgeSel, onCloseBadge: () => this.setState({ visBadgeId:null }),
+      visDrawerSel, onCloseVisDrawer: () => this.setState({ visDrawerId:null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

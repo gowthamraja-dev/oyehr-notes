@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;--ink-300:#A8B2BE;--ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --bg-app:#ECEFEE;--bg-canvas:#F4F6F5;--card:#FFFFFF;--border:#E2E7E6;--border-soft:#EBEEED;--upload:#F2682A;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  .emp-app-scroll::-webkit-scrollbar{width:0;height:0}
+  input::placeholder,textarea::placeholder{color:var(--ink-400)}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal-700)!important;box-shadow:0 0 0 3px var(--teal-50)}
+  @keyframes empPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;background:radial-gradient(1200px 700px at 50% -10%,#F3F6F5,#E6EBEA);font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:#1B2937;padding:44px 32px 60px">
+
+  <!-- Header -->
+  <div style="max-width:520px;margin:0 auto 36px;text-align:center">
+    <div style="display:inline-flex;align-items:center;gap:11px">
+      <span style="width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,#1B8682,#14716F);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(14,94,92,.3)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+      </span>
+      <div style="text-align:left">
+        <div style="font-size:18px;font-weight:700;letter-spacing:-.015em;color:#0B1620">NanoHealth — Employee App</div>
+        <div style="font-size:12.5px;color:#5F6E80;margin-top:2px">High-fidelity iOS prototype · tap through every module</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="position:relative;width:412px;height:868px;border-radius:60px;background:#0B0E12;padding:14px;box-shadow:0 2px 0 2px #23272E inset,0 40px 80px -20px rgba(9,20,20,.5),0 12px 30px rgba(9,20,20,.28)">
+      <!-- side buttons -->
+      <div style="position:absolute;left:-3px;top:168px;width:3px;height:34px;border-radius:3px;background:#1A1E24"></div>
+      <div style="position:absolute;left:-3px;top:214px;width:3px;height:58px;border-radius:3px;background:#1A1E24"></div>
+      <div style="position:absolute;left:-3px;top:284px;width:3px;height:58px;border-radius:3px;background:#1A1E24"></div>
+      <div style="position:absolute;right:-3px;top:238px;width:3px;height:92px;border-radius:3px;background:#1A1E24"></div>
+      <!-- screen -->
+      <div style="position:relative;width:384px;height:840px;border-radius:47px;overflow:hidden;background:#F4F6F5">
+        <!-- status bar -->
+        <div style="position:absolute;top:0;left:0;right:0;height:52px;z-index:20;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 9px;background:#fff;pointer-events:none">
+          <span style="font-size:15px;font-weight:650;color:#0B1620;letter-spacing:.02em">9:41</span>
+          <span style="display:inline-flex;align-items:center;gap:7px">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="#0B1620"><rect x="0" y="7" width="3" height="5" rx="1"></rect><rect x="5" y="4.5" width="3" height="7.5" rx="1"></rect><rect x="10" y="2" width="3" height="10" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.5C11 2.5 13.2 3.5 14.8 5.1M8.5 2.5C6 2.5 3.8 3.5 2.2 5.1M8.5 6.2c1.2 0 2.3.5 3.1 1.3M8.5 6.2c-1.2 0-2.3.5-3.1 1.3" stroke="#0B1620" stroke-width="1.4" stroke-linecap="round"></path><circle cx="8.5" cy="10.2" r="1.2" fill="#0B1620"></circle></svg>
+            <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.6" y="0.6" width="21" height="11.8" rx="3" stroke="#0B1620" stroke-width="1" opacity=".4"></rect><rect x="2.2" y="2.2" width="16.5" height="8.6" rx="1.6" fill="#0B1620"></rect><rect x="23" y="4" width="1.8" height="5" rx=".9" fill="#0B1620" opacity=".4"></rect></svg>
+          </span>
+        </div>
+        <!-- dynamic island -->
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:33px;border-radius:20px;background:#0B0E12;z-index:30"></div>
+        <!-- app -->
+        <div style="position:absolute;top:52px;left:0;right:0;bottom:0">
+
+<div style="width:100%;height:100%;position:relative;overflow:hidden;display:flex;flex-direction:column;font-family:'Inter',system-ui,-apple-system,sans-serif;font-feature-settings:'ss01','cv11';background:var(--bg-canvas);color:var(--ink-900);-webkit-font-smoothing:antialiased">
+
+  <!-- ══════════ APP BAR ══════════ -->
+  <header style="flex:none;height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 12px 0 8px;z-index:5">
+    <button onClick="{{ onOpenDrawer }}" style="width:40px;height:40px;flex:none;border:0;background:transparent;border-radius:10px;color:var(--ink-700);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-active="background:var(--ink-50)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+    </button>
+    <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink-950);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ screenTitle }}</div></div>
+    <button onClick="{{ onToggleNotif }}" style="width:40px;height:40px;flex:none;border:0;background:transparent;border-radius:10px;color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative" style-active="background:var(--ink-50)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+      <span style="position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--upload);border:1.5px solid #fff;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ notifCount }}</span>
+    </button>
+  </header>
+
+  <!-- ══════════ CONTENT ══════════ -->
+  <div class="emp-app-scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch">
+
+    <!-- ═══ HOME ═══ -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div style="font-size:20px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">{{ greeting }}, Ananya</div>
+        <div style="font-size:12px;color:var(--ink-500);margin-top:3px">{{ todayFull }} · Morning shift</div>
+      </div>
+
+      <!-- Clock (compact) -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:11px 11px 11px 15px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+        <span style="width:9px;height:9px;flex:none;border-radius:999px;background:{{ clockDotColor }};animation:{{ clockAnim }}"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:650;color:var(--ink-900)">{{ clockStatusLabel }}<span style="font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--ink-500);margin-left:8px">{{ clockShort }}</span></div>
+          <div style="font-size:11px;color:var(--ink-400);margin-top:2px">{{ clockSubLabel }}</div>
+        </div>
+        <button onClick="{{ onToggleClock }}" style="flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;background:var(--teal-800);color:#fff;padding:11px 18px;border-radius:11px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ clockIcon }}"></path></svg>{{ clockBtnLabel }}</button>
+      </div>
+
+      <!-- Stat grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        <sc-for list="{{ homeStats }}" as="k" hint-placeholder-count="4">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 14px;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+            <span style="display:inline-flex;color:var(--teal-800)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ k.icon }}"></path></svg></span>
+            <div style="font-size:20px;font-weight:700;color:var(--ink-950);margin-top:7px;letter-spacing:-.01em">{{ k.value }}</div>
+            <div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ k.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- Quick actions -->
+      <div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900);margin:2px 2px 10px"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Quick actions</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
+            <button onClick="{{ q.onClick }}" style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 14px;cursor:pointer;font-family:inherit;text-align:left" style-active="background:var(--teal-50);border-color:var(--teal-100)">
+              <span style="width:34px;height:34px;flex:none;border-radius:10px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ q.icon }}"></path></svg></span>
+              <span style="font-size:12.5px;font-weight:600;color:var(--ink-800);line-height:1.25">{{ q.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Open requests -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>My open requests</div>
+        <sc-for list="{{ openRequests }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ r.bg }};color:{{ r.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.icon }}"></path></svg></span>
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ r.meta }}</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ r.stBg }};color:{{ r.stColor }}">{{ r.status }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noRequests }}" hint-placeholder-val="{{ false }}"><div style="padding:22px;text-align:center;font-size:12.5px;color:var(--ink-400)">No pending requests.</div></sc-if>
+      </div>
+
+      <!-- Announcements teaser -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--border-soft)">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Announcements</span>
+          <button onClick="{{ onGoAnnouncements }}" style="border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;color:var(--teal-800);cursor:pointer">See all</button>
+        </div>
+        <sc-for list="{{ homeAnnouncements }}" as="a" hint-placeholder-count="2">
+          <div style="padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:9px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ a.color }};background:{{ a.bg }};border-radius:5px;padding:2px 7px">{{ a.tag }}</span><span style="font-size:10.5px;color:var(--ink-400)">{{ a.date }}</span></div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink-800);line-height:1.4">{{ a.title }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ ATTENDANCE ═══ -->
+    <sc-if value="{{ isAttendance }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:linear-gradient(150deg,var(--teal-900),var(--teal-950));border-radius:18px;padding:18px;color:#fff;box-shadow:0 8px 24px rgba(9,61,60,.28)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)"><span style="width:8px;height:8px;border-radius:999px;background:{{ clockLiveDot }};animation:{{ clockAnim }}"></span>{{ clockStatusLabel }}</span>
+          <span style="font-size:11.5px;color:rgba(255,255,255,.6)">Shift 09:00 – 17:30</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:500;margin:10px 0 2px">{{ elapsed }}</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-bottom:14px">worked today · in at {{ clockInLabel }}</div>
+        <button onClick="{{ onToggleClock }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:{{ clockHeroBtnBg }};color:{{ clockHeroBtnColor }};padding:13px;border-radius:12px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer" style-active="opacity:.9"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ clockIcon }}"></path></svg>{{ clockBtnLabel }}</button>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:15px 16px;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px"><span style="font-size:12px;color:var(--ink-500)">Attendance this month</span><span style="font-size:22px;font-weight:700;color:var(--teal-800);line-height:1">96%</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+          <div style="border:1px solid var(--border-soft);border-radius:11px;padding:11px;background:#FBFCFC;text-align:center"><div style="font-size:19px;font-weight:700;color:var(--ink-900)">21</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">Present</div></div>
+          <div style="border:1px solid var(--border-soft);border-radius:11px;padding:11px;background:#FBFCFC;text-align:center"><div style="font-size:19px;font-weight:700;color:var(--ink-900)">2</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">Late</div></div>
+          <div style="border:1px solid var(--border-soft);border-radius:11px;padding:11px;background:#FBFCFC;text-align:center"><div style="font-size:19px;font-weight:700;color:var(--ink-900)">1</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">Leave</div></div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--border-soft)"><span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Daily log · July</span><button onClick="{{ onRegularize }}" style="border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;color:var(--teal-800);cursor:pointer">Regularize</button></div>
+        <sc-for list="{{ attLog }}" as="d" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <div style="width:38px;flex:none;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink-900);line-height:1">{{ d.date }}</div><div style="font-size:10px;color:var(--ink-400);margin-top:2px">{{ d.dayShort }}</div></div>
+            <div style="width:1px;height:26px;background:var(--border-soft);flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-700)">{{ d.in }} – {{ d.out }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ d.hours }}</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:6px;background:{{ d.stBg }};color:{{ d.stColor }}">{{ d.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ LEAVE ═══ -->
+    <sc-if value="{{ isLeave }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ leaveBalances }}" as="b" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 15px;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:var(--ink-800)">{{ b.label }}</span><span style="font-size:11px;color:var(--ink-400)">{{ b.taken }} / {{ b.total }} used</span></div>
+            <div style="font-size:23px;font-weight:700;color:var(--ink-950);margin:6px 0 3px">{{ b.left }} <span style="font-size:12px;font-weight:600;color:var(--ink-400)">days left</span></div>
+            <div style="height:6px;background:var(--ink-100);border-radius:999px;overflow:hidden;margin-top:6px"><div style="width:{{ b.pct }};height:100%;background:{{ b.color }};border-radius:999px"></div></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Apply for leave</div>
+        <div style="padding:15px;display:flex;flex-direction:column;gap:12px">
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Leave type</div><select value="{{ lvType }}" onChange="{{ onLvType }}" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ lvTypeOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+          <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">From</div><input value="{{ lvFrom }}" onChange="{{ onLvFrom }}" placeholder="10 Jul" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">To</div><input value="{{ lvTo }}" onChange="{{ onLvTo }}" placeholder="12 Jul" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div></div>
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Reason</div><textarea value="{{ lvReason }}" onChange="{{ onLvReason }}" rows="2" placeholder="Short note for your manager…" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;resize:none"></textarea></div>
+          <div style="font-size:11px;color:var(--ink-400)">Approver · Dr. Vikram Iyer (HOD)</div>
+          <button onClick="{{ onSubmitLeave }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:0;padding:13px;border-radius:12px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>Submit request</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Request history</div>
+        <sc-for list="{{ myLeaves }}" as="l" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900)">{{ l.type }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ l.dates }} · {{ l.days }} day(s)</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ l.stBg }};color:{{ l.stColor }}">{{ l.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ PAYSLIPS ═══ -->
+    <sc-if value="{{ isPayslips }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:11px;overflow-x:auto;padding-bottom:2px" class="emp-app-scroll">
+        <sc-for list="{{ payYtd }}" as="k" hint-placeholder-count="3">
+          <div style="flex:none;width:150px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 15px;box-shadow:0 1px 2px rgba(11,22,32,.04)"><div style="font-size:11.5px;color:var(--ink-500)">{{ k.label }}</div><div style="font-size:20px;font-weight:700;color:var(--ink-950);margin-top:6px;letter-spacing:-.01em">{{ k.value }}</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div></div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Monthly payslips</div>
+        <sc-for list="{{ payslips }}" as="p" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid var(--border-soft)">
+            <span style="width:38px;height:38px;flex:none;border-radius:10px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18"></path></svg></span>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900)">{{ p.month }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">Net {{ p.net }}</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ p.sBg }};color:{{ p.sColor }}">{{ p.status }}</span>
+            <button onClick="{{ p.onDownload }}" style="width:34px;height:34px;flex:none;border:1px solid var(--border);background:#fff;border-radius:9px;color:var(--teal-800);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-active="background:var(--teal-50)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Tax documents</div>
+        <sc-for list="{{ taxDocs }}" as="t" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <span style="width:34px;height:34px;flex:none;border-radius:9px;background:var(--ink-50);color:var(--ink-600);display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900)">{{ t.name }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ t.meta }}</div></div>
+            <button onClick="{{ t.onDownload }}" style="width:32px;height:32px;flex:none;border:1px solid var(--border);background:#fff;border-radius:8px;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-active="background:var(--bg-canvas)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ REIMBURSEMENTS ═══ -->
+    <sc-if value="{{ isExpenses }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:11px;overflow-x:auto;padding-bottom:2px" class="emp-app-scroll">
+        <sc-for list="{{ expSummary }}" as="k" hint-placeholder-count="3">
+          <div style="flex:none;width:150px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 15px;box-shadow:0 1px 2px rgba(11,22,32,.04)"><div style="font-size:11.5px;color:var(--ink-500)">{{ k.label }}</div><div style="font-size:20px;font-weight:700;color:{{ k.color }};margin-top:6px;letter-spacing:-.01em">{{ k.value }}</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div></div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>New claim</div>
+        <div style="padding:15px;display:flex;flex-direction:column;gap:12px">
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Category</div><select value="{{ expCat }}" onChange="{{ onExpCat }}" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ expCatOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+          <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Amount (₹)</div><input value="{{ expAmt }}" onChange="{{ onExpAmt }}" placeholder="4,200" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Date</div><input value="{{ expDate }}" onChange="{{ onExpDate }}" placeholder="3 Jul" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div></div>
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Note</div><input value="{{ expNote }}" onChange="{{ onExpNote }}" placeholder="What was this for?" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div>
+          <button onClick="{{ onAttachReceipt }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px dashed var(--ink-200);background:transparent;color:var(--teal-800);padding:11px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-active="border-color:var(--teal-100);background:var(--teal-50)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>{{ receiptLabel }}</button>
+          <button onClick="{{ onSubmitExpense }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:0;padding:13px;border-radius:12px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)">Submit claim</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>My claims</div>
+        <sc-for list="{{ expenses }}" as="e" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.note }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ e.cat }} · {{ e.date }}</div></div>
+            <span style="flex:none;font-size:13px;font-weight:700;color:var(--ink-900)">₹{{ e.amount }}</span>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ e.stBg }};color:{{ e.stColor }}">{{ e.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ DOCUMENTS ═══ -->
+    <sc-if value="{{ isDocuments }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:16px">
+      <button onClick="{{ onUploadDoc }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:0;padding:12px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:650;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>Upload document</button>
+      <sc-for list="{{ docGroups }}" as="g" hint-placeholder-count="3">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);padding:0 2px 9px">{{ g.label }}</div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+            <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+                <span style="width:38px;height:38px;flex:none;border-radius:10px;background:{{ d.bg }};color:{{ d.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ d.meta }}</div></div>
+                <button onClick="{{ d.onDownload }}" style="width:32px;height:32px;flex:none;border:1px solid var(--border);background:#fff;border-radius:8px;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-active="background:var(--bg-canvas)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ═══ ANNOUNCEMENTS ═══ -->
+    <sc-if value="{{ isAnnouncements }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ announcements }}" as="a" hint-placeholder-count="5">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:0 1px 2px rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04);display:flex;gap:12px">
+          <span style="width:38px;height:38px;flex:none;border-radius:10px;background:{{ a.bg }};color:{{ a.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.iconPath }}"></path></svg></span>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:9px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ a.color }};background:{{ a.bg }};border-radius:5px;padding:2px 7px">{{ a.tag }}</span><span style="font-size:11px;color:var(--ink-400)">{{ a.date }}</span><sc-if value="{{ a.isNew }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:999px;background:var(--upload)"></span></sc-if></div>
+            <div style="font-size:14px;font-weight:700;color:var(--ink-900);letter-spacing:-.005em;line-height:1.3">{{ a.title }}</div>
+            <div style="font-size:12px;color:var(--ink-500);margin-top:5px;line-height:1.5">{{ a.body }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ═══ HOLIDAYS ═══ -->
+    <sc-if value="{{ isHolidays }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:16px">
+      <div style="background:linear-gradient(150deg,var(--teal-800),var(--teal-950));color:#fff;border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 20px rgba(9,61,60,.24)"><div style="flex:1"><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)">Next holiday</div><div style="font-size:16px;font-weight:700;margin-top:3px">{{ nextHolName }}</div></div><div style="text-align:right;border-left:1px solid rgba(255,255,255,.2);padding-left:14px"><div style="font-size:24px;font-weight:700;line-height:1">{{ nextHolDays }}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">days away</div></div></div>
+      <sc-for list="{{ holMonths }}" as="m" hint-placeholder-count="3">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);padding:0 2px 9px">{{ m.month }}</div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+            <sc-for list="{{ m.items }}" as="h" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:14px;padding:13px 15px;border-bottom:1px solid var(--border-soft)">
+                <div style="width:44px;flex:none;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--ink-900);line-height:1.1">{{ h.date }}</div><div style="font-size:10px;color:var(--ink-400)">{{ h.day }}</div></div>
+                <div style="width:1px;height:28px;background:var(--border-soft);flex:none"></div>
+                <div style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--ink-800)">{{ h.name }}</div>
+                <span style="flex:none;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ h.typeColor }};background:{{ h.typeBg }};border-radius:6px;padding:3px 8px">{{ h.type }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ═══ TEAM ═══ -->
+    <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:13px">
+      <div style="background:#FBF7ED;border:1px solid #EDDFBE;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px">
+        <span style="width:34px;height:34px;flex:none;border-radius:9px;background:#FBF0DB;color:#96690F;display:inline-flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4"></path></svg></span>
+        <div style="font-size:12.5px;color:var(--ink-700);line-height:1.4"><span style="font-weight:650;color:var(--ink-900)">{{ onLeaveToday }} on leave today.</span></div>
+      </div>
+      <sc-for list="{{ team }}" as="t" hint-placeholder-count="6">
+        <div style="background:#fff;border:1px solid {{ t.cardBorder }};border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+          <span style="width:44px;height:44px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border:1px solid var(--teal-100);position:relative">{{ t.init }}<span style="position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;border-radius:999px;background:{{ t.dot }};border:2px solid #fff"></span></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:1px">{{ t.role }}</div></div>
+          <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ t.stBg }};color:{{ t.stColor }}">{{ t.status }}</span>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ═══ HELPDESK ═══ -->
+    <sc-if value="{{ isHelpdesk }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>Raise a request</div>
+        <div style="padding:15px;display:flex;flex-direction:column;gap:12px">
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Route to</div><select value="{{ hdCat }}" onChange="{{ onHdCat }}" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ hdCatOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Subject</div><input value="{{ hdSubject }}" onChange="{{ onHdSubject }}" placeholder="Brief summary" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div>
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Description</div><textarea value="{{ hdDesc }}" onChange="{{ onHdDesc }}" rows="3" placeholder="Describe your request…" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;resize:none"></textarea></div>
+          <button onClick="{{ onSubmitTicket }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:0;padding:13px;border-radius:12px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)">Submit request</button>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>My tickets</div>
+        <sc-for list="{{ tickets }}" as="t" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:11px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.subject }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px"><span style="font-family:'JetBrains Mono',monospace">{{ t.id }}</span> · {{ t.cat }} · {{ t.when }}</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ t.stBg }};color:{{ t.stColor }}">{{ t.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ═══ PROFILE ═══ -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <span style="width:72px;height:72px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;border:1px solid var(--teal-100)">AS</span>
+        <div style="font-size:18px;font-weight:700;color:var(--ink-950);margin-top:11px;letter-spacing:-.01em">Dr. Ananya Sharma</div>
+        <div style="font-size:12.5px;color:var(--ink-500);margin-top:3px">Senior Consultant · Cardiology · EMP-0142</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center"><span style="font-size:11px;font-weight:600;color:var(--teal-900);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:6px;padding:3px 10px">Full-time</span><span style="font-size:11px;font-weight:600;color:var(--ink-600);background:var(--ink-50);border-radius:6px;padding:3px 10px">6 yrs</span></div>
+        <button onClick="{{ onEditProfile }}" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--border);background:#fff;color:var(--ink-700);padding:11px;border-radius:11px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer" style-active="background:var(--bg-canvas)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>Edit profile</button>
+      </div>
+      <sc-for list="{{ profileCards }}" as="c" hint-placeholder-count="4">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04)">
+          <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>{{ c.label }}</div>
+          <div style="padding:4px 15px 10px">
+            <sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid var(--border-soft)"><span style="width:110px;flex:none;font-size:12px;color:var(--ink-500)">{{ r.k }}</span><span style="flex:1;font-size:12.5px;font-weight:550;color:var(--ink-800);text-align:right">{{ r.v }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ═══ VISITORS ═══ -->
+    <sc-if value="{{ isVisitors }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:16px 15px 26px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:linear-gradient(150deg,var(--teal-800),var(--teal-950));border-radius:18px;padding:16px 17px;color:#fff;box-shadow:0 8px 24px rgba(9,61,60,.24);display:flex;align-items:center;gap:13px">
+        <span style="width:42px;height:42px;flex:none;border-radius:12px;background:rgba(255,255,255,.14);display:inline-flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2M15.5 9.5H18M15.5 12.5H18"></path></svg></span>
+        <div style="min-width:0"><div style="font-size:15.5px;font-weight:700;letter-spacing:-.01em">Pre-register your guest</div><div style="font-size:11.5px;color:rgba(255,255,255,.72);margin-top:3px;line-height:1.4">They get a QR gate pass by SMS · reception is notified on arrival</div></div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>New invite</div>
+        <div style="padding:15px;display:flex;flex-direction:column;gap:12px">
+          <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Visitor name</div><input value="{{ vsName }}" onChange="{{ onVsName }}" placeholder="Full name" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div>
+          <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Mobile</div><input value="{{ vsMobile }}" onChange="{{ onVsMobile }}" placeholder="+91" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Purpose</div><select value="{{ vsPurpose }}" onChange="{{ onVsPurpose }}" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ vsPurposeOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div></div>
+          <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Date</div><input value="{{ vsDate }}" onChange="{{ onVsDate }}" placeholder="10 Jul" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Time</div><input value="{{ vsTime }}" onChange="{{ onVsTime }}" placeholder="15:00" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink-900);outline:0" /></div></div>
+          <div style="font-size:11px;color:var(--ink-400)">Host · Dr. Ananya Sharma · Cardiology, Main Campus</div>
+          <button onClick="{{ onSubmitInvite }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:0;padding:13px;border-radius:12px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,94,92,.24)" style-active="background:var(--teal-900)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>Send invite</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+        <div style="display:flex;align-items:center;gap:7px;padding:13px 15px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:12px;background:var(--teal-800);border-radius:2px"></span>My visitors</div>
+        <sc-for list="{{ myVisitors }}" as="v" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border-soft)">
+            <span style="width:38px;height:38px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:1px solid var(--teal-100)">{{ v.initials }}</span>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.name }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ v.purpose }} · {{ v.when }}</div></div>
+            <span style="flex:none;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ v.stBg }};color:{{ v.stColor }}">{{ v.status }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noVisitors }}" hint-placeholder-val="{{ false }}"><div style="padding:22px;text-align:center;font-size:12.5px;color:var(--ink-400)">No visitors invited yet.</div></sc-if>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:9px;background:var(--teal-50);border:1px solid var(--teal-100);border-radius:12px;padding:12px 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal-800)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 16v-5M12 8v.01M12 21a9 9 0 100-18 9 9 0 000 18z"></path></svg><div style="font-size:11.5px;color:var(--teal-900);line-height:1.5">Guests are received at <b>Main Gate reception</b>. You'll get a notification the moment they check in.</div></div>
+    </div>
+    </sc-if>
+
+  </div>
+
+  <!-- ══════════ BOTTOM TABS ══════════ -->
+  <nav style="flex:none;height:62px;background:#fff;border-top:1px solid var(--border);display:flex;align-items:stretch;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);z-index:5">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+      <button onClick="{{ t.onClick }}" style="flex:1;border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;padding-top:8px">
+        <span style="display:inline-flex;color:{{ t.color }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ t.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icon }}"></path></svg></span>
+        <span style="font-size:10px;font-weight:{{ t.fw }};color:{{ t.color }};letter-spacing:.01em">{{ t.label }}</span>
+      </button>
+    </sc-for>
+  </nav>
+
+  <!-- ══════════ DRAWER ══════════ -->
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseDrawer }}" style="position:absolute;inset:0;background:rgba(11,22,32,.45);z-index:40;backdrop-filter:blur(1px)"></div>
+    <div style="position:absolute;top:0;left:0;bottom:0;width:82%;max-width:310px;background:var(--teal-950);z-index:41;display:flex;flex-direction:column;box-shadow:8px 0 32px rgba(0,0,0,.3)">
+      <div style="padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px">
+        <span style="width:44px;height:44px;flex:none;border-radius:999px;background:var(--teal-700);display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff">AS</span>
+        <div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Dr. Ananya Sharma</div><div style="font-size:11px;color:rgba(255,255,255,.55)">Cardiology · EMP-0142</div></div>
+      </div>
+      <div class="emp-app-scroll" style="flex:1;min-height:0;overflow-y:auto;padding:10px 12px">
+        <sc-for list="{{ drawerItems }}" as="m" hint-placeholder-count="11">
+          <sc-if value="{{ m.hasSection }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:650;letter-spacing:.13em;color:rgba(255,255,255,.38);text-transform:uppercase;padding:14px 10px 7px;margin-top:5px;border-top:1px solid rgba(255,255,255,.07)">{{ m.sectionLabel }}</div></sc-if>
+          <button onClick="{{ m.onClick }}" style="position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:{{ m.bg }};padding:11px 12px;border-radius:10px;cursor:pointer;font-family:inherit">
+            <span style="display:inline-flex;color:{{ m.iconColor }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+            <span style="font-size:13.5px;font-weight:{{ m.fw }};color:{{ m.textColor }}">{{ m.label }}</span>
+            <sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--upload);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ m.badge }}</span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+      <div style="padding:12px;border-top:1px solid rgba(255,255,255,.08)">
+        <a href="login.html" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:0;cursor:pointer;font-family:inherit;color:rgba(255,255,255,.8);text-decoration:none" style-active="background:rgba(255,255,255,.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"></path></svg><span style="font-size:13.5px;font-weight:600">Sign out</span></a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══════════ NOTIFICATIONS SHEET ══════════ -->
+  <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseNotif }}" style="position:absolute;inset:0;background:rgba(11,22,32,.45);z-index:44"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;max-height:74%;background:#fff;border-radius:20px 20px 0 0;z-index:45;display:flex;flex-direction:column;box-shadow:0 -8px 32px rgba(11,22,32,.22);overflow:hidden">
+      <div style="padding:12px 0 4px;display:flex;justify-content:center"><span style="width:38px;height:4px;border-radius:999px;background:var(--ink-200)"></span></div>
+      <div style="padding:8px 18px 12px;border-bottom:1px solid var(--border-soft);font-size:15px;font-weight:700;color:var(--ink-950)">Notifications</div>
+      <div class="emp-app-scroll" style="flex:1;min-height:0;overflow-y:auto">
+        <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+          <div style="display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border-soft)">
+            <span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ n.bg }};color:{{ n.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.iconPath }}"></path></svg></span>
+            <div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink-800)">{{ n.title }}</div><div style="font-size:11.5px;color:var(--ink-500);margin-top:1px;line-height:1.4">{{ n.desc }}</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:3px">{{ n.time }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══════════ TOAST ══════════ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;bottom:78px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;background:var(--ink-900);color:#fff;padding:11px 16px;border-radius:12px;box-shadow:0 12px 32px rgba(11,22,32,.3);font-size:13px;font-weight:550;max-width:90%">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FD9C6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg><span style="min-width:0">{{ toastText }}</span>
+    </div>
+  </sc-if>
+
+</div>
+        </div>
+        <!-- home indicator -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:#0B0E12;opacity:.9;z-index:25;pointer-events:none"></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#8390A0">iPhone 15 Pro · 393 × 852 pt</div>
+  </div>
+
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0E5E5C"/><g transform="translate(34,26)"><rect x="0" y="0" width="32" height="48" rx="7" fill="none" stroke="#fff" stroke-width="3"/><circle cx="16" cy="40" r="2.4" fill="#fff"/><path d="M12 6h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g></svg>
+  </template>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:500,&quot;height&quot;:980}}">
+class Component extends DCLogic {
+  state = {
+    view:'home', drawerOpen:false, notifOpen:false, toast:'', tick:0,
+    clockedIn:true, clockInAt: Date.now() - (3*3600 + 24*60 + 12)*1000,
+    lvType:'Casual Leave', lvFrom:'', lvTo:'', lvReason:'',
+    myLeaves:[
+      { type:'Casual Leave', dates:'18 Jun 2026', days:'1', status:'Approved' },
+      { type:'Sick Leave',   dates:'02 – 03 May 2026', days:'2', status:'Approved' },
+      { type:'Earned Leave', dates:'10 – 14 Aug 2026', days:'5', status:'Pending' },
+    ],
+    expCat:'Travel', expAmt:'', expDate:'', expNote:'', receiptAttached:false,
+    expenses:[
+      { note:'Conference travel — Chennai', cat:'Travel',  date:'21 Jun', amount:'12,400', status:'Approved' },
+      { note:'Cardiology reference books',  cat:'Learning', date:'28 Jun', amount:'3,200',  status:'Pending' },
+      { note:'Taxi — late OPD',             cat:'Travel',  date:'01 Jul', amount:'850',    status:'Reimbursed' },
+    ],
+    hdCat:'IT Support', hdSubject:'', hdDesc:'',
+    tickets:[
+      { id:'HD-2043', subject:'ID card replacement', cat:'Facilities', when:'2 Jul', status:'Open' },
+      { id:'HD-2019', subject:'Payslip correction — May', cat:'Payroll', when:'26 Jun', status:'In progress' },
+      { id:'HD-1998', subject:'Second monitor request', cat:'IT Support', when:'18 Jun', status:'Resolved' },
+    ],
+    vsName:'', vsMobile:'', vsPurpose:'Personal / Family', vsDate:'', vsTime:'',
+    myVisitors:[
+      { name:'Meera Nair',    purpose:'Family visit',            when:'Today · 15:00', status:'Expected' },
+      { name:'Sundar Reddy',  purpose:'Personal document pickup', when:'01 Jul · 11:20', status:'Checked out' },
+    ],
+  };
+
+  componentDidMount(){ if(this.state.clockedIn) this.startTimer(); }
+  componentWillUnmount(){ this.stopTimer(); clearTimeout(this._toast); }
+  startTimer(){ this.stopTimer(); this._t=setInterval(()=>this.setState(s=>({tick:s.tick+1})),1000); }
+  stopTimer(){ if(this._t){ clearInterval(this._t); this._t=null; } }
+  flash(msg){ this.setState({toast:msg}); clearTimeout(this._toast); this._toast=setTimeout(()=>this.setState({toast:''}),2400); }
+  go(v){ this.setState({view:v, drawerOpen:false, notifOpen:false}); }
+  toggleClock(){
+    if(this.state.clockedIn){ this.stopTimer(); this.setState({clockedIn:false}); this.flash('Clocked out — have a good evening'); }
+    else { this.setState({clockedIn:true, clockInAt:Date.now()}); this.startTimer(); this.flash('Clocked in — welcome back'); }
+  }
+  fmtElapsed(){
+    if(!this.state.clockedIn) return '00:00:00';
+    let sec=Math.max(0,Math.floor((Date.now()-this.state.clockInAt)/1000));
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    const p=n=>String(n).padStart(2,'0');
+    return p(h)+':'+p(m)+':'+p(s);
+  }
+  clockInTime(){ const d=new Date(this.state.clockInAt); let h=d.getHours(); const m=d.getMinutes(); const ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
+  fmtWorked(){ if(!this.state.clockedIn) return ''; let sec=Math.max(0,Math.floor((Date.now()-this.state.clockInAt)/1000)); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60); return h+'h '+String(m).padStart(2,'0')+'m'; }
+
+  MODULES=[
+    { id:'home',          label:'Home',              iconPath:'M4 13h7V4H4zM13 20h7v-9h-7zM4 20h7v-5H4zM13 9h7V4h-7z' },
+    { id:'attendance',    label:'My Attendance',     iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+    { id:'leave',         label:'My Leave',          iconPath:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4' },
+    { id:'payslips',      label:'My Payslips',       iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+    { id:'expenses',      label:'My Reimbursements', iconPath:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1zM9 7.5h6M9 11.5h6M9 15.5h3' },
+    { id:'documents',     label:'My Documents',      iconPath:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4' },
+    { id:'profile',       label:'My Profile',        iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0' },
+    { id:'visitors',      label:'Invite a Visitor',  iconPath:'M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2M15.5 9.5H18M15.5 12.5H18' },
+    { id:'holidays',      label:'Holiday Calendar',  iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4', section:'Company' },
+    { id:'team',          label:'My Team',           iconPath:'M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M16 3.5a4 4 0 010 7.5M21 21a6 6 0 00-4-5.6' },
+    { id:'announcements', label:'Announcements',     iconPath:'M3 11l14-6v14L3 13zM3 11v2M7 12.5V18a2 2 0 004 0M19 8a3 3 0 010 6' },
+    { id:'helpdesk',      label:'Helpdesk',          iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 013.9-2c1 .6 1.6 1.9 1 3-.5 1-1.9 1.2-1.9 2.5M12 17h.01' },
+  ];
+
+  TABS=[
+    { id:'home',       label:'Home',   icon:'M3 11l9-8 9 8M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10' },
+    { id:'attendance', label:'Clock',  icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+    { id:'leave',      label:'Leave',  icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4' },
+    { id:'payslips',   label:'Pay',    icon:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18' },
+    { id:'profile',    label:'Profile',icon:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0' },
+  ];
+
+  NOTIFS=[
+    { title:'Leave approved', desc:'Your casual leave on 18 Jun was approved', time:'2 days ago', iconPath:'M20 6L9 17l-5-5', bg:'#E7F3EC', color:'#1E7A46' },
+    { title:'Payslip ready', desc:'June 2026 payslip is being processed', time:'4 days ago', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', bg:'#EEF0FB', color:'#3B47A0' },
+    { title:'Health camp', desc:'Annual check-up camp on 12 Jul — register now', time:'5 days ago', iconPath:'M11 3a1 1 0 00-1 1v4H6a1 1 0 00-1 1v2a1 1 0 001 1h4v4a1 1 0 001 1h2a1 1 0 001-1v-4h4a1 1 0 001-1V9a1 1 0 00-1-1h-4V4a1 1 0 00-1-1z', bg:'#E7F3EC', color:'#1E7A46' },
+    { title:'Ticket update', desc:'HD-2019 payslip correction is in progress', time:'1 week ago', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', bg:'#F1F3F5', color:'#5F6E80' },
+  ];
+
+  ANN=[
+    { tag:'HR', title:'Revised OPD timings from 10 July', date:'3 Jul 2026', isNew:true,  body:'Cardiology and Emergency OPD will run 09:00–14:00 on weekdays. Please align your consultation slots accordingly.', iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0', bg:'#EAF3F2', color:'#0E5E5C' },
+    { tag:'Wellness', title:'Annual staff health check camp — 12 July', date:'2 Jul 2026', isNew:true, body:'Free comprehensive health screening for all employees at the West Wing. Slots open on the portal.', iconPath:'M11 3a1 1 0 00-1 1v4H6a1 1 0 00-1 1v2a1 1 0 001 1h4v4a1 1 0 001 1h2a1 1 0 001-1v-4h4a1 1 0 001-1V9a1 1 0 00-1-1h-4V4a1 1 0 00-1-1z', bg:'#E7F3EC', color:'#1E7A46' },
+    { tag:'Finance', title:'Payroll cut-off is the 25th', date:'28 Jun 2026', isNew:false, body:'Submit reimbursement claims before the 25th to be included in the same month\u2019s pay run.', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', bg:'#F1ECFB', color:'#5E42A0' },
+    { tag:'IT', title:'Mandatory password reset this week', date:'25 Jun 2026', isNew:false, body:'All clinical system passwords must be updated by Friday as part of the security refresh.', iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z', bg:'#EEF0FB', color:'#3B47A0' },
+    { tag:'Facilities', title:'New parking arrangement — West Wing', date:'20 Jun 2026', isNew:false, body:'Level 2 of the West Wing car park reopens with reserved bays for on-call clinicians.', iconPath:'M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01', bg:'#F1F3F5', color:'#48586A' },
+  ];
+
+  ATT_LOG=[
+    { date:'04', dayShort:'Fri', in:'09:02', out:'—',     hours:'In progress', status:'Present' },
+    { date:'03', dayShort:'Thu', in:'08:58', out:'17:34', hours:'8h 36m', status:'Present' },
+    { date:'02', dayShort:'Wed', in:'09:14', out:'17:40', hours:'8h 26m', status:'Late' },
+    { date:'01', dayShort:'Tue', in:'08:55', out:'17:28', hours:'8h 33m', status:'Present' },
+    { date:'30', dayShort:'Mon', in:'—',     out:'—',     hours:'On leave', status:'Leave' },
+    { date:'28', dayShort:'Sat', in:'09:00', out:'13:05', hours:'4h 05m', status:'Half day' },
+    { date:'27', dayShort:'Fri', in:'08:51', out:'17:31', hours:'8h 40m', status:'Present' },
+    { date:'26', dayShort:'Thu', in:'09:20', out:'17:45', hours:'8h 25m', status:'Late' },
+  ];
+
+  HOLIDAYS=[
+    { month:'August 2026',   date:'15', day:'Sat', name:'Independence Day', type:'Public' },
+    { month:'August 2026',   date:'27', day:'Thu', name:'Ganesh Chaturthi', type:'Restricted' },
+    { month:'October 2026',  date:'02', day:'Fri', name:'Gandhi Jayanti',   type:'Public' },
+    { month:'October 2026',  date:'20', day:'Tue', name:'Dussehra',         type:'Public' },
+    { month:'November 2026', date:'08', day:'Sun', name:'Diwali',           type:'Public' },
+    { month:'December 2026', date:'25', day:'Fri', name:'Christmas',        type:'Public' },
+  ];
+
+  TEAM=[
+    { name:'Dr. Ananya Sharma (You)', role:'Senior Consultant', init:'AS', status:'Clocked in' },
+    { name:'Dr. Kiran Rao',           role:'Consultant',        init:'KR', status:'In' },
+    { name:'Dr. Sameer Joshi',        role:'Junior Consultant', init:'SJ', status:'Remote' },
+    { name:'Anjali Menon',            role:'Staff Nurse',       init:'AM', status:'In' },
+    { name:'Fatima Sheikh',           role:'Cardiac Technician',init:'FS', status:'On Leave' },
+    { name:'Ravi Teja',               role:'Cath Lab Assistant',init:'RT', status:'On Leave' },
+  ];
+
+  DOCS={
+    'Payslips':[
+      { name:'Payslip — June 2026', meta:'PDF · 88 KB' },
+      { name:'Payslip — May 2026',  meta:'PDF · 87 KB' },
+      { name:'Payslip — April 2026',meta:'PDF · 86 KB' },
+    ],
+    'Letters':[
+      { name:'Offer Letter', meta:'PDF · Mar 2019' },
+      { name:'Appraisal Letter 2026', meta:'PDF · Apr 2026' },
+      { name:'Experience Certificate', meta:'PDF · on request' },
+    ],
+    'Statements & ID':[
+      { name:'Form 16 — FY 2025-26', meta:'PDF · 210 KB' },
+      { name:'Insurance e-Card', meta:'PDF · policy active' },
+      { name:'PF Statement', meta:'PDF · 2025-26' },
+    ],
+  };
+
+  TITLES={ home:'NanoHealth', attendance:'My Attendance', leave:'My Leave', payslips:'Payslips & Tax', expenses:'Reimbursements', documents:'My Documents', profile:'My Profile', holidays:'Holiday Calendar', team:'My Team', announcements:'Announcements', helpdesk:'Helpdesk', visitors:'Invite a Visitor' };
+
+  stTone(status){
+    const map={ 'Approved':['#E7F3EC','#1E7A46'], 'Paid':['#E7F3EC','#1E7A46'], 'Reimbursed':['#EAF3F2','#0E5E5C'], 'Resolved':['#E7F3EC','#1E7A46'],
+      'Pending':['#FBF0DB','#96690F'], 'Processing':['#FBF0DB','#96690F'], 'In progress':['#FBF0DB','#96690F'], 'Open':['#EEF0FB','#3B47A0'],
+      'Rejected':['#FBE9E7','#C33F2A'] };
+    return map[status]||['#F1F3F5','#5F6E80'];
+  }
+
+  renderVals(){
+    const s=this.state, v=s.view, on=s.clockedIn;
+
+    const tabs=this.TABS.map(t=>({ ...t, onClick:()=>this.go(t.id), color: t.id===v?'var(--teal-800)':'var(--ink-400)', fw: t.id===v?'700':'500', sw: t.id===v?'2.1':'1.7' }));
+
+    const drawerItems=this.MODULES.map(m=>({
+      ...m, hasSection:!!m.section, sectionLabel:m.section||'',
+      bg: m.id===v?'var(--teal-800)':'transparent',
+      textColor: m.id===v?'#fff':'rgba(255,255,255,.8)',
+      iconColor: m.id===v?'#fff':'rgba(255,255,255,.55)',
+      fw: m.id===v?'650':'500',
+      hasBadge: (m.id==='helpdesk'||m.id==='announcements'),
+      badge: m.id==='helpdesk'?'1':(m.id==='announcements'?'2':''),
+      onClick:()=>this.go(m.id),
+    }));
+
+    const hr=new Date().getHours();
+    const greeting = hr<12?'Good morning':(hr<17?'Good afternoon':'Good evening');
+    const todayFull='Saturday, 5 July 2026';
+
+    const elapsed=this.fmtElapsed();
+    const clock={
+      elapsed, clockInLabel:this.clockInTime(),
+      clockLiveDot: on?'#7FD9C6':'rgba(255,255,255,.4)',
+      clockAnim: on?'empPulse 2s ease-in-out infinite':'none',
+      clockStatusLabel: on?'On the clock':'Clocked out',
+      clockBtnLabel: on?'Clock out':'Clock in',
+      clockIcon: on?'M9 9h6v6H9z':'M8 5v14l11-7z',
+      clockHeroBtnBg: on?'rgba(255,255,255,.14)':'#fff',
+      clockHeroBtnColor: on?'#fff':'var(--teal-900)',
+      clockDotColor: on?'#1E7A46':'var(--ink-300)',
+      clockShort: on? this.fmtWorked() : '',
+      clockSubLabel: on? ('Since '+this.clockInTime()+' · worked today') : 'Tap to start your shift',
+    };
+
+    const homeStats=[
+      { label:'Leave balance', value:'21', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M9 15l2 2 4-4' },
+      { label:'Attendance', value:'96%', icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+      { label:'Next holiday', value:'15 Aug', icon:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4' },
+      { label:'Open requests', value:'2', icon:'M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    ];
+    const quickActions=[
+      { label:'Apply leave', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M9 15l2 2 4-4', onClick:()=>this.go('leave') },
+      { label:'Download payslip', icon:'M12 3v12M8 11l4 4 4-4M4 21h16', onClick:()=>this.go('payslips') },
+      { label:'Submit expense', icon:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1zM9 8h6M9 12h6', onClick:()=>this.go('expenses') },
+      { label:'Raise a request', icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 013.9-2c1 .6 1.6 1.9 1 3-.5 1-1.9 1.2-1.9 2.5M12 17h.01', onClick:()=>this.go('helpdesk') },
+      { label:'Invite a visitor', icon:'M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2M15.5 9.5H18M15.5 12.5H18', onClick:()=>this.go('visitors') },
+    ];
+
+    const openRequests=[];
+    s.myLeaves.filter(l=>l.status==='Pending').forEach(l=>openRequests.push({ title:l.type, meta:l.dates+' · '+l.days+' day(s)', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17', bg:'#EAF3F2', color:'#0E5E5C', status:l.status }));
+    s.expenses.filter(e=>e.status==='Pending').forEach(e=>openRequests.push({ title:e.note, meta:'Reimbursement · ₹'+e.amount, icon:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1z', bg:'#F1ECFB', color:'#5E42A0', status:e.status }));
+    s.tickets.filter(t=>t.status!=='Resolved').forEach(t=>openRequests.push({ title:t.subject, meta:t.id+' · '+t.cat, icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', bg:'#F1F3F5', color:'#48586A', status:t.status }));
+    openRequests.forEach(r=>{ const t=this.stTone(r.status); r.stBg=t[0]; r.stColor=t[1]; });
+    const noRequests=openRequests.length===0;
+
+    const homeAnnouncements=this.ANN.slice(0,2).map(a=>({ tag:a.tag, title:a.title, date:a.date, bg:a.bg, color:a.color }));
+
+    const attLog=this.ATT_LOG.map(d=>({ ...d, stBg: d.status==='Present'?'#E7F3EC':(d.status==='Late'?'#FBF0DB':(d.status==='Leave'?'#F1F3F5':'#EAF3F2')), stColor: d.status==='Present'?'#1E7A46':(d.status==='Late'?'#96690F':(d.status==='Leave'?'#5F6E80':'#0E5E5C')) }));
+
+    const bal=[ {label:'Casual Leave', taken:6, total:12, color:'var(--teal-700)'}, {label:'Sick Leave', taken:4, total:12, color:'#3B47A0'}, {label:'Earned Leave', taken:11, total:18, color:'#5E42A0'} ];
+    const leaveBalances=bal.map(b=>({ label:b.label, taken:b.taken, total:b.total, left:(b.total-b.taken), pct:Math.round(b.taken/b.total*100)+'%', color:b.color }));
+    const lvTypeOptions=['Casual Leave','Sick Leave','Earned Leave','Comp-off','Work from home'];
+    const myLeaves=s.myLeaves.map(l=>{ const t=this.stTone(l.status); return { ...l, stBg:t[0], stColor:t[1] }; });
+
+    const payYtd=[ {label:'YTD gross', value:'₹6.9L', sub:'Apr–Jun 2026'}, {label:'YTD net', value:'₹5.5L', sub:'3 months'}, {label:'Tax (TDS)', value:'₹78K', sub:'this FY'} ];
+    const paySeed=[ {month:'June 2026', net:'₹1,84,200', status:'Processing'},{month:'May 2026', net:'₹1,84,200', status:'Paid'},{month:'April 2026', net:'₹1,84,200', status:'Paid'},{month:'March 2026', net:'₹1,79,500', status:'Paid'} ];
+    const payslips=paySeed.map(p=>{ const t=this.stTone(p.status); return { ...p, sBg:t[0], sColor:t[1], onDownload:()=>this.flash('Downloading '+p.month+' payslip') }; });
+    const taxDocs=[ {name:'Form 16 — FY 2025-26', meta:'Issued 15 Jun 2026'},{name:'Investment declaration', meta:'FY 2026-27 · submitted'},{name:'Tax computation sheet', meta:'FY 2026-27'} ].map(t=>({ ...t, onDownload:()=>this.flash('Downloading '+t.name) }));
+
+    const expApproved=s.expenses.filter(e=>e.status==='Approved'||e.status==='Reimbursed').length;
+    const expPending=s.expenses.filter(e=>e.status==='Pending').length;
+    const expSummary=[
+      { label:'Reimbursed', value:'₹34,850', sub:'YTD', color:'var(--teal-800)' },
+      { label:'Pending', value:expPending+' claim'+(expPending===1?'':'s'), sub:'awaiting', color:'#96690F' },
+      { label:'Approved', value:expApproved+' claim'+(expApproved===1?'':'s'), sub:'processed', color:'#1E7A46' },
+    ];
+    const expCatOptions=['Travel','Learning','Meals','Medical','Equipment','Other'];
+    const receiptLabel=s.receiptAttached?'Receipt attached ✓':'Attach receipt';
+    const expenses=s.expenses.map(e=>{ const t=this.stTone(e.status); return { ...e, stBg:t[0], stColor:t[1] }; });
+
+    const docGroups=Object.keys(this.DOCS).map(k=>({ label:k, items:this.DOCS[k].map(d=>({ ...d, bg: k==='Payslips'?'var(--teal-50)':(k==='Letters'?'#EEF0FB':'#F1ECFB'), color: k==='Payslips'?'var(--teal-900)':(k==='Letters'?'#3B47A0':'#5E42A0'), onDownload:()=>this.flash('Downloading '+d.name) })) }));
+
+    const profileCards=[
+      { label:'Personal', rows:[ {k:'Date of birth', v:'22 Jul 1985'},{k:'Gender', v:'Female'},{k:'Blood group', v:'O+'} ] },
+      { label:'Contact', rows:[ {k:'Work email', v:'ananya.sharma@nanohealth.in'},{k:'Mobile', v:'+91 98480 12345'},{k:'Location', v:'Hyderabad — Main Campus'} ] },
+      { label:'Job details', rows:[ {k:'Employee ID', v:'EMP-0142'},{k:'Designation', v:'Senior Consultant'},{k:'Department', v:'Cardiology'},{k:'Date joined', v:'14 Mar 2019'},{k:'Reports to', v:'Dr. Vikram Iyer'} ] },
+      { label:'Bank & emergency', rows:[ {k:'Bank', v:'HDFC · ••••4021'},{k:'PAN', v:'ABCPS••••K'},{k:'Emergency', v:'Rohit Sharma (Spouse)'},{k:'Phone', v:'+91 98765 40021'} ] },
+    ];
+
+    const holTone={ 'Public':['#EAF3F2','#0E5E5C'], 'Restricted':['#FBF0DB','#96690F'], 'Optional':['#EEF0FB','#3B47A0'] };
+    const holMonths=[]; this.HOLIDAYS.forEach(h=>{ let g=holMonths.find(x=>x.month===h.month); if(!g){ g={month:h.month, items:[]}; holMonths.push(g); } const t=holTone[h.type]||holTone.Public; g.items.push({ date:h.date, day:h.day, name:h.name, type:h.type, typeColor:t[1], typeBg:t[0] }); });
+
+    const teamTone=(st)=>{ const m={ 'Clocked in':['#E7F3EC','#1E7A46','#1E7A46'], 'In':['#E7F3EC','#1E7A46','#1E7A46'], 'Remote':['#EEF0FB','#3B47A0','#3B47A0'], 'On Leave':['#FBF0DB','#96690F','#D9A63A'] }; return m[st]||['#F1F3F5','#5F6E80','#A8B2BE']; };
+    const team=this.TEAM.map(t=>{ const tn=teamTone(t.status); return { ...t, stBg:tn[0], stColor:tn[1], dot:tn[2], cardBorder: t.status==='On Leave'?'#EDDFBE':'var(--border)' }; });
+    const onLeaveNames=this.TEAM.filter(t=>t.status==='On Leave').map(t=>t.name.replace(' (You)',''));
+    const onLeaveToday = onLeaveNames.length? onLeaveNames.join(' and ') : 'No one is';
+
+    const hdCatOptions=['IT Support','HR','Payroll','Facilities','Access & Security'];
+    const tickets=s.tickets.map(t=>{ const tn=this.stTone(t.status); return { ...t, stBg:tn[0], stColor:tn[1] }; });
+
+    const visTone=(st)=>{ const m={ 'Expected':['#EEF0FB','#3B47A0'], 'On premises':['#E7F3EC','#1E7A46'], 'Checked out':['#F1F3F5','#5F6E80'] }; return m[st]||['#F1F3F5','#5F6E80']; };
+    const myVisitors=s.myVisitors.map(x=>{ const t=visTone(x.status); return { ...x, stBg:t[0], stColor:t[1], initials: x.name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() }; });
+    const vsPurposeOptions=['Personal / Family','Business meeting','Delivery / Courier','Other'];
+
+    return {
+      screenTitle:this.TITLES[v]||'NanoHealth', tabs, drawerItems,
+      drawerOpen:s.drawerOpen, onOpenDrawer:()=>this.setState({drawerOpen:true}), onCloseDrawer:()=>this.setState({drawerOpen:false}),
+      onSignOut:()=>{ this.setState({drawerOpen:false}); this.flash('Signed out'); },
+      notifOpen:s.notifOpen, notifs:this.NOTIFS, notifCount:this.NOTIFS.length,
+      onToggleNotif:()=>this.setState(st=>({notifOpen:!st.notifOpen})), onCloseNotif:()=>this.setState({notifOpen:false}),
+      greeting, todayFull,
+      ...clock, onToggleClock:()=>this.toggleClock(),
+      isHome:v==='home', isAttendance:v==='attendance', isLeave:v==='leave', isPayslips:v==='payslips', isExpenses:v==='expenses',
+      isDocuments:v==='documents', isProfile:v==='profile', isHolidays:v==='holidays', isTeam:v==='team', isAnnouncements:v==='announcements', isHelpdesk:v==='helpdesk', isVisitors:v==='visitors',
+      homeStats, quickActions, openRequests, noRequests, homeAnnouncements, onGoAnnouncements:()=>this.go('announcements'),
+      attLog, onRegularize:()=>this.flash('Regularization request opened'),
+      leaveBalances, lvTypeOptions, myLeaves,
+      lvType:s.lvType, lvFrom:s.lvFrom, lvTo:s.lvTo, lvReason:s.lvReason,
+      onLvType:(e)=>this.setState({lvType:e.target.value}), onLvFrom:(e)=>this.setState({lvFrom:e.target.value}), onLvTo:(e)=>this.setState({lvTo:e.target.value}), onLvReason:(e)=>this.setState({lvReason:e.target.value}),
+      onSubmitLeave:()=>{ const dates=(s.lvFrom||'—')+' – '+(s.lvTo||'—'); this.setState(st=>({ myLeaves:[{ type:st.lvType, dates, days:'—', status:'Pending' }, ...st.myLeaves], lvFrom:'', lvTo:'', lvReason:'' })); this.flash('Leave request submitted to Dr. Vikram Iyer'); },
+      payYtd, payslips, taxDocs,
+      expSummary, expCatOptions, expenses, receiptLabel,
+      expCat:s.expCat, expAmt:s.expAmt, expDate:s.expDate, expNote:s.expNote,
+      onExpCat:(e)=>this.setState({expCat:e.target.value}), onExpAmt:(e)=>this.setState({expAmt:e.target.value}), onExpDate:(e)=>this.setState({expDate:e.target.value}), onExpNote:(e)=>this.setState({expNote:e.target.value}),
+      onAttachReceipt:()=>{ this.setState({receiptAttached:true}); this.flash('Receipt attached'); },
+      onSubmitExpense:()=>{ this.setState(st=>({ expenses:[{ note:st.expNote||'New claim', cat:st.expCat, date:st.expDate||'Today', amount:st.expAmt||'0', status:'Pending' }, ...st.expenses], expAmt:'', expDate:'', expNote:'', receiptAttached:false })); this.flash('Reimbursement claim submitted'); },
+      docGroups, onUploadDoc:()=>this.flash('Choose a file to upload'),
+      profileCards, onEditProfile:()=>this.flash('Profile editor opened'),
+      holMonths, nextHolName:'Independence Day', nextHolDays:'41',
+      team, onLeaveToday,
+      announcements:this.ANN,
+      hdCatOptions, tickets, hdCat:s.hdCat, hdSubject:s.hdSubject, hdDesc:s.hdDesc,
+      myVisitors, noVisitors:myVisitors.length===0, vsPurposeOptions,
+      vsName:s.vsName, vsMobile:s.vsMobile, vsPurpose:s.vsPurpose, vsDate:s.vsDate, vsTime:s.vsTime,
+      onVsName:(e)=>this.setState({vsName:e.target.value}), onVsMobile:(e)=>this.setState({vsMobile:e.target.value}), onVsPurpose:(e)=>this.setState({vsPurpose:e.target.value}), onVsDate:(e)=>this.setState({vsDate:e.target.value}), onVsTime:(e)=>this.setState({vsTime:e.target.value}),
+      onSubmitInvite:()=>{ const when=((s.vsDate||'Today')+(s.vsTime?(' · '+s.vsTime):'')); this.setState(st=>({ myVisitors:[{ name:st.vsName||'New guest', purpose:st.vsPurpose, when, status:'Expected' }, ...st.myVisitors], vsName:'', vsMobile:'', vsDate:'', vsTime:'' })); this.flash('Invite sent — gate pass texted to your guest'); },
+      onHdCat:(e)=>this.setState({hdCat:e.target.value}), onHdSubject:(e)=>this.setState({hdSubject:e.target.value}), onHdDesc:(e)=>this.setState({hdDesc:e.target.value}),
+      onSubmitTicket:()=>{ const id='HD-'+(2044+ s.tickets.length); this.setState(st=>({ tickets:[{ id, subject:st.hdSubject||'New request', cat:st.hdCat, when:'Just now', status:'Open' }, ...st.tickets], hdSubject:'', hdDesc:'' })); this.flash('Request raised · '+id); },
+      toast:!!s.toast, toastText:s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div onClick="{{ toggle }}" role="switch" style="width:42px;height:24px;flex:0 0 auto;border-radius:999px;padding:3px;box-sizing:border-box;cursor:pointer;transition:background .15s ease;background:{{ bg }}">
+  <div style="width:18px;height:18px;border-radius:999px;background:#ffffff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s ease;transform:translateX({{ x }})"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:60,&quot;height&quot;:40},&quot;st&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{on:boolean,toggle:()=&gt;void}&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#EA580C&quot;,&quot;options&quot;:[&quot;#EA580C&quot;,&quot;#0F766E&quot;,&quot;#1D4ED8&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.props.st || {};
+    const on = !!st.on;
+    return {
+      bg: on ? (this.props.accent || '#EA580C') : '#D6D3D1',
+      x: on ? '18px' : '0px',
+      toggle: st.toggle || (() => {})
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance & Shifts — Insights (design mock)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-600:#22988F;
+    --teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;
+    --ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;--app-bg:#F5F7F6;
+    --border:#E2E7E6;--border-soft:#EBEEED;
+    --green-bg:#E7F3EC;--green-fg:#1E7A46;
+    --amber-bg:#FBF0DB;--amber-fg:#96690F;
+    --red-bg:#FBE7E3;--red-fg:#B3372A;
+    --slate-bg:#F5F8F7;--slate-fg:#5F6E80;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:var(--ink-900);background:var(--app-bg)}
+  button{font-family:inherit;cursor:pointer}
+  select,input{font-family:inherit}
+  input:focus,select:focus{outline:0}
+  .note{max-width:1180px;margin:0 auto 14px;padding:10px 14px;border-radius:10px;background:#FFF7E0;border:1px solid #F0DDA8;color:#7A5A0B;font-size:12.5px;font-weight:600}
+
+  /* breadcrumb + header */
+  .topbar{max-width:1180px;margin:0 auto;padding:22px 20px 0}
+  .crumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-500);margin-bottom:14px}
+  .crumb b{color:var(--teal-800);font-weight:700}
+  .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+  .pagehead h1{margin:0;font-size:21px;font-weight:800;letter-spacing:-.01em;color:var(--ink-950)}
+
+  /* tab switcher: Policy config / Insights */
+  .tabs{display:inline-flex;border:1px solid var(--border);background:#fff;border-radius:11px;padding:4px;gap:2px}
+  .tabs button{border:0;background:transparent;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:650;color:var(--ink-500)}
+  .tabs button.active{background:var(--teal-900);color:#fff}
+
+  /* body: left rail + main */
+  .shell{max-width:1180px;margin:0 auto;padding:0 20px 60px;display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:start}
+  .rail{position:sticky;top:20px}
+  .rail-head{padding:2px 4px 14px}
+  .rail-head .t{font-size:16px;font-weight:800;color:var(--ink-950);letter-spacing:-.01em}
+  .rail-head .s{font-size:12px;color:var(--ink-500);margin-top:2px}
+  .rail-group{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-400);padding:10px 10px 6px}
+  .rail-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:600;color:var(--ink-700);margin-bottom:2px}
+  .rail-item:hover{background:var(--ink-50)}
+  .rail-item.active{background:var(--teal-50);color:var(--teal-900);font-weight:700}
+  .rail-item svg{flex:none;opacity:.85}
+  .rail-item .cnt{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink-400)}
+  .rail-item.active .cnt{color:var(--teal-800)}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  /* filter/context row */
+  .ctxrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
+  .navbtn{display:flex;height:36px;width:36px;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--border);background:#fff;color:var(--ink-600)}
+  .navbtn:hover{background:var(--ink-50)}
+  .datepill,.pillbtn{border-radius:9px;border:1px solid var(--border);background:#fff;padding:8px 14px;font-size:12.5px;font-weight:650;color:var(--ink-700)}
+  select.ctl{cursor:pointer;border-radius:8px;border:1px solid var(--border);background:#fff;padding:8px 12px;font-size:12.5px;color:var(--ink-700)}
+  .spacer{flex:1}
+  .exportbtn{display:inline-flex;align-items:center;gap:8px;border-radius:9px;border:1px solid var(--border);background:#fff;padding:8px 14px;font-size:13px;font-weight:650;color:var(--ink-700)}
+  .exportbtn:hover{background:var(--ink-50)}
+
+  /* KPI tiles */
+  .kpirow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+  .kpi{display:flex;align-items:center;gap:12px;border:1px solid var(--border);background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)}
+  .kpi .ic{display:flex;flex:none;height:42px;width:42px;align-items:center;justify-content:center;border-radius:11px}
+  .kpi .v{font-size:22px;font-weight:800;letter-spacing:-.01em;color:var(--ink-950);line-height:1}
+  .kpi .l{margin-top:4px;font-size:12px;color:var(--ink-500)}
+
+  /* analytics band */
+  .bandhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .bandhead .h{font-size:14px;font-weight:700;color:var(--ink-900)}
+  .toggle{display:inline-flex;border:1px solid var(--border);background:var(--ink-50);border-radius:9px;padding:3px}
+  .toggle button{border:0;background:transparent;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:650;color:var(--ink-500)}
+  .toggle button.active{background:#fff;color:var(--teal-900);box-shadow:0 1px 2px rgba(11,22,32,.1)}
+  .metricrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:26px}
+  .metric{border:1px solid var(--border);background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)}
+  .metric .l{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-500)}
+  .metric .dot{height:6px;width:6px;border-radius:999px}
+  .metric .v{margin-top:8px;font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--ink-950);line-height:1}
+  .metric .v.accent{color:var(--teal-800)}
+  .metric .s{margin-top:6px;font-size:11.5px;color:var(--ink-400)}
+
+  /* exceptions */
+  .exhead{font-size:14px;font-weight:700;color:var(--ink-900);margin-bottom:10px}
+  .expills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+  .expill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid var(--border);background:#fff;padding:8px 14px;font-size:12.5px;font-weight:650;color:var(--ink-700)}
+  .expill:hover{background:var(--ink-50)}
+  .expill.active{border-color:var(--teal-700);background:var(--teal-50);color:var(--teal-900)}
+  .exhint{font-size:11.5px;color:var(--ink-400);margin-top:2px}
+
+  /* register filter bar */
+  .filterbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border);background:#fff;border-radius:11px;padding:10px 14px;margin-bottom:20px}
+  .filterbar .fl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .flabel{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)}
+  .statuspills{display:flex;border:1px solid var(--border);background:var(--ink-50);border-radius:9px;padding:3px}
+  .statuspills button{border:0;background:transparent;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:650;color:var(--ink-500)}
+  .statuspills button.active{background:#fff;color:var(--teal-900);box-shadow:0 1px 2px rgba(11,22,32,.1)}
+  .searchbox{display:flex;align-items:center;gap:8px;min-width:230px;border:1px solid var(--border);background:#fff;border-radius:9px;padding:8px 12px}
+  .searchbox input{border:0;background:transparent;font-size:12.5px;color:var(--ink-700);width:100%}
+  .searchbox input::placeholder{color:var(--ink-400)}
+  .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid var(--teal-100);background:var(--teal-50);color:var(--teal-900);font-size:11.5px;font-weight:650;padding:5px 6px 5px 11px}
+  .chip button{border:0;background:transparent;color:var(--teal-800);height:16px;width:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0}
+
+  /* table */
+  .tablewrap{overflow:hidden;border:1px solid var(--border);background:#fff;border-radius:14px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)}
+  .tscroll{overflow-x:auto}
+  table{width:100%;min-width:980px;border-collapse:collapse}
+  thead th{position:sticky;top:0;background:#F5F8F7;border-bottom:1px solid var(--border);padding:10px 12px;text-align:left;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-500);white-space:nowrap}
+  thead th.sortable{cursor:pointer}
+  thead th.sortable:hover{color:var(--ink-800)}
+  tbody tr{border-bottom:1px solid var(--border-soft);cursor:pointer}
+  tbody tr:hover{background:var(--teal-50)}
+  tbody td{padding:12px;font-size:12.5px;color:var(--ink-700);vertical-align:middle}
+  .empname{display:flex;align-items:center;gap:10px}
+  .avatar{display:flex;flex:none;height:32px;width:32px;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--teal-100);background:var(--teal-50);font-size:11.5px;font-weight:700;color:var(--teal-900)}
+  .empname .n{font-size:13px;font-weight:650;color:var(--ink-900)}
+  .empname .id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--ink-400)}
+  .statuspill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:650}
+  .statuspill .d{height:6px;width:6px;border-radius:999px}
+  .latetag{display:inline-block;margin-left:6px;border-radius:999px;background:var(--amber-bg);color:var(--amber-fg);font-size:10.5px;font-weight:650;padding:2px 8px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--ink-900)}
+  .chev{color:var(--ink-400)}
+  tfoot td{border-top:1px solid var(--border-soft);background:#FCFDFC;padding:10px 14px;font-size:12px;color:var(--ink-500)}
+  .pagefoot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pagebtn{display:flex;height:28px;width:28px;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--ink-600)}
+
+  /* drawer */
+  .backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;z-index:900}
+  .backdrop.open{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:96vw;background:var(--app-bg);box-shadow:-8px 0 40px -8px rgba(6,32,31,.4);transform:translateX(100%);transition:transform .24s cubic-bezier(.2,.7,.3,1);z-index:901;display:flex;flex-direction:column}
+  .drawer.open{transform:none}
+  .dhead{display:flex;align-items:flex-start;gap:14px;border-bottom:1px solid var(--border-soft);background:#fff;padding:20px 20px 16px}
+  .dhead .avatar{height:48px;width:48px;font-size:16px}
+  .dhead h2{margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--ink-950)}
+  .dhead .meta{margin-top:4px;font-size:12.5px;color:var(--ink-500)}
+  .dclose{display:flex;flex:none;height:32px;width:32px;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--ink-500)}
+  .dbody{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+  .dcard{border:1px solid var(--border);background:#fff;border-radius:12px;padding:14px}
+  .dcard .t{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-500);margin-bottom:10px}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .dgrid .k{font-size:11.5px;color:var(--ink-500)}
+  .dgrid .v{font-size:13.5px;font-weight:650;color:var(--ink-900);margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="note">Design mock only — static HTML, not wired to real data. Click the "Overview" / "Register" rail items, an exception pill, or a table row.</div>
+
+<div class="topbar">
+  <div class="crumb">Home <span>›</span> <b>Attendance &amp; Shifts</b></div>
+  <div class="pagehead">
+    <h1>Attendance &amp; Shifts</h1>
+    <div class="tabs">
+      <button type="button">Policy config</button>
+      <button type="button" class="active">Insights</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- ============ LEFT RAIL ============ -->
+  <div class="rail">
+    <div class="rail-head">
+      <div class="t">Insights</div>
+      <div class="s">Attendance snapshot</div>
+    </div>
+    <div class="rail-group">Views</div>
+    <button type="button" class="rail-item active" id="railOverview" onclick="showView('overview')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16M8 20v-6M13 20V10M18 20v-8"/></svg>
+      Overview
+    </button>
+    <button type="button" class="rail-item" id="railRegister" onclick="showView('register')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      Register
+      <span class="cnt">271</span>
+    </button>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div>
+    <!-- shared context row: date / department / shift -->
+    <div class="ctxrow">
+      <button type="button" class="navbtn" title="Previous day">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <span class="datepill">08-Sep-26</span>
+      <button type="button" class="navbtn" title="Next day">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button type="button" class="pillbtn">Today</button>
+      <select class="ctl"><option>All departments</option><option>Nursing</option><option>ICU</option><option>Emergency</option></select>
+      <select class="ctl"><option>All shifts</option><option>General (09:00–18:00)</option><option>Night (20:00–05:00)</option></select>
+    </div>
+
+    <!-- ============ OVERVIEW VIEW ============ -->
+    <div class="view active" id="viewOverview">
+      <div class="kpirow">
+        <div class="kpi"><span class="ic" style="background:var(--green-bg);color:var(--green-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5L9.5 17 4.5 12"/></svg></span><div><div class="v">271</div><div class="l">Present</div></div></div>
+        <div class="kpi"><span class="ic" style="background:var(--amber-bg);color:var(--amber-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg></span><div><div class="v">18</div><div class="l">Late arrivals</div></div></div>
+        <div class="kpi"><span class="ic" style="background:var(--teal-50);color:var(--teal-800)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="14" height="14" rx="1"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/></svg></span><div><div class="v">14</div><div class="l">On leave</div></div></div>
+        <div class="kpi"><span class="ic" style="background:var(--red-bg);color:var(--red-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></span><div><div class="v">3</div><div class="l">Absent</div></div></div>
+        <div class="kpi"><span class="ic" style="background:var(--slate-bg);color:var(--slate-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg></span><div><div class="v">12</div><div class="l">Yet to check in</div></div></div>
+        <div class="kpi"><span class="ic" style="background:var(--teal-50);color:var(--teal-800)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="v">89%</div><div class="l">Attendance %</div></div></div>
+      </div>
+
+      <div class="bandhead">
+        <span class="h">Attendance analytics</span>
+        <div class="toggle">
+          <button type="button" class="active">Day</button>
+          <button type="button">Week</button>
+          <button type="button">Month</button>
+        </div>
+      </div>
+      <div class="metricrow">
+        <div class="metric"><div class="l">Total logged hours</div><div class="v">2168h 30m</div><div class="s">across present staff · today</div></div>
+        <div class="metric"><div class="l"><span class="dot" style="background:#2E9E5B"></span>Timely logins</div><div class="v">253</div><div class="s">on time · today</div></div>
+        <div class="metric"><div class="l"><span class="dot" style="background:#C99212"></span>Late logins</div><div class="v">18</div><div class="s">today</div></div>
+        <div class="metric"><div class="l">Average logged hours</div><div class="v">8h 00m</div><div class="s">per employee · today</div></div>
+        <div class="metric"><div class="l">Punctuality %</div><div class="v">93%</div><div class="s">today</div></div>
+        <div class="metric"><div class="l">Attendance %</div><div class="v accent">89%</div><div class="s">today</div></div>
+      </div>
+
+      <div class="exhead">Exceptions</div>
+      <div class="expills" id="excPills">
+        <button type="button" class="expill" onclick="drillException(this,'Missing clock-out')">Missing clock-out · 5</button>
+        <button type="button" class="expill" onclick="drillException(this,'Late arrivals')">Late arrivals · 18</button>
+        <button type="button" class="expill" onclick="drillException(this,'Early departures')">Early departures · 4</button>
+        <button type="button" class="expill" onclick="drillException(this,'Pending regularization')">Pending regularization · 7</button>
+      </div>
+      <div class="exhint">Selecting an exception opens the Register, filtered to it.</div>
+    </div>
+
+    <!-- ============ REGISTER VIEW (the "detailed page") ============ -->
+    <div class="view" id="viewRegister">
+      <div class="filterbar">
+        <div class="fl">
+          <span class="flabel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            Filter
+          </span>
+          <div class="statuspills">
+            <button type="button" class="active">All</button>
+            <button type="button">Present</button>
+            <button type="button">Absent</button>
+            <button type="button">On leave</button>
+          </div>
+          <div class="searchbox">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-400)"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Search name, employee ID or mobile">
+          </div>
+          <span class="chip" id="excChip" style="display:none">
+            <span id="excChipLabel"></span>
+            <button type="button" onclick="clearExceptionFilter()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </span>
+        </div>
+        <button type="button" class="exportbtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M6 11l6 6 6-6M5 21h14"/></svg>
+          Export attendance
+        </button>
+      </div>
+
+      <div class="tablewrap">
+        <div class="tscroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">Employee ▾</th>
+                <th>Department</th>
+                <th>Shift</th>
+                <th>Status</th>
+                <th class="sortable">First in</th>
+                <th class="sortable">Last out</th>
+                <th class="sortable">Worked hours</th>
+                <th class="sortable">Late by</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="registerBody">
+              <tr onclick="openDrawer('Anita Rao','EMP-1042','Nursing','General (09:00–18:00)','present',false,'09:02 AM','06:11 PM','8h 09m','—')">
+                <td><div class="empname"><span class="avatar">AR</span><div><div class="n">Anita Rao</div><div class="id">EMP-1042</div></div></div></td>
+                <td>Nursing</td><td>General (09:00–18:00)</td>
+                <td><span class="statuspill" style="background:var(--green-bg);color:var(--green-fg)"><span class="d" style="background:var(--green-fg)"></span>Present</span></td>
+                <td class="mono">09:02 AM</td><td class="mono">06:11 PM</td><td>8h 09m</td><td>—</td>
+                <td class="chev">›</td>
+              </tr>
+              <tr onclick="openDrawer('Suresh Kumar','EMP-1108','ICU','Night (20:00–05:00)','present',true,'09:24 AM','06:40 PM','8h 16m','24m')">
+                <td><div class="empname"><span class="avatar">SK</span><div><div class="n">Suresh Kumar</div><div class="id">EMP-1108</div></div></div></td>
+                <td>ICU</td><td>Night (20:00–05:00)</td>
+                <td><span class="statuspill" style="background:var(--green-bg);color:var(--green-fg)"><span class="d" style="background:var(--green-fg)"></span>Present</span><span class="latetag">Late</span></td>
+                <td class="mono">09:24 AM</td><td class="mono">06:40 PM</td><td>8h 16m</td><td>24m</td>
+                <td class="chev">›</td>
+              </tr>
+              <tr onclick="openDrawer('Farhan Sheikh','EMP-0987','Emergency','General (09:00–18:00)','on_leave',false,'—','—','—','—')">
+                <td><div class="empname"><span class="avatar">FS</span><div><div class="n">Farhan Sheikh</div><div class="id">EMP-0987</div></div></div></td>
+                <td>Emergency</td><td>General (09:00–18:00)</td>
+                <td><span class="statuspill" style="background:var(--teal-50);color:var(--teal-800)"><span class="d" style="background:var(--teal-800)"></span>On leave</span></td>
+                <td class="mono">—</td><td class="mono">—</td><td>—</td><td>—</td>
+                <td class="chev">›</td>
+              </tr>
+              <tr onclick="openDrawer('Meera Iyer','EMP-1201','Cardiology','General (09:00–18:00)','present',false,'08:58 AM','—','—','—')">
+                <td><div class="empname"><span class="avatar">MI</span><div><div class="n">Meera Iyer</div><div class="id">EMP-1201</div></div></div></td>
+                <td>Cardiology</td><td>General (09:00–18:00)</td>
+                <td><span class="statuspill" style="background:var(--slate-bg);color:var(--slate-fg)"><span class="d" style="background:var(--slate-fg)"></span>Missing clock-out</span></td>
+                <td class="mono">08:58 AM</td><td class="mono">—</td><td>—</td><td>—</td>
+                <td class="chev">›</td>
+              </tr>
+              <tr onclick="openDrawer('Devika Nair','EMP-0765','Radiology','General (09:00–18:00)','absent',false,'—','—','—','—')">
+                <td><div class="empname"><span class="avatar">DN</span><div><div class="n">Devika Nair</div><div class="id">EMP-0765</div></div></div></td>
+                <td>Radiology</td><td>General (09:00–18:00)</td>
+                <td><span class="statuspill" style="background:var(--red-bg);color:var(--red-fg)"><span class="d" style="background:var(--red-fg)"></span>Absent</span></td>
+                <td class="mono">—</td><td class="mono">—</td><td>—</td><td>—</td>
+                <td class="chev">›</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagefoot">
+          <span>Showing <b style="color:var(--ink-900)">1–5</b> of 271 employees</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button type="button" class="pagebtn">‹</button>
+            <span style="font-size:12.5px;color:var(--ink-600);padding:0 4px">Page 1 of 55</span>
+            <button type="button" class="pagebtn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EMPLOYEE DRAWER ============ -->
+<div class="backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true">
+  <div class="dhead">
+    <span class="avatar" id="dAvatar">AR</span>
+    <div style="flex:1;min-width:0">
+      <h2 id="dName">Anita Rao</h2>
+      <div class="meta" id="dMeta">General (09:00–18:00) · Nursing · EMP-1042</div>
+    </div>
+    <button type="button" class="dclose" onclick="closeDrawer()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="dbody">
+    <div class="dcard">
+      <div class="t">Today</div>
+      <div class="dgrid">
+        <div><div class="k">First in</div><div class="v" id="dIn">09:02 AM</div></div>
+        <div><div class="k">Last out</div><div class="v" id="dOut">06:11 PM</div></div>
+        <div><div class="k">Worked hours</div><div class="v" id="dHours">8h 09m</div></div>
+        <div><div class="k">Late by</div><div class="v" id="dLate">—</div></div>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="t">Last 7 days</div>
+      <div style="font-size:12.5px;color:var(--ink-500)">Daily log &amp; regularization history renders here — same detail component already used on the HR Manager Attendance tab (<code>EmployeeAttendanceTab</code>).</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showView(name){
+    document.getElementById('viewOverview').classList.toggle('active', name==='overview');
+    document.getElementById('viewRegister').classList.toggle('active', name==='register');
+    document.getElementById('railOverview').classList.toggle('active', name==='overview');
+    document.getElementById('railRegister').classList.toggle('active', name==='register');
+  }
+  function drillException(btn, label){
+    document.querySelectorAll('#excPills .expill').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('excChipLabel').textContent = label;
+    document.getElementById('excChip').style.display = 'inline-flex';
+    showView('register');
+  }
+  function clearExceptionFilter(){
+    document.getElementById('excChip').style.display = 'none';
+    document.querySelectorAll('#excPills .expill').forEach(function(b){ b.classList.remove('active'); });
+  }
+  function openDrawer(name, empId, dept, shift, status, late, tin, tout, hours, lateBy){
+    document.getElementById('dName').textContent = name;
+    document.getElementById('dMeta').textContent = shift + ' · ' + dept + ' · ' + empId;
+    document.getElementById('dAvatar').textContent = name.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();
+    document.getElementById('dIn').textContent = tin;
+    document.getElementById('dOut').textContent = tout;
+    document.getElementById('dHours').textContent = hours;
+    document.getElementById('dLate').textContent = late ? lateBy : '—';
+    document.getElementById('backdrop').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer(){
+    document.getElementById('backdrop').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+  }
+</script>
+</body>
+</html>

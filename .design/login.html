@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NanoHealth — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&family=Noto+Sans+Devanagari:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-600:#22988F;
+    --teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;
+    --ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --border:#E2E7E6;--border-soft:#EBEEED;--danger:#DD4A3B;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:var(--ink-900)}
+  a{color:var(--teal-800);text-decoration:none}
+  a:hover{color:var(--teal-900);text-decoration:underline}
+  input::placeholder{color:var(--ink-400)}
+  input{font-family:inherit}
+  input:focus{outline:0;border-color:var(--teal-700)!important;box-shadow:0 0 0 3px var(--teal-50)}
+  button{font-family:inherit;cursor:pointer}
+  @keyframes lgIn{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+
+  .stage{position:relative;min-height:100vh;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:40px 20px;
+    background:linear-gradient(135deg,#0B4A48 0%,#0E5E5C 44%,#14716F 100%)}
+  .bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+
+  .card{position:relative;z-index:2;width:452px;max-width:100%;background:#fff;border-radius:16px;
+    box-shadow:0 30px 80px -24px rgba(6,32,31,.55),0 12px 30px rgba(6,32,31,.22);overflow:hidden;animation:lgIn .4s cubic-bezier(.2,.7,.3,1) both}
+  .card-head{background:linear-gradient(180deg,#F4FAF9,#EAF3F2);padding:22px 34px 18px;border-bottom:1px solid var(--border-soft);text-align:center}
+  .logo{display:inline-flex;align-items:center;gap:11px;margin-bottom:12px}
+  .logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(145deg,var(--teal-700),var(--teal-900));display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(14,94,92,.34)}
+  .logo-hi{font-family:'Noto Sans Devanagari','Inter',sans-serif;font-weight:700;font-size:17px;color:var(--teal-900);line-height:1.1;letter-spacing:.01em}
+  .logo-en{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--teal-700);margin-top:3px}
+  .head-title{font-size:18px;font-weight:700;letter-spacing:-.01em;color:var(--ink-950)}
+
+  .body{padding:26px 34px 8px;display:flex;flex-direction:column;gap:13px}
+  .field{position:relative;display:flex;align-items:center}
+  .field .lead{position:absolute;left:14px;display:inline-flex;color:var(--ink-400);pointer-events:none}
+  .field input{width:100%;border:1px solid var(--border);border-radius:10px;padding:13px 14px 13px 42px;font-size:14px;color:var(--ink-900);background:#fff}
+  .field .eye{position:absolute;right:8px;width:32px;height:32px;border:0;background:transparent;color:var(--ink-400);border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+  .field .eye:hover{color:var(--ink-700);background:var(--ink-50)}
+
+  .captcha-row{display:flex;gap:10px;align-items:stretch}
+  .captcha{flex:none;display:inline-flex;align-items:center;gap:2px;background:var(--ink-50);border:1px solid var(--border);border-radius:10px;padding:0 16px;font-size:15px;font-weight:700;color:var(--ink-700);letter-spacing:.04em;user-select:none}
+  .captcha b{color:var(--teal-800);font-weight:700}
+  .captcha-row input{flex:1;border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-size:14px;color:var(--ink-900);background:#fff}
+
+  .btn-primary{width:100%;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:13px;border-radius:10px;font-size:14.5px;font-weight:650;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 3px 10px rgba(14,94,92,.28);transition:background .15s}
+  .btn-primary:hover{background:var(--teal-900)}
+  .forgot{text-align:center;font-size:13px;font-weight:550;padding:2px 0}
+  .btn-ghost{width:100%;background:var(--teal-50);color:var(--teal-800);border:1px solid var(--teal-100);padding:12px;border-radius:10px;font-size:14px;font-weight:600;transition:background .15s}
+  .btn-ghost:hover{background:#E0EFEE}
+  .foot{padding:16px 34px 20px;text-align:center;font-size:12px;color:var(--ink-400)}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--ink-400);font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin:2px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border-soft)}
+
+  /* profile screen */
+  .card-head.sel{display:flex;align-items:center;justify-content:space-between;text-align:left;padding:18px 22px}
+  .sel-title{display:inline-flex;align-items:center;gap:10px;font-size:17px;font-weight:700;color:var(--ink-950);letter-spacing:-.01em}
+  .sel-title .dot{width:11px;height:11px;border-radius:3px;transform:rotate(45deg);background:var(--teal-700);box-shadow:0 0 0 3px rgba(27,134,130,.16)}
+  .power{width:38px;height:38px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--danger);display:inline-flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s}
+  .power:hover{background:#FCEDEB;border-color:#F3C9C1}
+  .plist{max-height:404px;overflow-y:auto}
+  .prow{display:flex;align-items:center;gap:15px;width:100%;text-align:left;border:0;background:transparent;padding:15px 24px;border-bottom:1px solid var(--border-soft);transition:background .13s}
+  .prow:last-child{border-bottom:0}
+  .prow:hover{background:var(--teal-50)}
+  .pav{width:42px;height:42px;flex:none;border-radius:11px;background:#EEF3F7;display:inline-flex;align-items:center;justify-content:center;color:var(--teal-800)}
+  .prow:hover .pav{background:#fff}
+  .pname{font-size:14.5px;font-weight:600;color:var(--ink-900)}
+  .pmeta{font-size:12px;color:var(--ink-400);margin-top:2px}
+  .pgo{margin-left:auto;color:var(--ink-200);display:inline-flex}
+  .prow:hover .pgo{color:var(--teal-700)}
+  .plist::-webkit-scrollbar{width:9px}
+  .plist::-webkit-scrollbar-thumb{background:#CFD6DD;border-radius:8px;border:2px solid #fff;background-clip:content-box}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#0E5E5C">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#0E5E5C"></rect>
+      <rect x="410" y="230" width="380" height="340" rx="26" fill="#ffffff"></rect>
+      <rect x="540" y="290" width="120" height="120" rx="26" fill="#14716F"></rect>
+      <path d="M600 322v56M572 350h56" stroke="#fff" stroke-width="14" stroke-linecap="round"></path>
+      <rect x="470" y="440" width="260" height="40" rx="12" fill="#E5E9ED"></rect>
+      <rect x="470" y="496" width="260" height="40" rx="12" fill="#14716F"></rect>
+    </svg>
+  </template>
+  <div class="stage">
+    <!-- backdrop -->
+    <svg class="bg" viewBox="0 0 1440 860" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="hex" width="88" height="152" patternUnits="userSpaceOnUse">
+          <path d="M44 2 L86 26 L86 74 L44 98 L2 74 L2 26 Z" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1.3"></path>
+          <path d="M44 98 L86 122 L86 170 L44 194 L2 170 L2 122 Z" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1.3"></path>
+        </pattern>
+        <radialGradient id="gl" cx="28%" cy="36%" r="62%">
+          <stop offset="0%" stop-color="rgba(255,255,255,.10)"></stop>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"></stop>
+        </radialGradient>
+      </defs>
+      <rect width="1440" height="860" fill="url(#hex)"></rect>
+      <rect width="1440" height="860" fill="url(#gl)"></rect>
+      <g id="dots" fill="rgba(127,217,198,.34)"></g>
+      <g fill="none" stroke="rgba(127,217,198,.32)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="translate(1150,110)"><path d="M2 0h28M9 0v22l-15 30a9 9 0 008 14h26a9 9 0 008-14l-15-30V0"></path></g>
+        <g transform="translate(1206,300) scale(1.1)"><path d="M0 14a14 14 0 1128 0v20a14 14 0 01-28 0zM8 46v8a20 20 0 0040 0V30M48 30a7 7 0 100-14 7 7 0 000 14z"></path></g>
+        <g transform="translate(120,150) scale(1.15)"><path d="M0 40 L28 40 L36 20 L48 60 L58 40 L84 40"></path></g>
+        <g transform="translate(150,620) scale(1.2)" opacity=".8"><path d="M20 0v18M6 18h28M10 18l4 40a10 10 0 0020 0l4-40M14 44h16"></path></g>
+        <g transform="translate(1120,650) scale(1.15)"><path d="M12 4h28v14a14 14 0 01-28 0zM12 62h28V48a14 14 0 00-28 0zM4 4h44M4 62h44"></path></g>
+      </g>
+    </svg>
+
+    <!-- ══════ SIGN IN CARD ══════ -->
+    <div class="card" id="cardSignin">
+      <div class="card-head">
+        <div class="logo">
+          <span class="logo-mark">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+          </span>
+          <div style="text-align:left">
+            <div class="logo-hi">कंचन शल्य निकेतन</div>
+            <div class="logo-en">Kanchan Shalya Niketan</div>
+          </div>
+        </div>
+        <div class="head-title">Sign In</div>
+      </div>
+      <form class="body" id="signinForm" autocomplete="off">
+        <div class="field">
+          <span class="lead"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0"></path></svg></span>
+          <input type="text" placeholder="Email or Mobile" value="sanjay.gupta@nanohealth.in">
+        </div>
+        <div class="field">
+          <span class="lead"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 018 0v3"></path></svg></span>
+          <input id="pwd" type="password" placeholder="Password" value="password">
+          <button type="button" class="eye" id="eyeBtn" title="Show password">
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+        <div class="captcha-row">
+          <span class="captcha">1 + 3 = <b style="margin-left:5px">?</b></span>
+          <input type="text" placeholder="Answer" value="4">
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+        <a class="forgot" href="#">Forgot password?</a>
+        <button type="button" class="btn-ghost" id="otpBtn">Login with OTP</button>
+      </form>
+      <div class="foot">© 2026 NanoHealth</div>
+    </div>
+
+    <!-- ══════ SELECT PROFILE CARD ══════ -->
+    <div class="card hidden" id="cardProfile">
+      <div class="card-head sel">
+        <span class="sel-title"><span class="dot"></span>Select Profile</span>
+        <button class="power" id="logoutBtn" title="Sign out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9M6.4 6.4a9 9 0 1011.2 0"></path></svg>
+        </button>
+      </div>
+      <div class="plist" id="plist"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // dotted grid accent
+  var dg = document.getElementById('dots'), s='';
+  for(var r=0;r<6;r++){for(var c=0;c<6;c++){s+='<circle cx="'+(1006+c*15)+'" cy="'+(210+r*15)+'" r="2.4"></circle>';}}
+  dg.innerHTML = s;
+
+  // password toggle
+  var pwd=document.getElementById('pwd'), eyeBtn=document.getElementById('eyeBtn'), eyeIcon=document.getElementById('eyeIcon');
+  var eyeOpen='<path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle>';
+  var eyeOff='<path d="M2 2l20 20M6.7 6.75C3.9 8.4 1.5 12 1.5 12S5 19 12 19a10.9 10.9 0 005.3-1.35M9.9 5.2A11.6 11.6 0 0112 5c7 0 10.5 7 10.5 7a18.6 18.6 0 01-3.1 4.05M9.9 9.9a3 3 0 004.2 4.2"></path>';
+  eyeBtn.addEventListener('click',function(){
+    var show = pwd.type==='password';
+    pwd.type = show?'text':'password';
+    eyeIcon.innerHTML = show?eyeOff:eyeOpen;
+  });
+
+  // profiles → portals
+  var PROFILES=[
+    {name:'HR Manager', meta:'KSN Hospital — Human Resources', href:'Manager Portal.dc.html',
+      icon:'M4 13h7V4H4zM13 20h7v-9h-7zM4 20h7v-5H4zM13 9h7V4h-7z'},
+    {name:'Front Desk Executive', meta:'Main Gate — Reception', href:'Front Desk Portal.dc.html',
+      icon:'M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 9.5a2 2 0 104 0 2 2 0 00-4 0M7.5 15c.4-1.4 1.7-2.2 3-2.2s2.6.8 3 2.2'},
+    {name:'Employee — Self Service', meta:'Cardiology — Staff', href:'Employee Portal.dc.html',
+      icon:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0'},
+    {name:'Employee — Mobile App', meta:'On-the-go employee experience', href:'Employee Mobile App.dc.html',
+      icon:'M7 2h10a2 2 0 012 2v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zM10 18.5h4'},
+    {name:'Platform Administrator', meta:'System Administration', href:'Admin Console.dc.html',
+      icon:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 13.5a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1a1.6 1.6 0 00-2.7-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00-1.1-2.7H3a2 2 0 110-4h.1A1.6 1.6 0 004.2 8.3l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V8'}
+  ];
+  var chev='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>';
+  var pl=document.getElementById('plist'), h='';
+  PROFILES.forEach(function(p){
+    h+='<a class="prow" href="'+p.href+'">'
+      +'<span class="pav"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+p.icon+'"></path></svg></span>'
+      +'<span><span class="pname" style="display:block">'+p.name+'</span><span class="pmeta">'+p.meta+'</span></span>'
+      +'<span class="pgo">'+chev+'</span></a>';
+  });
+  pl.innerHTML=h;
+
+  // navigation between the two screens
+  var cSign=document.getElementById('cardSignin'), cProf=document.getElementById('cardProfile');
+  function toProfile(){ cSign.classList.add('hidden'); cProf.classList.remove('hidden'); cProf.style.animation='none'; void cProf.offsetWidth; cProf.style.animation='lgIn .4s cubic-bezier(.2,.7,.3,1) both'; }
+  function toSignin(){ cProf.classList.add('hidden'); cSign.classList.remove('hidden'); }
+  document.getElementById('signinForm').addEventListener('submit',function(e){e.preventDefault();toProfile();});
+  document.getElementById('otpBtn').addEventListener('click',toProfile);
+  document.getElementById('logoutBtn').addEventListener('click',toSignin);
+})();
+</script>
+</body>
+</html>

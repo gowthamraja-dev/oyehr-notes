@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;--ink-300:#A8B2BE;--ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --bg-app:#ECEFEE;--bg-canvas:#F4F6F5;--card:#FFFFFF;--border:#E2E7E6;--border-soft:#EBEEED;--upload:#F2682A;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:#CFD6DD;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#B4BEC8;background-clip:content-box}
+  input::placeholder,textarea::placeholder{color:var(--ink-400)}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal-700)!important;box-shadow:0 0 0 3px var(--teal-50)}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;overflow:hidden;font-family:'Inter',system-ui,-apple-system,sans-serif;font-feature-settings:'ss01','cv11';background:var(--bg-app);color:var(--ink-900);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside style="width:248px;flex:none;background:var(--teal-950);display:flex;flex-direction:column;color:#fff">
+    <div style="display:flex;align-items:center;gap:11px;padding:18px 18px 16px">
+      <span style="width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,var(--teal-700),var(--teal-800));display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"></path></svg>
+      </span>
+      <div style="min-width:0">
+        <div style="font-size:15px;font-weight:700;letter-spacing:-.01em">NanoHealth</div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:1px">Employee Portal</div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:6px 12px 12px">
+      <div style="font-size:10px;font-weight:650;letter-spacing:.13em;color:rgba(255,255,255,.38);text-transform:uppercase;padding:10px 10px 8px">Me</div>
+      <nav style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ modules }}" as="m" hint-placeholder-count="11">
+          <sc-if value="{{ m.hasSection }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:650;letter-spacing:.13em;color:rgba(255,255,255,.38);text-transform:uppercase;padding:15px 10px 8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.07)">{{ m.sectionLabel }}</div></sc-if>
+          <button onClick="{{ m.onClick }}" style="position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500" style-hover="background:rgba(255,255,255,.06)">
+            <sc-if value="{{ m.active }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;inset:0;background:var(--teal-800);border-radius:9px"></span>
+              <span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:#7FD9C6;border-radius:0 3px 3px 0"></span>
+              <span style="position:relative;display:inline-flex;color:#fff"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:#fff;font-weight:600">{{ m.label }}</span>
+            </sc-if>
+            <sc-if value="{{ m.notActive }}" hint-placeholder-val="{{ true }}">
+              <span style="position:relative;display:inline-flex;color:rgba(255,255,255,.6)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ m.iconPath }}"></path></svg></span>
+              <span style="position:relative;color:rgba(255,255,255,.72)">{{ m.label }}</span>
+              <sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:relative;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--upload);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ m.badge }}</span></sc-if>
+            </sc-if>
+          </button>
+        </sc-for>
+      </nav>
+    </div>
+
+    <div style="padding:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px">
+      <button onClick="{{ onGoProfile }}" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05);border:0;cursor:pointer;font-family:inherit" style-hover="background:rgba(255,255,255,.09)">
+        <span style="width:32px;height:32px;border-radius:999px;background:var(--teal-700);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;color:#fff">AS</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Dr. Ananya Sharma</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.55)">Cardiology · EMP-0142</div>
+        </div>
+      </button>
+      <a href="login.html" title="Sign out" style="width:38px;height:38px;flex:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);text-decoration:none" style-hover="background:rgba(255,255,255,.1);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"></path></svg></a>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+
+    <!-- TOP BAR -->
+    <header style="height:64px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 22px">
+      <div style="flex:none;width:300px;display:flex;align-items:center;gap:9px;background:var(--ink-50);border:1px solid var(--border-soft);border-radius:10px;padding:9px 13px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search leave, payslips, documents…" style="border:0;outline:0;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:13.5px;color:var(--ink-900)" />
+      </div>
+      <div style="flex:1"></div>
+      <span style="font-size:12.5px;color:var(--ink-500);font-weight:550">{{ todayLabel }}</span>
+      <div style="width:1px;height:26px;background:var(--border);flex:none;margin:0 4px"></div>
+      <button onClick="{{ onToggleClock }}" style="flex:none;display:inline-flex;align-items:center;gap:9px;border:1px solid {{ clockBorder }};background:{{ clockBtnBg }};color:{{ clockBtnColor }};padding:8px 14px;border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="opacity:.92">
+        <span style="width:8px;height:8px;border-radius:999px;background:{{ clockDot }}"></span>{{ clockPillLabel }}
+      </button>
+      <div style="position:relative;flex:none">
+        <button onClick="{{ onToggleNotif }}" style="width:42px;height:42px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative" title="Notifications" style-hover="background:var(--bg-canvas);color:var(--ink-900)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+          <span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--upload);border:1.5px solid #fff;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ notifCount }}</span>
+        </button>
+        <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ onCloseNotif }}" style="position:fixed;inset:0;z-index:40"></div>
+          <div style="position:absolute;top:50px;right:0;width:344px;max-width:90vw;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(11,22,32,.18);z-index:41;overflow:hidden">
+            <div style="padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:13px;font-weight:700;color:var(--ink-900)">Notifications</div>
+            <div style="max-height:340px;overflow-y:auto">
+              <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+                <div style="display:flex;gap:11px;padding:12px 16px;border-bottom:1px solid var(--border-soft)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:9px;background:{{ n.bg }};color:{{ n.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.iconPath }}"></path></svg></span>
+                  <div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--ink-800)">{{ n.title }}</div><div style="font-size:11.5px;color:var(--ink-500);margin-top:1px">{{ n.desc }}</div><div style="font-size:10.5px;color:var(--ink-400);margin-top:3px">{{ n.time }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div style="flex:1;min-height:0;overflow-y:auto;background:var(--bg-canvas)">
+
+      <!-- ═══════ HOME ═══════ -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1140px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div>
+          <h1 style="margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">{{ greeting }}, Ananya</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:var(--ink-500)">{{ todayFull }} · Morning shift · Cardiology</p>
+        </div>
+
+        <!-- Stat cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+          <sc-for list="{{ homeStats }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:center;gap:8px;color:{{ k.iconColor }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ k.icon }}"></path></svg><span style="font-size:11.5px;font-weight:600;color:var(--ink-500)">{{ k.label }}</span></div>
+              <div style="font-size:24px;font-weight:700;color:var(--ink-950);margin-top:8px;letter-spacing:-.01em">{{ k.value }}</div>
+              <div style="font-size:11.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- Quick actions -->
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900);margin-bottom:14px"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Quick actions</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px">
+            <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="6">
+              <button onClick="{{ q.onClick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--bg-canvas);border:1px solid var(--border-soft);border-radius:11px;padding:14px;cursor:pointer;font-family:inherit;text-align:left" style-hover="background:var(--teal-50);border-color:var(--teal-100)">
+                <span style="width:34px;height:34px;border-radius:9px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ q.icon }}"></path></svg></span>
+                <span style="font-size:12.5px;font-weight:600;color:var(--ink-800)">{{ q.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start">
+          <!-- My requests -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>My open requests</div>
+            <sc-for list="{{ openRequests }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-soft)">
+                <span style="width:32px;height:32px;flex:none;border-radius:9px;background:{{ r.bg }};color:{{ r.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.icon }}"></path></svg></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900)">{{ r.title }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:1px">{{ r.meta }}</div></div>
+                <span style="flex:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ r.stBg }};color:{{ r.stColor }}">{{ r.status }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noRequests }}" hint-placeholder-val="{{ false }}"><div style="padding:24px;text-align:center;font-size:12.5px;color:var(--ink-400)">No pending requests.</div></sc-if>
+          </div>
+          <!-- Announcements -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+              <span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Announcements</span>
+              <button onClick="{{ onGoAnnouncements }}" style="border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;color:var(--teal-800);cursor:pointer">See all</button>
+            </div>
+            <sc-for list="{{ homeAnnouncements }}" as="a" hint-placeholder-count="3">
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border-soft)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ a.color }};background:{{ a.bg }};border-radius:5px;padding:2px 7px">{{ a.tag }}</span><span style="font-size:11px;color:var(--ink-400)">{{ a.date }}</span></div>
+                <div style="font-size:13px;font-weight:600;color:var(--ink-800);line-height:1.4">{{ a.title }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY ATTENDANCE ═══════ -->
+      <sc-if value="{{ isAttendance }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Attendance</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">July 2026 · Morning shift (09:00 – 17:30)</p></div>
+
+        <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">
+          <!-- Clock + summary -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid {{ clockCardBorder }};border-radius:14px;padding:16px 18px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 16px rgba(11,22,32,.05)">
+              <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500)"><span style="width:8px;height:8px;border-radius:999px;background:{{ clockDot }}"></span>{{ clockStatusLabel }}</span><span style="font-size:11.5px;color:var(--ink-400)">In {{ clockInLabel }}</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;color:var(--ink-950);margin:10px 0 4px">{{ elapsed }}</div>
+              <div style="font-size:11.5px;color:var(--ink-400);margin-bottom:14px">worked today</div>
+              <button onClick="{{ onToggleClock }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid {{ clockBorder }};background:{{ clockBtnBg }};color:{{ clockBtnColor }};padding:11px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;cursor:pointer" style-hover="opacity:.92"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ clockIcon }}"></path></svg>{{ clockBtnLabel }}</button>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 16px rgba(11,22,32,.05)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><span style="font-size:12px;color:var(--ink-500)">Attendance rate</span><span style="font-size:22px;font-weight:700;color:var(--teal-800);line-height:1">96%</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+                <div style="border:1px solid var(--border-soft);border-radius:9px;padding:10px 11px;background:#FBFCFC"><div style="font-size:18px;font-weight:700;color:var(--ink-900)">21</div><div style="font-size:11px;color:var(--ink-400);margin-top:2px">Present</div></div>
+                <div style="border:1px solid var(--border-soft);border-radius:9px;padding:10px 11px;background:#FBFCFC"><div style="font-size:18px;font-weight:700;color:var(--ink-900)">2</div><div style="font-size:11px;color:var(--ink-400);margin-top:2px">Late</div></div>
+                <div style="border:1px solid var(--border-soft);border-radius:9px;padding:10px 11px;background:#FBFCFC"><div style="font-size:18px;font-weight:700;color:var(--ink-900)">1</div><div style="font-size:11px;color:var(--ink-400);margin-top:2px">Leave</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Monthly log -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border-soft)"><span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Daily log</span><button onClick="{{ onRegularize }}" style="border:1px solid var(--border);background:#fff;color:var(--teal-800);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-50);border-color:var(--teal-100)">Request regularization</button></div>
+            <div style="display:grid;grid-template-columns:64px 1fr 90px 90px 80px 110px;gap:8px;padding:11px 16px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)"><span>Date</span><span>Day</span><span>In</span><span>Out</span><span>Hours</span><span>Status</span></div>
+            <sc-for list="{{ attLog }}" as="d" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:64px 1fr 90px 90px 80px 110px;gap:8px;padding:11px 16px;border-bottom:1px solid var(--border-soft);align-items:center;background:{{ d.rowBg }}">
+                <span style="font-size:13px;font-weight:650;color:var(--ink-900)">{{ d.date }}</span>
+                <span style="font-size:12.5px;color:var(--ink-500)">{{ d.day }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-700)">{{ d.in }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-700)">{{ d.out }}</span>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ d.hours }}</span>
+                <span><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;background:{{ d.stBg }};color:{{ d.stColor }}">{{ d.status }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>My regularization requests</div>
+            <sc-if value="{{ hasRegs }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:110px 110px 1fr 100px;gap:8px;padding:11px 16px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)"><span>Date</span><span>Punch</span><span>Reason</span><span>Status</span></div>
+            <sc-for list="{{ myRegs }}" as="r" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:110px 110px 1fr 100px;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:center">
+                <span style="font-size:12.5px;font-weight:600;color:var(--ink-900)">{{ r.date }}</span>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ r.punch }}</span>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ r.reason }}</span>
+                <span><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ r.stBg }};color:{{ r.stColor }}">{{ r.status }}</span></span>
+              </div>
+            </sc-for>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY LEAVE ═══════ -->
+      <sc-if value="{{ isLeave }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1100px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Leave</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Balances, applications and history for 2026</p></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <sc-for list="{{ leaveBalances }}" as="b" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:12.5px;font-weight:600;color:var(--ink-700)">{{ b.label }}</span><span style="font-size:11.5px;color:var(--ink-400)">{{ b.taken }} / {{ b.total }} used</span></div>
+              <div style="font-size:26px;font-weight:700;color:var(--ink-950);margin:8px 0 3px">{{ b.left }} <span style="font-size:13px;font-weight:600;color:var(--ink-400)">days left</span></div>
+              <div style="height:6px;background:var(--ink-100);border-radius:999px;overflow:hidden;margin-top:8px"><div style="width:{{ b.pct }};height:100%;background:{{ b.color }};border-radius:999px"></div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start">
+          <!-- Apply form -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Apply for leave</div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Leave type</div><select value="{{ lvType }}" onChange="{{ onLvType }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ lvTypeOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+              <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">From</div><input value="{{ lvFrom }}" onChange="{{ onLvFrom }}" placeholder="10 Jul 2026" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">To</div><input value="{{ lvTo }}" onChange="{{ onLvTo }}" placeholder="12 Jul 2026" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div></div>
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Reason</div><textarea value="{{ lvReason }}" onChange="{{ onLvReason }}" rows="3" placeholder="Add a short note for your manager…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;resize:vertical"></textarea></div>
+              <div style="font-size:11.5px;color:var(--ink-400)">Approver · Dr. Vikram Iyer (HOD)</div>
+              <button onClick="{{ onSubmitLeave }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:11px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>Submit request</button>
+            </div>
+          </div>
+          <!-- History -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Request history</div>
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 60px 100px;gap:8px;padding:11px 16px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)"><span>Type</span><span>Dates</span><span>Days</span><span>Status</span></div>
+            <sc-for list="{{ myLeaves }}" as="l" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:1.1fr 1.4fr 60px 100px;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:center">
+                <span style="font-size:13px;font-weight:600;color:var(--ink-900)">{{ l.type }}</span>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ l.dates }}</span>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ l.days }}</span>
+                <span><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ l.stBg }};color:{{ l.stColor }}">{{ l.status }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY PAYSLIPS ═══════ -->
+      <sc-if value="{{ isPayslips }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Payslips &amp; Tax</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Financial year 2026–27 · monthly gross ₹2,30,000</p></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <sc-for list="{{ payYtd }}" as="k" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)"><div style="font-size:12px;color:var(--ink-500)">{{ k.label }}</div><div style="font-size:23px;font-weight:700;color:var(--ink-950);margin-top:7px;letter-spacing:-.01em">{{ k.value }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div></div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Monthly payslips</div>
+            <sc-for list="{{ payslips }}" as="p" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+                <span style="width:38px;height:38px;flex:none;border-radius:9px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18"></path></svg></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900)">{{ p.month }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:1px">Net pay {{ p.net }}</div></div>
+                <span style="flex:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ p.sBg }};color:{{ p.sColor }}">{{ p.status }}</span>
+                <button onClick="{{ p.onDownload }}" style="width:32px;height:32px;flex:none;border:1px solid var(--border);background:#fff;border-radius:8px;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas);border-color:var(--teal-100);color:var(--teal-800)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Tax documents</div>
+            <sc-for list="{{ taxDocs }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+                <span style="width:34px;height:34px;flex:none;border-radius:9px;background:var(--ink-50);color:var(--ink-600);display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900)">{{ t.name }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:1px">{{ t.meta }}</div></div>
+                <button onClick="{{ t.onDownload }}" style="width:30px;height:30px;flex:none;border:1px solid var(--border);background:#fff;border-radius:7px;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY EXPENSES ═══════ -->
+      <sc-if value="{{ isExpenses }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Reimbursements</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Claims and expense reimbursements</p></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+          <sc-for list="{{ expSummary }}" as="k" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 17px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)"><div style="font-size:12px;color:var(--ink-500)">{{ k.label }}</div><div style="font-size:23px;font-weight:700;color:{{ k.color }};margin-top:7px;letter-spacing:-.01em">{{ k.value }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:2px">{{ k.sub }}</div></div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>New claim</div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Category</div><select value="{{ expCat }}" onChange="{{ onExpCat }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ expCatOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+              <div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Amount (₹)</div><input value="{{ expAmt }}" onChange="{{ onExpAmt }}" placeholder="4,200" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Date</div><input value="{{ expDate }}" onChange="{{ onExpDate }}" placeholder="3 Jul 2026" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div></div>
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Note</div><input value="{{ expNote }}" onChange="{{ onExpNote }}" placeholder="What was this for?" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div>
+              <button onClick="{{ onAttachReceipt }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px dashed var(--ink-200);background:transparent;color:var(--teal-800);padding:9px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:var(--teal-100);background:var(--teal-50)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>{{ receiptLabel }}</button>
+              <button onClick="{{ onSubmitExpense }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:11px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)">Submit claim</button>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>My claims</div>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 100px 100px;gap:8px;padding:11px 16px;background:#F5F8F7;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)"><span>Claim</span><span>Date</span><span>Amount</span><span>Status</span></div>
+            <sc-for list="{{ expenses }}" as="e" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 100px 100px;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:center">
+                <div style="min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.note }}</div><div style="font-size:11px;color:var(--ink-400)">{{ e.cat }}</div></div>
+                <span style="font-size:12.5px;color:var(--ink-600)">{{ e.date }}</span>
+                <span style="font-size:12.5px;font-weight:600;color:var(--ink-900)">₹{{ e.amount }}</span>
+                <span><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ e.stBg }};color:{{ e.stColor }}">{{ e.status }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY DOCUMENTS ═══════ -->
+      <sc-if value="{{ isDocuments }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Documents</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Letters, statements and files you can access anytime</p></div>
+          <button onClick="{{ onUploadDoc }}" style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 15px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"></path></svg>Upload document</button>
+        </div>
+        <sc-for list="{{ docGroups }}" as="g" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);padding:2px 4px 10px">{{ g.label }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+              <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+                  <span style="width:40px;height:40px;flex:none;border-radius:10px;background:{{ d.bg }};color:{{ d.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ d.meta }}</div></div>
+                  <button onClick="{{ d.onDownload }}" style="width:30px;height:30px;flex:none;border:1px solid var(--border);background:#fff;border-radius:7px;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas);color:var(--teal-800)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"></path></svg></button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY PROFILE ═══════ -->
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+          <span style="width:66px;height:66px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;border:1px solid var(--teal-100)">AS</span>
+          <div style="flex:1;min-width:0"><div style="font-size:20px;font-weight:700;color:var(--ink-950);letter-spacing:-.01em">Dr. Ananya Sharma</div><div style="font-size:13px;color:var(--ink-500);margin-top:3px">Senior Consultant · Cardiology · EMP-0142</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px"><span style="font-size:11.5px;font-weight:600;color:var(--teal-900);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:6px;padding:3px 10px">Full-time</span><span style="font-size:11.5px;font-weight:600;color:var(--ink-600);background:var(--ink-50);border-radius:6px;padding:3px 10px">6 yrs tenure</span><span style="font-size:11.5px;font-weight:600;color:var(--ink-600);background:var(--ink-50);border-radius:6px;padding:3px 10px">Reports to Dr. Vikram Iyer</span></div></div>
+          <button onClick="{{ onEditProfile }}" style="flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:#fff;color:var(--ink-700);padding:9px 15px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--bg-canvas);border-color:var(--teal-100);color:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>Edit</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <sc-for list="{{ profileCards }}" as="c" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+              <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>{{ c.label }}</div>
+              <div style="padding:6px 16px 12px">
+                <sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid var(--border-soft)"><span style="width:150px;flex:none;font-size:12.5px;color:var(--ink-500)">{{ r.k }}</span><span style="flex:1;font-size:13px;font-weight:550;color:var(--ink-800)">{{ r.v }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ HOLIDAY CALENDAR ═══════ -->
+      <sc-if value="{{ isHolidays }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:900px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">Holiday Calendar</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">2026 · Hyderabad — Main Campus</p></div>
+          <div style="background:var(--teal-800);color:#fff;border-radius:12px;padding:11px 16px;display:flex;align-items:center;gap:12px"><div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)">Next holiday</div><div style="font-size:14px;font-weight:700;margin-top:2px">{{ nextHolName }}</div></div><div style="text-align:right;border-left:1px solid rgba(255,255,255,.2);padding-left:12px"><div style="font-size:20px;font-weight:700;line-height:1">{{ nextHolDays }}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">days away</div></div></div>
+        </div>
+        <sc-for list="{{ holMonths }}" as="m" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500);padding:2px 4px 10px">{{ m.month }}</div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 14px rgba(11,22,32,.04)">
+              <sc-for list="{{ m.items }}" as="h" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid var(--border-soft);opacity:{{ h.opacity }}">
+                  <div style="width:52px;flex:none;text-align:center"><div style="font-size:15px;font-weight:700;color:var(--ink-900);line-height:1.15">{{ h.date }}</div><div style="font-size:10.5px;color:var(--ink-400)">{{ h.day }}</div></div>
+                  <div style="width:1px;height:30px;background:var(--border-soft);flex:none"></div>
+                  <div style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--ink-800)">{{ h.name }}</div>
+                  <span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ h.typeColor }};background:{{ h.typeBg }};border-radius:6px;padding:3px 9px">{{ h.type }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ MY TEAM ═══════ -->
+      <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">My Team</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Cardiology · {{ teamCount }} members · reporting to Dr. Vikram Iyer</p></div>
+
+        <div style="background:#FBF7ED;border:1px solid #EDDFBE;border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+          <span style="width:34px;height:34px;flex:none;border-radius:9px;background:#FBF0DB;color:#96690F;display:inline-flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4"></path></svg></span>
+          <div style="font-size:13px;color:var(--ink-700)"><span style="font-weight:650;color:var(--ink-900)">{{ onLeaveToday }} on leave today.</span> Plan cover for OPD and rounds accordingly.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
+          <sc-for list="{{ team }}" as="t" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid {{ t.cardBorder }};border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 12px rgba(11,22,32,.04)">
+              <span style="width:44px;height:44px;flex:none;border-radius:999px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border:1px solid var(--teal-100);position:relative">{{ t.init }}<span style="position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;border-radius:999px;background:{{ t.dot }};border:2px solid #fff"></span></span>
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:1px">{{ t.role }}</div></div>
+              <span style="flex:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ t.stBg }};color:{{ t.stColor }}">{{ t.status }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ ANNOUNCEMENTS ═══════ -->
+      <sc-if value="{{ isAnnouncements }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:820px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:16px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">Announcements</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Notices from HR, IT, Finance and Facilities</p></div>
+        <sc-for list="{{ announcements }}" as="a" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:16px 18px;box-shadow:0 1px 0 rgba(11,22,32,.04),0 3px 14px rgba(11,22,32,.04);display:flex;gap:14px">
+            <span style="width:40px;height:40px;flex:none;border-radius:10px;background:{{ a.bg }};color:{{ a.color }};display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.iconPath }}"></path></svg></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><span style="font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ a.color }};background:{{ a.bg }};border-radius:5px;padding:2px 7px">{{ a.tag }}</span><span style="font-size:11.5px;color:var(--ink-400)">{{ a.date }}</span><sc-if value="{{ a.isNew }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:999px;background:var(--upload)"></span></sc-if></div>
+              <div style="font-size:14.5px;font-weight:700;color:var(--ink-900);letter-spacing:-.005em">{{ a.title }}</div>
+              <div style="font-size:12.5px;color:var(--ink-500);margin-top:5px;line-height:1.55">{{ a.body }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ═══════ HELPDESK ═══════ -->
+      <sc-if value="{{ isHelpdesk }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:24px 26px 40px;display:flex;flex-direction:column;gap:18px">
+        <div><h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink-950)">Helpdesk</h1><p style="margin:5px 0 0;font-size:13px;color:var(--ink-500)">Raise a request to HR, IT, Payroll or Facilities</p></div>
+        <div style="display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>Raise a request</div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Route to</div><select value="{{ hdCat }}" onChange="{{ onHdCat }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ hdCatOptions }}" as="o" hint-placeholder-count="4"><option>{{ o }}</option></sc-for></select></div>
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Subject</div><input value="{{ hdSubject }}" onChange="{{ onHdSubject }}" placeholder="Brief summary" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div>
+              <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Description</div><textarea value="{{ hdDesc }}" onChange="{{ onHdDesc }}" rows="4" placeholder="Describe your request in detail…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;resize:vertical"></textarea></div>
+              <button onClick="{{ onSubmitTicket }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:11px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 2px 8px rgba(14,94,92,.24)" style-hover="background:var(--teal-900)">Submit request</button>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-900)"><span style="width:3px;height:13px;background:var(--teal-800);border-radius:2px"></span>My tickets</div>
+            <sc-for list="{{ tickets }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:13px;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-400);flex:none">{{ t.id }}</span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.subject }}</div><div style="font-size:11px;color:var(--ink-400);margin-top:1px">{{ t.cat }} · {{ t.when }}</div></div>
+                <span style="flex:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:{{ t.stBg }};color:{{ t.stColor }}">{{ t.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- ══════════ REGULARIZATION MODAL ══════════ -->
+  <sc-if value="{{ regOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseReg }}" style="position:fixed;inset:0;background:rgba(11,22,32,.36);z-index:70"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:480px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(11,22,32,.3);z-index:71;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:17px 20px;border-bottom:1px solid var(--border-soft)">
+        <span style="width:38px;height:38px;flex:none;border-radius:10px;background:var(--teal-50);color:var(--teal-900);display:inline-flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2"></path></svg></span>
+        <div style="flex:1;min-width:0"><div style="font-size:15.5px;font-weight:700;color:var(--ink-950);letter-spacing:-.01em">Request regularization</div><div style="font-size:12px;color:var(--ink-500);margin-top:1px">Correct a missed or wrong punch</div></div>
+        <button onClick="{{ onCloseReg }}" style="width:32px;height:32px;flex:none;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink-500);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:var(--bg-canvas)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div style="padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:12px">
+          <div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Date</div><input value="{{ regDate }}" onChange="{{ onRegDate }}" placeholder="04 Jul 2026" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0" /></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Which punch</div><select value="{{ regPunch }}" onChange="{{ onRegPunch }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ regPunchOptions }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for></select></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1"><div style="font-size:12px;font-weight:600;color:{{ regInColor }};margin-bottom:6px">Actual clock-in</div><input value="{{ regInTime }}" onChange="{{ onRegInTime }}" placeholder="09:00 AM" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:{{ regInBg }};color:var(--ink-900);outline:0" /></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600;color:{{ regOutColor }};margin-bottom:6px">Actual clock-out</div><input value="{{ regOutTime }}" onChange="{{ onRegOutTime }}" placeholder="06:00 PM" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:{{ regOutBg }};color:var(--ink-900);outline:0" /></div>
+        </div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Reason</div><select value="{{ regReason }}" onChange="{{ onRegReason }}" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;cursor:pointer"><sc-for list="{{ regReasonOptions }}" as="o" hint-placeholder-count="5"><option>{{ o }}</option></sc-for></select></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:6px">Supporting note</div><textarea value="{{ regNote }}" onChange="{{ onRegNote }}" rows="2" placeholder="Add context for your manager…" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink-900);outline:0;resize:vertical"></textarea></div>
+        <button onClick="{{ onAttachReg }}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px dashed {{ regFileBorder }};background:{{ regFileBg }};border-radius:10px;padding:11px 13px;cursor:pointer;font-family:inherit">
+          <span style="width:32px;height:32px;flex:none;border-radius:8px;background:#fff;border:1px solid var(--border);color:var(--teal-800);display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.05l-8.5 8.5a5 5 0 01-7.1-7.1l8.5-8.5a3.3 3.3 0 014.7 4.7l-8.5 8.5a1.7 1.7 0 01-2.4-2.4l7.9-7.9"></path></svg></span>
+          <span style="flex:1;min-width:0"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink-800)">{{ regFileLabel }}</span><span style="font-size:11px;color:var(--ink-400)">Screenshot, email or approval — optional</span></span>
+        </button>
+        <div style="font-size:11.5px;color:var(--ink-400)">Approver · Dr. Vikram Iyer (HOD)</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#FCFDFC">
+        <button onClick="{{ onCloseReg }}" style="background:#fff;color:var(--ink-700);border:1px solid var(--border);padding:9px 18px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:550;cursor:pointer" style-hover="background:var(--bg-canvas)">Cancel</button>
+        <button onClick="{{ onSubmitReg }}" style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-800);color:#fff;border:1px solid var(--teal-900);padding:9px 20px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--teal-900)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>Submit request</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══════════ TOAST ══════════ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:11px;background:var(--ink-900);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 12px 32px rgba(11,22,32,.3);font-size:13.5px;font-weight:550">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7FD9C6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>{{ toastText }}
+    </div>
+  </sc-if>
+<template id="__bundler_thumbnail" data-bg-color="#093D3C">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#093D3C"/><g transform="translate(520,296)" fill="none" stroke="#7FD9C6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"><circle cx="80" cy="66" r="40"/><path d="M14 168c8-46 40-70 66-70s58 24 66 70"/></g><text x="600" y="588" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">Employee Portal</text></svg>
+</template>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view:'home',
+    notifOpen:false,
+    toast:'',
+    tick:0,
+    clockedIn:true,
+    clockInAt: Date.now() - (3*3600 + 24*60 + 12)*1000,
+    // leave form
+    lvType:'Casual Leave', lvFrom:'', lvTo:'', lvReason:'',
+    // regularization
+    regOpen:false, regDate:'', regPunch:'Clock-in', regInTime:'', regOutTime:'', regReason:'Forgot to punch', regNote:'', regFile:false,
+    myRegs:[
+      { date:'02 Jul 2026', punch:'Clock-out', reason:'Forgot to punch',  status:'Approved' },
+      { date:'28 Jun 2026', punch:'Both',       reason:'Biometric error',  status:'Pending' },
+    ],
+    myLeaves:[
+      { type:'Casual Leave', dates:'18 – 18 Jun 2026', days:'1', status:'Approved' },
+      { type:'Sick Leave',   dates:'02 – 03 May 2026', days:'2', status:'Approved' },
+      { type:'Earned Leave', dates:'10 – 14 Aug 2026', days:'5', status:'Pending' },
+    ],
+    // expense form
+    expCat:'Travel', expAmt:'', expDate:'', expNote:'', receiptAttached:false,
+    expenses:[
+      { note:'Conference travel — Chennai', cat:'Travel',  date:'21 Jun 2026', amount:'12,400', status:'Approved' },
+      { note:'Cardiology reference books',  cat:'Learning', date:'28 Jun 2026', amount:'3,200',  status:'Pending' },
+      { note:'Taxi — late OPD',             cat:'Travel',  date:'01 Jul 2026', amount:'850',    status:'Reimbursed' },
+    ],
+    // helpdesk
+    hdCat:'IT Support', hdSubject:'', hdDesc:'',
+    tickets:[
+      { id:'HD-2043', subject:'ID card replacement', cat:'Facilities', when:'2 Jul 2026', status:'Open' },
+      { id:'HD-2019', subject:'Payslip correction — May', cat:'Payroll', when:'26 Jun 2026', status:'In progress' },
+      { id:'HD-1998', subject:'Second monitor request', cat:'IT Support', when:'18 Jun 2026', status:'Resolved' },
+    ],
+  };
+
+  componentDidMount(){ if(this.state.clockedIn) this.startTimer(); }
+  componentWillUnmount(){ this.stopTimer(); }
+  startTimer(){ this.stopTimer(); this._t=setInterval(()=>this.setState(s=>({tick:s.tick+1})),1000); }
+  stopTimer(){ if(this._t){ clearInterval(this._t); this._t=null; } }
+  flash(msg){ this.setState({toast:msg}); clearTimeout(this._toast); this._toast=setTimeout(()=>this.setState({toast:''}),2400); }
+  go(v){ this.setState({view:v, notifOpen:false}); }
+  toggleClock(){
+    if(this.state.clockedIn){ this.stopTimer(); this.setState({clockedIn:false}); this.flash('Clocked out — have a good evening'); }
+    else { this.setState({clockedIn:true, clockInAt:Date.now()}); this.startTimer(); this.flash('Clocked in — welcome back'); }
+  }
+  fmtElapsed(){
+    if(!this.state.clockedIn) return '00:00:00';
+    let sec=Math.max(0,Math.floor((Date.now()-this.state.clockInAt)/1000));
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    const p=n=>String(n).padStart(2,'0');
+    return p(h)+':'+p(m)+':'+p(s);
+  }
+  clockInTime(){ const d=new Date(this.state.clockInAt); let h=d.getHours(); const m=d.getMinutes(); const ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
+
+  MODULES=[
+    { id:'home',          label:'Home',              iconPath:'M4 13h7V4H4zM13 20h7v-9h-7zM4 20h7v-5H4zM13 9h7V4h-7z' },
+    { id:'attendance',    label:'My Attendance',     iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2' },
+    { id:'leave',         label:'My Leave',          iconPath:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4' },
+    { id:'payslips',      label:'My Payslips',       iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M16.5 14.5h1.5' },
+    { id:'expenses',      label:'My Reimbursements', iconPath:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1zM9 7.5h6M9 11.5h6M9 15.5h3' },
+    { id:'documents',     label:'My Documents',      iconPath:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4' },
+    { id:'profile',       label:'My Profile',        iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0' },
+    { id:'holidays',      label:'Holiday Calendar',  iconPath:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4', section:'Company' },
+    { id:'team',          label:'My Team',           iconPath:'M9 11a4 4 0 100-8 4 4 0 000 8zM3 21a6 6 0 0112 0M16 3.5a4 4 0 010 7.5M21 21a6 6 0 00-4-5.6' },
+    { id:'announcements', label:'Announcements',     iconPath:'M3 11l14-6v14L3 13zM3 11v2M7 12.5V18a2 2 0 004 0M19 8a3 3 0 010 6' },
+    { id:'helpdesk',      label:'Helpdesk',          iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 013.9-2c1 .6 1.6 1.9 1 3-.5 1-1.9 1.2-1.9 2.5M12 17h.01' },
+  ];
+
+  NOTIFS=[
+    { title:'Leave approved', desc:'Your casual leave on 18 Jun was approved', time:'2 days ago', iconPath:'M20 6L9 17l-5-5', bg:'#E7F3EC', color:'#1E7A46' },
+    { title:'Payslip ready', desc:'June 2026 payslip is being processed', time:'4 days ago', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', bg:'#EEF0FB', color:'#3B47A0' },
+    { title:'Health camp', desc:'Annual check-up camp on 12 Jul — register now', time:'5 days ago', iconPath:'M11 3a1 1 0 00-1 1v4H6a1 1 0 00-1 1v2a1 1 0 001 1h4v4a1 1 0 001 1h2a1 1 0 001-1v-4h4a1 1 0 001-1V9a1 1 0 00-1-1h-4V4a1 1 0 00-1-1z', bg:'#E7F3EC', color:'#1E7A46' },
+    { title:'Ticket update', desc:'HD-2019 payslip correction is in progress', time:'1 week ago', iconPath:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', bg:'#F1F3F5', color:'#5F6E80' },
+  ];
+
+  ANN=[
+    { tag:'HR', title:'Revised OPD timings from 10 July', date:'3 Jul 2026', isNew:true,  body:'Cardiology and Emergency OPD will run 09:00–14:00 on weekdays. Please align your consultation slots accordingly.', iconPath:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0', bg:'#EAF3F2', color:'#0E5E5C' },
+    { tag:'Wellness', title:'Annual staff health check camp — 12 July', date:'2 Jul 2026', isNew:true, body:'Free comprehensive health screening for all employees at the West Wing. Slots open on the portal.', iconPath:'M11 3a1 1 0 00-1 1v4H6a1 1 0 00-1 1v2a1 1 0 001 1h4v4a1 1 0 001 1h2a1 1 0 001-1v-4h4a1 1 0 001-1V9a1 1 0 00-1-1h-4V4a1 1 0 00-1-1z', bg:'#E7F3EC', color:'#1E7A46' },
+    { tag:'Finance', title:'Payroll cut-off is the 25th', date:'28 Jun 2026', isNew:false, body:'Submit reimbursement claims before the 25th to be included in the same month\u2019s pay run.', iconPath:'M3 8a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18', bg:'#F1ECFB', color:'#5E42A0' },
+    { tag:'IT', title:'Mandatory password reset this week', date:'25 Jun 2026', isNew:false, body:'All clinical system passwords must be updated by Friday as part of the security refresh.', iconPath:'M12 2l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V5z', bg:'#EEF0FB', color:'#3B47A0' },
+    { tag:'Facilities', title:'New parking arrangement — West Wing', date:'20 Jun 2026', isNew:false, body:'Level 2 of the West Wing car park reopens with reserved bays for on-call clinicians.', iconPath:'M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01', bg:'#F1F3F5', color:'#48586A' },
+  ];
+
+  ATT_LOG=[
+    { date:'04', day:'Friday',    in:'09:02', out:'—',     hours:'—',    status:'Present' },
+    { date:'03', day:'Thursday',  in:'08:58', out:'17:34', hours:'8h 36m', status:'Present' },
+    { date:'02', day:'Wednesday', in:'09:14', out:'17:40', hours:'8h 26m', status:'Late' },
+    { date:'01', day:'Tuesday',   in:'08:55', out:'17:28', hours:'8h 33m', status:'Present' },
+    { date:'30', day:'Monday',    in:'—',     out:'—',     hours:'—',    status:'Leave' },
+    { date:'28', day:'Saturday',  in:'09:00', out:'13:05', hours:'4h 05m', status:'Half day' },
+    { date:'27', day:'Friday',    in:'08:51', out:'17:31', hours:'8h 40m', status:'Present' },
+    { date:'26', day:'Thursday',  in:'09:20', out:'17:45', hours:'8h 25m', status:'Late' },
+  ];
+
+  HOLIDAYS=[
+    { month:'August 2026',    date:'15', day:'Sat', name:'Independence Day', type:'Public',     past:false },
+    { month:'August 2026',    date:'27', day:'Thu', name:'Ganesh Chaturthi', type:'Restricted', past:false },
+    { month:'October 2026',   date:'02', day:'Fri', name:'Gandhi Jayanti',   type:'Public',     past:false },
+    { month:'October 2026',   date:'20', day:'Tue', name:'Dussehra',         type:'Public',     past:false },
+    { month:'November 2026',  date:'08', day:'Sun', name:'Diwali',           type:'Public',     past:false },
+    { month:'December 2026',  date:'25', day:'Fri', name:'Christmas',        type:'Public',     past:false },
+  ];
+
+  TEAM=[
+    { name:'Dr. Ananya Sharma (You)', role:'Senior Consultant', init:'AS', status:'Clocked in' },
+    { name:'Dr. Kiran Rao',           role:'Consultant',        init:'KR', status:'In' },
+    { name:'Dr. Sameer Joshi',        role:'Junior Consultant', init:'SJ', status:'Remote' },
+    { name:'Anjali Menon',            role:'Staff Nurse',       init:'AM', status:'In' },
+    { name:'Fatima Sheikh',           role:'Cardiac Technician',init:'FS', status:'On Leave' },
+    { name:'Ravi Teja',               role:'Cath Lab Assistant',init:'RT', status:'On Leave' },
+  ];
+
+  DOCS={
+    'Payslips':[
+      { name:'Payslip — June 2026', meta:'PDF · 88 KB' },
+      { name:'Payslip — May 2026',  meta:'PDF · 87 KB' },
+      { name:'Payslip — April 2026',meta:'PDF · 86 KB' },
+    ],
+    'Letters':[
+      { name:'Offer Letter', meta:'PDF · Mar 2019' },
+      { name:'Appraisal Letter 2026', meta:'PDF · Apr 2026' },
+      { name:'Experience Certificate', meta:'PDF · on request' },
+    ],
+    'Statements & ID':[
+      { name:'Form 16 — FY 2025-26', meta:'PDF · 210 KB' },
+      { name:'Insurance e-Card', meta:'PDF · policy active' },
+      { name:'PF Statement', meta:'PDF · 2025-26' },
+    ],
+  };
+
+  renderVals(){
+    const s=this.state;
+    const v=s.view;
+    const modules=this.MODULES.map(m=>({
+      ...m, active:m.id===v, notActive:m.id!==v,
+      hasSection:!!m.section, sectionLabel:m.section||'',
+      hasBadge: m.id==='helpdesk'? true : (m.id==='announcements'? true : false),
+      badge: m.id==='helpdesk'? '1' : (m.id==='announcements'? '2' : ''),
+      onClick:()=>this.go(m.id),
+    }));
+
+    const hr=new Date().getHours();
+    const greeting = hr<12?'Good morning':(hr<17?'Good afternoon':'Good evening');
+    const todayLabel='Sat, 5 Jul 2026';
+    const todayFull='Saturday, 5 July 2026';
+
+    // clock
+    const on=s.clockedIn;
+    const elapsed=this.fmtElapsed();
+    const clock={
+      clockedIn:on, elapsed,
+      clockInLabel:this.clockInTime(),
+      clockDot: on?'#1E7A46':'var(--ink-300)',
+      clockStatusLabel: on?'On the clock':'Clocked out',
+      clockPillLabel: on?('Clocked in · '+elapsed):'Clocked out',
+      clockBtnLabel: on?'Clock out':'Clock in',
+      clockIcon: on?'M10 9v6M14 9v6M12 21a9 9 0 100-18 9 9 0 000 18z':'M8 5v14l11-7z',
+      clockBtnBg: on?'#fff':'var(--teal-800)',
+      clockBtnColor: on?'#C33F2A':'#fff',
+      clockBorder: on?'#F0C9C1':'var(--teal-900)',
+      clockCardBorder: on?'var(--teal-100)':'var(--border)',
+    };
+
+    // home stats
+    const homeStats=[
+      { label:'Leave balance', value:'21 days', sub:'across all types', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M9 15l2 2 4-4', iconColor:'var(--teal-800)' },
+      { label:'Attendance', value:'96%', sub:'this month', icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', iconColor:'var(--teal-800)' },
+      { label:'Next holiday', value:'15 Aug', sub:'Independence Day', icon:'M4 6a2 2 0 012-2h12a2 2 0 012 2v13a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 10h16M8 3v4M16 3v4', iconColor:'var(--teal-800)' },
+      { label:'Open requests', value:'2', sub:'awaiting action', icon:'M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z', iconColor:'var(--teal-800)' },
+    ];
+    const quickActions=[
+      { label:'Apply for leave', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17M9 15l2 2 4-4', onClick:()=>this.go('leave') },
+      { label: on?'Clock out':'Clock in', icon: on?'M10 9v6M14 9v6M12 21a9 9 0 100-18 9 9 0 000 18z':'M8 5v14l11-7z', onClick:()=>this.toggleClock() },
+      { label:'Download payslip', icon:'M12 3v12M8 11l4 4 4-4M4 21h16', onClick:()=>this.go('payslips') },
+      { label:'Submit expense', icon:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1zM9 8h6M9 12h6', onClick:()=>this.go('expenses') },
+      { label:'Raise a request', icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 013.9-2c1 .6 1.6 1.9 1 3-.5 1-1.9 1.2-1.9 2.5M12 17h.01', onClick:()=>this.go('helpdesk') },
+      { label:'View my profile', icon:'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21a7 7 0 0114 0', onClick:()=>this.go('profile') },
+    ];
+
+    const stTone=(status)=>{
+      const map={ 'Approved':['#E7F3EC','#1E7A46'], 'Paid':['#E7F3EC','#1E7A46'], 'Reimbursed':['#EAF3F2','#0E5E5C'], 'Resolved':['#E7F3EC','#1E7A46'],
+        'Pending':['#FBF0DB','#96690F'], 'Processing':['#FBF0DB','#96690F'], 'In progress':['#FBF0DB','#96690F'], 'Open':['#EEF0FB','#3B47A0'],
+        'Rejected':['#FBE9E7','#C33F2A'] };
+      return map[status]||['#F1F3F5','#5F6E80'];
+    };
+
+    // open requests (home): pending leaves + pending expenses + open tickets
+    const openRequests=[];
+    s.myLeaves.filter(l=>l.status==='Pending').forEach(l=>openRequests.push({ title:l.type, meta:l.dates+' · '+l.days+' day(s)', icon:'M5 5.5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1v-13a1 1 0 011-1zM3.5 10h17', bg:'#EAF3F2', color:'#0E5E5C', status:l.status }));
+    s.expenses.filter(e=>e.status==='Pending').forEach(e=>openRequests.push({ title:e.note, meta:'Reimbursement · ₹'+e.amount, icon:'M6 2h12a1 1 0 011 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 011-1z', bg:'#F1ECFB', color:'#5E42A0', status:e.status }));
+    s.tickets.filter(t=>t.status!=='Resolved').forEach(t=>openRequests.push({ title:t.subject, meta:t.id+' · '+t.cat, icon:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', bg:'#F1F3F5', color:'#48586A', status:t.status }));
+    openRequests.forEach(r=>{ const t=stTone(r.status); r.stBg=t[0]; r.stColor=t[1]; });
+    const noRequests=openRequests.length===0;
+
+    const homeAnnouncements=this.ANN.slice(0,3).map(a=>({ tag:a.tag, title:a.title, date:a.date, bg:a.bg, color:a.color }));
+
+    // attendance log
+    const attLog=this.ATT_LOG.map((d,i)=>{ const t=stTone(d.status); return { ...d, stBg: d.status==='Present'?'#E7F3EC':(d.status==='Late'?'#FBF0DB':(d.status==='Leave'?'#F1F3F5':'#EAF3F2')), stColor: d.status==='Present'?'#1E7A46':(d.status==='Late'?'#96690F':(d.status==='Leave'?'#5F6E80':'#0E5E5C')), rowBg: i%2?'#FBFCFC':'#fff' }; });
+
+    // leave balances
+    const bal=[ {label:'Casual Leave', taken:6, total:12, color:'var(--teal-700)'}, {label:'Sick Leave', taken:4, total:12, color:'#3B47A0'}, {label:'Earned Leave', taken:11, total:18, color:'#5E42A0'} ];
+    const leaveBalances=bal.map(b=>({ label:b.label, taken:b.taken, total:b.total, left:(b.total-b.taken), pct:Math.round(b.taken/b.total*100)+'%', color:b.color }));
+    const lvTypeOptions=['Casual Leave','Sick Leave','Earned Leave','Comp-off','Work from home'];
+    const myLeaves=s.myLeaves.map(l=>{ const t=stTone(l.status); return { ...l, stBg:t[0], stColor:t[1] }; });
+
+    // payslips
+    const payYtd=[ {label:'YTD gross', value:'₹6,90,000', sub:'Apr–Jun 2026'}, {label:'YTD net paid', value:'₹5,52,600', sub:'3 months'}, {label:'Tax deducted', value:'₹78,000', sub:'TDS this FY'} ];
+    const paySeed=[ {month:'June 2026', net:'₹1,84,200', status:'Processing'},{month:'May 2026', net:'₹1,84,200', status:'Paid'},{month:'April 2026', net:'₹1,84,200', status:'Paid'},{month:'March 2026', net:'₹1,79,500', status:'Paid'} ];
+    const payslips=paySeed.map(p=>{ const t=stTone(p.status); return { ...p, sBg:t[0], sColor:t[1], onDownload:()=>this.flash('Downloading '+p.month+' payslip') }; });
+    const taxDocs=[ {name:'Form 16 — FY 2025-26', meta:'Issued 15 Jun 2026'},{name:'Investment declaration', meta:'FY 2026-27 · submitted'},{name:'Tax computation sheet', meta:'FY 2026-27'} ].map(t=>({ ...t, onDownload:()=>this.flash('Downloading '+t.name) }));
+
+    // expenses
+    const expApproved=s.expenses.filter(e=>e.status==='Approved'||e.status==='Reimbursed').length;
+    const expPending=s.expenses.filter(e=>e.status==='Pending').length;
+    const expSummary=[
+      { label:'Reimbursed (YTD)', value:'₹34,850', sub:'this financial year', color:'var(--teal-800)' },
+      { label:'Pending', value:expPending+' claim'+(expPending===1?'':'s'), sub:'awaiting approval', color:'#96690F' },
+      { label:'Approved', value:expApproved+' claim'+(expApproved===1?'':'s'), sub:'processed', color:'#1E7A46' },
+    ];
+    const expCatOptions=['Travel','Learning','Meals','Medical','Equipment','Other'];
+    const receiptLabel=s.receiptAttached?'Receipt attached ✓':'Attach receipt';
+    const expenses=s.expenses.map(e=>{ const t=stTone(e.status); return { ...e, stBg:t[0], stColor:t[1] }; });
+
+    // documents
+    const docGroups=Object.keys(this.DOCS).map(k=>({ label:k, items:this.DOCS[k].map(d=>({ ...d, bg: k==='Payslips'?'var(--teal-50)':(k==='Letters'?'#EEF0FB':'#F1ECFB'), color: k==='Payslips'?'var(--teal-900)':(k==='Letters'?'#3B47A0':'#5E42A0'), onDownload:()=>this.flash('Downloading '+d.name) })) }));
+
+    // profile
+    const profileCards=[
+      { label:'Personal details', rows:[ {k:'Date of birth', v:'22 Jul 1985'},{k:'Gender', v:'Female'},{k:'Blood group', v:'O+'},{k:'Address', v:'Road No. 12, Banjara Hills, Hyderabad 500034'} ] },
+      { label:'Contact', rows:[ {k:'Work email', v:'ananya.sharma@nanohealth.in'},{k:'Mobile', v:'+91 98480 12345'},{k:'Location', v:'Hyderabad — Main Campus'} ] },
+      { label:'Job details', rows:[ {k:'Employee ID', v:'EMP-0142'},{k:'Designation', v:'Senior Consultant'},{k:'Department', v:'Cardiology'},{k:'Date joined', v:'14 Mar 2019'},{k:'Reports to', v:'Dr. Vikram Iyer'} ] },
+      { label:'Bank & emergency', rows:[ {k:'Bank', v:'HDFC Bank · ••••4021'},{k:'PAN', v:'ABCPS••••K'},{k:'Emergency contact', v:'Rohit Sharma (Spouse)'},{k:'Emergency phone', v:'+91 98765 40021'} ] },
+    ];
+
+    // holidays
+    const holTone={ 'Public':['#EAF3F2','#0E5E5C'], 'Restricted':['#FBF0DB','#96690F'], 'Optional':['#EEF0FB','#3B47A0'] };
+    const holMonths=[]; this.HOLIDAYS.forEach(h=>{ let g=holMonths.find(x=>x.month===h.month); if(!g){ g={month:h.month, items:[]}; holMonths.push(g); } const t=holTone[h.type]||holTone.Public; g.items.push({ date:h.date, day:h.day, name:h.name, type:h.type, typeColor:t[1], typeBg:t[0], opacity:h.past?'.5':'1' }); });
+    const nextHolName='Independence Day'; const nextHolDays='41';
+
+    // team
+    const teamTone=(st)=>{ const m={ 'Clocked in':['#E7F3EC','#1E7A46','#1E7A46'], 'In':['#E7F3EC','#1E7A46','#1E7A46'], 'Remote':['#EEF0FB','#3B47A0','#3B47A0'], 'On Leave':['#FBF0DB','#96690F','#D9A63A'] }; return m[st]||['#F1F3F5','#5F6E80','#A8B2BE']; };
+    const team=this.TEAM.map(t=>{ const tn=teamTone(t.status); return { ...t, stBg:tn[0], stColor:tn[1], dot:tn[2], cardBorder: t.status==='On Leave'?'#EDDFBE':'var(--border)' }; });
+    const onLeaveNames=this.TEAM.filter(t=>t.status==='On Leave').map(t=>t.name.replace(' (You)',''));
+    const onLeaveToday = onLeaveNames.length? (onLeaveNames.join(' and ')) : 'No one is';
+    const teamCount=this.TEAM.length;
+
+    // announcements
+    const announcements=this.ANN;
+
+    // helpdesk
+    const hdCatOptions=['IT Support','HR','Payroll','Facilities','Access & Security'];
+    const tickets=s.tickets.map(t=>{ const tn=stTone(t.status); return { ...t, stBg:tn[0], stColor:tn[1] }; });
+
+    return {
+      modules,
+      // topbar
+      todayLabel, greeting, todayFull, notifOpen:s.notifOpen, notifs:this.NOTIFS, notifCount:this.NOTIFS.length,
+      onToggleNotif:()=>this.setState(st=>({notifOpen:!st.notifOpen})), onCloseNotif:()=>this.setState({notifOpen:false}),
+      onGoProfile:()=>this.go('profile'),
+      // clock (spread)
+      ...clock, onToggleClock:()=>this.toggleClock(),
+      clockPillLabel:clock.clockPillLabel, clockBtnBg:clock.clockBtnBg, clockBtnColor:clock.clockBtnColor, clockBorder:clock.clockBorder,
+      // view flags
+      isHome:v==='home', isAttendance:v==='attendance', isLeave:v==='leave', isPayslips:v==='payslips', isExpenses:v==='expenses',
+      isDocuments:v==='documents', isProfile:v==='profile', isHolidays:v==='holidays', isTeam:v==='team', isAnnouncements:v==='announcements', isHelpdesk:v==='helpdesk',
+      // home
+      homeStats, quickActions, openRequests, noRequests, homeAnnouncements, onGoAnnouncements:()=>this.go('announcements'),
+      // attendance
+      attLog,
+      onRegularize:()=>this.setState({ regOpen:true }),
+      onCloseReg:()=>this.setState({ regOpen:false }),
+      regOpen:s.regOpen, regDate:s.regDate, regPunch:s.regPunch, regInTime:s.regInTime, regOutTime:s.regOutTime, regReason:s.regReason, regNote:s.regNote,
+      regPunchOptions:['Clock-in','Clock-out','Both'],
+      regReasonOptions:['Forgot to punch','On-duty / field work','Biometric error','Work from home','Other'],
+      regInColor: s.regPunch==='Clock-out' ? 'var(--ink-300)' : 'var(--ink-600)',
+      regOutColor: s.regPunch==='Clock-in' ? 'var(--ink-300)' : 'var(--ink-600)',
+      regInBg: s.regPunch==='Clock-out' ? 'var(--ink-50)' : '#fff',
+      regOutBg: s.regPunch==='Clock-in' ? 'var(--ink-50)' : '#fff',
+      regFile:s.regFile, regFileLabel: s.regFile ? 'punch-proof.png · attached' : 'Attach a document',
+      regFileBg: s.regFile ? 'var(--teal-50)' : 'var(--bg-canvas)', regFileBorder: s.regFile ? 'var(--teal-100)' : 'var(--border)',
+      onRegDate:(e)=>this.setState({regDate:e.target.value}), onRegPunch:(e)=>this.setState({regPunch:e.target.value}),
+      onRegInTime:(e)=>this.setState({regInTime:e.target.value}), onRegOutTime:(e)=>this.setState({regOutTime:e.target.value}),
+      onRegReason:(e)=>this.setState({regReason:e.target.value}), onRegNote:(e)=>this.setState({regNote:e.target.value}),
+      onAttachReg:()=>this.setState(st=>({regFile:!st.regFile})),
+      onSubmitReg:()=>{ this.setState(st=>({ myRegs:[{ date: st.regDate||'—', punch: st.regPunch, reason: st.regReason, status:'Pending' }, ...st.myRegs], regOpen:false, regDate:'', regInTime:'', regOutTime:'', regNote:'', regFile:false })); this.flash('Regularization request submitted for approval'); },
+      myRegs: s.myRegs.map(r => ({ ...r, stBg: r.status==='Approved'?'#E7F3EC':(r.status==='Rejected'?'#FBE7E3':'#FBF0DB'), stColor: r.status==='Approved'?'#1E7A46':(r.status==='Rejected'?'#B3372A':'#96690F') })),
+      hasRegs: s.myRegs.length>0,
+      // leave
+      leaveBalances, lvTypeOptions, myLeaves,
+      lvType:s.lvType, lvFrom:s.lvFrom, lvTo:s.lvTo, lvReason:s.lvReason,
+      onLvType:(e)=>this.setState({lvType:e.target.value}), onLvFrom:(e)=>this.setState({lvFrom:e.target.value}), onLvTo:(e)=>this.setState({lvTo:e.target.value}), onLvReason:(e)=>this.setState({lvReason:e.target.value}),
+      onSubmitLeave:()=>{ const dates=(s.lvFrom||'—')+' – '+(s.lvTo||'—'); this.setState(st=>({ myLeaves:[{ type:st.lvType, dates, days:'—', status:'Pending' }, ...st.myLeaves], lvFrom:'', lvTo:'', lvReason:'' })); this.flash('Leave request submitted to Dr. Vikram Iyer'); },
+      // payslips
+      payYtd, payslips, taxDocs,
+      // expenses
+      expSummary, expCatOptions, expenses, receiptLabel,
+      expCat:s.expCat, expAmt:s.expAmt, expDate:s.expDate, expNote:s.expNote,
+      onExpCat:(e)=>this.setState({expCat:e.target.value}), onExpAmt:(e)=>this.setState({expAmt:e.target.value}), onExpDate:(e)=>this.setState({expDate:e.target.value}), onExpNote:(e)=>this.setState({expNote:e.target.value}),
+      onAttachReceipt:()=>{ this.setState({receiptAttached:true}); this.flash('Receipt attached'); },
+      onSubmitExpense:()=>{ this.setState(st=>({ expenses:[{ note:st.expNote||'New claim', cat:st.expCat, date:st.expDate||'Today', amount:st.expAmt||'0', status:'Pending' }, ...st.expenses], expAmt:'', expDate:'', expNote:'', receiptAttached:false })); this.flash('Reimbursement claim submitted'); },
+      // documents
+      docGroups, onUploadDoc:()=>this.flash('Choose a file to upload'),
+      // profile
+      profileCards, onEditProfile:()=>this.flash('Profile editor opened'),
+      // holidays
+      holMonths, nextHolName, nextHolDays,
+      // team
+      team, onLeaveToday, teamCount,
+      // announcements
+      announcements,
+      // helpdesk
+      hdCatOptions, tickets, hdCat:s.hdCat, hdSubject:s.hdSubject, hdDesc:s.hdDesc,
+      onHdCat:(e)=>this.setState({hdCat:e.target.value}), onHdSubject:(e)=>this.setState({hdSubject:e.target.value}), onHdDesc:(e)=>this.setState({hdDesc:e.target.value}),
+      onSubmitTicket:()=>{ const id='HD-'+(2044+ s.tickets.length); this.setState(st=>({ tickets:[{ id, subject:st.hdSubject||'New request', cat:st.hdCat, when:'Just now', status:'Open' }, ...st.tickets], hdSubject:'', hdDesc:'' })); this.flash('Request raised · '+id); },
+      // toast
+      toast:!!s.toast, toastText:s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

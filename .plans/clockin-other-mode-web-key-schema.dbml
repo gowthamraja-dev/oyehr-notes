@@ -1,0 +1,134 @@
+// Clock-in "No Check" mode + per-site web clock-in switch — schema draft
+// STATUS: approved          (draft → approved → superseded)  — revision 2
+// CLONE: hrms
+// APPROVED_ON: 2026-10-13  (rev 1 and rev 2, which adds web_punch_check_mode)
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/clockin-other-mode-web-key-plan.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project clockin_other_mode_web_key {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. Once app clock-in is on, HR can choose a fourth check mode, "No Check" (`NoCheck`). The app punch is
+     accepted with no Wi-Fi or location check and recorded as `Unverified`.
+  2. The two policy keys stay (`can_punch_from_app`, `web_punch_allowed`). A new per-site
+     checkbox, "Allow web clock-in", drives `web_punch_allowed`, and the web gets **its own
+     check mode**, `web_punch_check_mode`, independent of the app's. A browser can't read the
+     Wi-Fi name, so the web mode has no Wi-Fi option: `Geofence` (browser geolocation) or
+     `NoCheck`. Example: the app checks Wi-Fi + location while the web checks location only.
+     Web clock-in only works while app clock-in is on (rev 1 Q2):
+     `web_punch_allowed = mobile_punch_enabled AND web_punch_enabled`.
+     When it is false the web hides the clock button instead of disabling it.
+
+  ## Feasibility
+  - ✅ Tenant scoping: no new table. `work_location_masters` is already CDP-scoped, and every
+       read or write goes through `_get_work_location(db, principal, id)`, which filters on
+       `principal.tenant_id`.
+  - ✅ Conventions: a NOT NULL boolean with `server_default false`, like `mobile_punch_enabled`.
+  - ✅ Soft delete / audit: the table already has `is_active`/`archive`/`updated_by_id`. Nothing new.
+  - ✅ FKs / indexes: none needed. The flag is read per row after the site is resolved from the shift.
+  - ✅ Existing data: both new columns have defaults (`web_punch_enabled` false,
+       `web_punch_check_mode` 'Geofence'), so every live site behaves as today (web punching
+       off) and no backfill is needed. The existing `mobile_punch_check_mode` values stay
+       valid, and only its CHECK constraint widens.
+  - ✅ `web_punch_check_mode` gets its own CHECK, `ck_work_location_masters_web_punch_check_mode`,
+       `IN ('Geofence','NoCheck')`. Wi-Fi values are rejected by the DB, not only by the API.
+  - ⚠️ CHECK constraint: `ck_work_location_masters_mobile_punch_check_mode` (from a9e2d7f4b613)
+       must be dropped and re-created with `NoCheck` added. Postgres can't ALTER a CHECK in
+       place. The downgrade must refuse, or first map rows to `WifiAndGeofence`, while any
+       row holds `NoCheck`.
+  - ⚠️ `check_mode()` falls back to WifiAndGeofence for unknown values ("fail towards more
+       checking"). `NoCheck` must be added to `CHECK_MODES` in the same change, or every
+       Other site silently becomes Wi-Fi + location.
+  - ⚠️ Behaviour change: the backend accepts a web punch only where `web_punch_allowed` is
+       true. Today a web punch at a site with app clock-in OFF is accepted as `Unverified`.
+       The UI already blocks that (task 214). This makes the server match the UI.
+  - ✅ Write paths: `PATCH /attendance/work-locations/{id}` (`update_work_location`) takes
+       `web_punch_enabled` and `web_punch_check_mode`. Turning web on with mode `Geofence`
+       needs coordinates and a radius (the same readiness rule as the app's geofence) → 422
+       otherwise. The app's mode no longer constrains the web box, so the "clear it on a
+       Wi-Fi mode" rule from rev 1 is gone. Create accepts `web_punch_check_mode` (a setting,
+       like `mobile_punch_check_mode`) but not `web_punch_enabled` (a switch).
+  - ⚠️ Web geofence accuracy: a desktop browser's position often comes from IP/Wi-Fi lookup
+       and can be hundreds of metres off. A web punch is held to the same
+       `max_location_accuracy_mtrs` / radius threshold as the app, so desktop users at a
+       `Geofence` web site may be refused as "not precise enough". `NoCheck` is the fallback.
+  - ✅ Migrations: a plain Alembic revision on the HRMS branch, applied via
+       `scripts/migrate.py upgrade heads`. No nhforms tables are touched.
+  - ✅ RBAC: writes are already gated `UPDATE ATTENDANCE` (`require_grid_permission`).
+  - ✅ Cloud fit: DB-only state.
+
+  ## Alternatives considered
+  - One merged key (`can_punch`): rejected 13-Oct-26. A browser can't satisfy a Wi-Fi check,
+    so a single answer is wrong for one of the two clients at Wi-Fi sites.
+  - Letting a web punch at a Wi-Fi site skip the Wi-Fi check: rejected. It quietly weakens
+    sites HR set to Wi-Fi.
+  - Inferring web from the mode, with no column: rejected. HR wants an explicit switch per site.
+  - Rev 1 had the web reuse the app's mode (web allowed only under app Geofence/NoCheck):
+    replaced 13-Oct-26 by `web_punch_check_mode`, so a Wi-Fi site can still offer web
+    clock-in, checked on location.
+
+  ## Open questions
+  Decided 13-Oct-26 (rev 1):
+  1. Stored value `NoCheck`, UI label "No Check".
+  2. "Allow web clock-in" only takes effect while app clock-in is ON (not independent).
+  Rev 2:
+  3. Decided: `web_punch_check_mode` defaults to `Geofence` (fail towards checking, as the
+     app's default does).
+  '''
+}
+
+Enum punch_check_mode {
+  WifiAndGeofence [note: 'existing, default']
+  Wifi            [note: 'existing']
+  Geofence        [note: 'existing']
+  NoCheck         [note: '[NEW] UI label "No Check". App punch accepted, verification_status = Unverified']
+  // Note: 'varchar(20) + CHECK ck_work_location_masters_mobile_punch_check_mode'
+}
+
+Enum web_punch_check_mode {
+  Geofence [note: 'default — browser geolocation checked against the site geofence + accuracy threshold']
+  NoCheck  [note: 'UI "No Check" — web punch accepted, verification_status = Unverified']
+  // varchar(20) + CHECK ck_work_location_masters_web_punch_check_mode. No Wi-Fi values: a browser cannot read the network name
+}
+
+Table work_location_masters [headercolor: #EF6C00] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id]
+  name varchar [not null]
+  lttd numeric(10,7)
+  lgtd numeric(10,7)
+  geo_fence_radius_mtrs integer
+  mobile_punch_enabled boolean [not null, default: false, note: 'existing — app clock-in switch']
+  mobile_punch_check_mode punch_check_mode [not null, default: 'WifiAndGeofence', note: 'existing column; CHECK widened to include NoCheck']
+  web_punch_enabled boolean [not null, default: false, note: '[NEW] "Allow web clock-in". Effective only while mobile_punch_enabled is on']
+  web_punch_check_mode web_punch_check_mode [not null, default: 'Geofence', note: '[NEW] What a web punch is checked on. Independent of mobile_punch_check_mode; never Wi-Fi']
+  max_location_accuracy_mtrs integer
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+  updated_by_id bigint
+  Note: 'app/models/work_location_master.py → WorkLocationMaster (gains web_punch_enabled, web_punch_check_mode)'
+}
+
+Table attendance_punch_details [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null]
+  work_location_master_id bigint [ref: > work_location_masters.id]
+  punch_source varchar [note: 'Web | Mobile']
+  verification_status varchar [note: 'Verified | Unverified — a punch under the app or web NoCheck mode writes Unverified; no new value']
+  raw jsonb [note: 'evidence; check_mode records whichever mode (app or web) the punch was judged by']
+}
+
+Table care_delivery_program_masters [headercolor: #616161] {
+  id bigint [pk]
+}
+
+TableGroup clock_in_policy {
+  work_location_masters
+  attendance_punch_details
+}

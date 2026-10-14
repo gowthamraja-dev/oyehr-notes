@@ -1,0 +1,1410 @@
+diff --git a/backend/alembic/versions/d8f3b6a91c27_leave_type_master_date_rule.py b/backend/alembic/versions/d8f3b6a91c27_leave_type_master_date_rule.py
+new file mode 100644
+index 0000000..4a2f873
+--- /dev/null
++++ b/backend/alembic/versions/d8f3b6a91c27_leave_type_master_date_rule.py
+@@ -0,0 +1,43 @@
++"""leave_type_masters.date_rule (OptionalHoliday)
++
++Revision ID: d8f3b6a91c27
++Revises: c5e2a7d41f93
++Create Date: 2026-10-06 00:00:00.000000
++
++"""
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision: str = 'd8f3b6a91c27'
++down_revision: Union[str, Sequence[str], None] = 'c5e2a7d41f93'
++branch_labels: Union[str, Sequence[str], None] = None
++depends_on: Union[str, Sequence[str], None] = None
++
++
++# Which dates a request of this leave type may cover (task 186): NULL = any date (every existing
++# type, so no backfill); 'OptionalHoliday' = only the Optional/Restricted holidays in the
++# employee's resolved calendar, the policy's yearly quota capping how many each employee takes.
++#
++# Hand-written and existence-guarded, same reason as b7d41e9a2c05 / c5e2a7d41f93: the shared
++# hrms-dev database is stamped at the orphan revision `8012104013b3`, so `alembic upgrade`
++# cannot reach it and this DDL is applied there directly.
++
++
++def _has_column(table: str, column: str) -> bool:
++    insp = sa.inspect(op.get_bind())
++    return insp.has_table(table) and column in {c["name"] for c in insp.get_columns(table)}
++
++
++def upgrade() -> None:
++    if _has_column("leave_type_masters", "date_rule"):
++        return
++    op.add_column("leave_type_masters", sa.Column("date_rule", sa.String(length=30), nullable=True))
++
++
++def downgrade() -> None:
++    if _has_column("leave_type_masters", "date_rule"):
++        op.drop_column("leave_type_masters", "date_rule")
+diff --git a/backend/app/models/leave_type_master.py b/backend/app/models/leave_type_master.py
+index 29e3a0a..c99c930 100644
+--- a/backend/app/models/leave_type_master.py
++++ b/backend/app/models/leave_type_master.py
+@@ -13,6 +13,9 @@ class LeaveTypeMaster(Base):
+     type) — this table only owns what governs whether and how a request can be raised
+     (approval, documentation, notice, gating), not balance math.
+     code (e.g. CL/SL/EL/ML/LOP) is tenant-defined, not a fixed enum.
++    date_rule restricts which dates a request may cover — NULL = any date; 'OptionalHoliday' =
++    only the Optional/Restricted holidays in the employee's resolved calendar (task 186), with
++    the policy's yearly quota capping how many of them each employee takes.
+     """
+ 
+     __tablename__ = "leave_type_masters"
+@@ -37,6 +40,7 @@ class LeaveTypeMaster(Base):
+     exclude_holidays: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+     display_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+     color_code: Mapped[str | None] = mapped_column(String(10))
++    date_rule: Mapped[str | None] = mapped_column(String(30))  # NULL | OptionalHoliday
+ 
+     # ── Lifecycle ──
+     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+diff --git a/backend/app/modules/leave/policy_service.py b/backend/app/modules/leave/policy_service.py
+index 921ff14..94ee914 100644
+--- a/backend/app/modules/leave/policy_service.py
++++ b/backend/app/modules/leave/policy_service.py
+@@ -104,6 +104,7 @@ def insert_rule(
+     ledger history that points at it. Shared by the policy screens and the per-leave-type
+     bridge endpoint (`service.create_policy`).
+     """
++    service.validate_date_rule_policy(leave_type.date_rule, payload.accrual_frequency, payload.reset_month)
+     existing = db.scalar(
+         select(LeavePolicyDetail).where(
+             LeavePolicyDetail.leave_policy_master_id == master.id,
+diff --git a/backend/app/modules/leave/router.py b/backend/app/modules/leave/router.py
+index a1c6807..c33ac76 100644
+--- a/backend/app/modules/leave/router.py
++++ b/backend/app/modules/leave/router.py
+@@ -43,6 +43,7 @@ from app.modules.leave.schemas import (
+     ManagerRequestDetailOut,
+     ManagerRequestOut,
+     MyLeavePolicyOut,
++    MyOptionalHolidaysOut,
+     PolicyAssignmentIn,
+     PolicyAssignmentOut,
+     PolicyAssignmentPatch,
+@@ -320,6 +321,14 @@ def get_my_balances(principal: CurrentPrincipal, db: DbSession) -> LeaveBalances
+     return service.get_my_balances(db, principal)
+ 
+ 
++@router.get("/me/optional-holidays", response_model=MyOptionalHolidaysOut)
++def my_optional_holidays(
++    principal: CurrentPrincipal, db: DbSession, year: int | None = Query(default=None, ge=2000, le=2100),
++) -> MyOptionalHolidaysOut:
++    """Self-service, ungated: the caller's own optional holidays and quota (task 186)."""
++    return service.list_my_optional_holidays(db, principal, year)
++
++
+ @router.get("/me/ledger", response_model=list[LeaveLedgerRowOut])
+ def get_my_ledger(principal: CurrentPrincipal, db: DbSession) -> list[LeaveLedgerRowOut]:
+     """The caller's own ledger rows (self-service, ungated — the caller's own record)."""
+diff --git a/backend/app/modules/leave/schemas.py b/backend/app/modules/leave/schemas.py
+index 04e091e..20c8b6d 100644
+--- a/backend/app/modules/leave/schemas.py
++++ b/backend/app/modules/leave/schemas.py
+@@ -12,6 +12,10 @@ UNITS = {"Day"}  # DB allows "Hour" too, but no service code interprets it yet (
+ ACCRUAL_FREQUENCIES = {"Monthly", "Quarterly", "Yearly", "OnJoining"}
+ #: When a period is credited — Pre = at its start (up front), Post = once it has ended (arrears).
+ ACCRUAL_TIMINGS = {"Pre", "Post"}
++#: leave_type_masters.date_rule values — None = any date; OptionalHoliday = only the Optional/
++#: Restricted holidays in the employee's resolved calendar (task 186).
++DATE_RULE_OPTIONAL_HOLIDAY = "OptionalHoliday"
++DATE_RULES = {DATE_RULE_OPTIONAL_HOLIDAY}
+ 
+ 
+ def default_accrual_timing(frequency: str) -> str:
+@@ -40,6 +44,7 @@ class LeaveTypeIn(BaseModel):
+     exclude_holidays: bool = True
+     display_order: int = 0
+     color_code: str | None = Field(default=None, max_length=10)
++    date_rule: str | None = None  # None = any date
+     effctv_dt: date | None = None  # None = in force from the start
+     trmntn_dt: date | None = None
+ 
+@@ -57,6 +62,13 @@ class LeaveTypeIn(BaseModel):
+             raise ValueError(f"gender_applicable must be one of {sorted(GENDERS_APPLICABLE)}")
+         return v
+ 
++    @field_validator("date_rule")
++    @classmethod
++    def _valid_date_rule(cls, v: str | None) -> str | None:
++        if v is not None and v not in DATE_RULES:
++            raise ValueError(f"date_rule must be one of {sorted(DATE_RULES)} or null")
++        return v
++
+     @model_validator(mode="after")
+     def _dates_ordered(self) -> "LeaveTypeIn":
+         if self.trmntn_dt is not None and self.effctv_dt is not None and self.trmntn_dt < self.effctv_dt:
+@@ -82,6 +94,7 @@ class LeaveTypePatch(BaseModel):
+     exclude_holidays: bool | None = None
+     display_order: int | None = None
+     color_code: str | None = Field(default=None, max_length=10)
++    date_rule: str | None = None  # explicit null clears the rule
+     effctv_dt: date | None = None
+     trmntn_dt: date | None = None
+ 
+@@ -99,6 +112,13 @@ class LeaveTypePatch(BaseModel):
+             raise ValueError(f"gender_applicable must be one of {sorted(GENDERS_APPLICABLE)}")
+         return v
+ 
++    @field_validator("date_rule")
++    @classmethod
++    def _valid_date_rule(cls, v: str | None) -> str | None:
++        if v is not None and v not in DATE_RULES:
++            raise ValueError(f"date_rule must be one of {sorted(DATE_RULES)} or null")
++        return v
++
+ 
+ class LeaveTypeOut(BaseModel):
+     id: int
+@@ -119,6 +139,7 @@ class LeaveTypeOut(BaseModel):
+     exclude_holidays: bool
+     display_order: int
+     color_code: str | None
++    date_rule: str | None
+     is_active: bool
+     effctv_dt: date | None
+     trmntn_dt: date | None
+@@ -615,6 +636,32 @@ class LeaveBalancesOut(BaseModel):
+     balances: list[LeaveBalanceOut]
+ 
+ 
++# ── Optional holidays (task 186) ─────────────────────────────────────────────
++
++OptionalHolidayStatus = Literal["Available", "Pending", "Taken", "Past"]
++
++
++class MyOptionalHolidayOut(BaseModel):
++    holiday_detail_id: int
++    holiday_date: date
++    name: str
++    holiday_type: str  # Optional | Restricted
++    status: OptionalHolidayStatus
++
++
++class MyOptionalHolidaysOut(BaseModel):
++    """The caller's Optional/Restricted holidays for one year, plus the quota of the tenant's
++    OptionalHoliday leave type. `leave_type_master_id` is None when the tenant has no such type
++    (the list is then informational only). The apply gate stays the authority — this is a picker."""
++    year: int
++    leave_type_master_id: int | None
++    quota: Decimal | None  # the resolved policy's yearly accrual_quantity; None = no policy applies
++    used: Decimal  # Approved days on optional holidays this year
++    pending: Decimal  # Pending days on optional holidays this year
++    available_balance: Decimal
++    holidays: list[MyOptionalHolidayOut]
++
++
+ # ── Manager approval queue: list, detail, approve, reject ───────────────────────
+ # api-and-pages.md §3.2/§4.10-§4.12. `ManagerRequestOut`/`ManagerRequestDetailOut` are
+ # distinct from the self-service `LeaveRequestOut`/`LeaveRequestDetailOut` above — the manager
+diff --git a/backend/app/modules/leave/service.py b/backend/app/modules/leave/service.py
+index d2569bd..9cf1632 100644
+--- a/backend/app/modules/leave/service.py
++++ b/backend/app/modules/leave/service.py
+@@ -30,6 +30,7 @@ from app.models import (
+     EmployeeAttendanceDetail,
+     EmployeeLeaveBalanceLedger,
+     EmployeeMaster,
++    HolidayCalendarMaster,
+     HolidayDetail,
+     ImageDetail,
+     LeavePolicyAudit,
+@@ -46,6 +47,7 @@ from app.models import (
+ from app.modules.engagement import service as engagement_service
+ from app.services import leave_policy_resolution_service as resolution
+ from app.modules.leave.schemas import (
++    DATE_RULE_OPTIONAL_HOLIDAY,
+     ApprovalFlowStepOut,
+     ApproverOut,
+     CorpOut,
+@@ -80,11 +82,18 @@ from app.modules.leave.schemas import (
+     ManagerBalanceOut,
+     ManagerRequestDetailOut,
+     ManagerRequestOut,
++    MyOptionalHolidayOut,
++    MyOptionalHolidaysOut,
+ )
+ from app.services import image_service, ledger_service
+ from app.services.activity_log_service import log_activity
+ from app.services.attendance_recompute_service import recompute_attendance_day
+-from app.services.calendar_resolver_service import resolve_day_type, resolve_effective_shift
++from app.services.calendar_resolver_service import (
++    OPTIONAL_HOLIDAY_TYPES,
++    resolve_day_type,
++    resolve_effective_shift,
++    resolve_optional_holiday,
++)
+ from app.services.gender import gender_applies
+ 
+ logger = logging.getLogger(__name__)
+@@ -254,6 +263,7 @@ def _leave_type_out(db: Session, tenant_id: int, leave_type: LeaveTypeMaster) ->
+         applicable_after_days=leave_type.applicable_after_days,
+         exclude_week_offs=leave_type.exclude_week_offs, exclude_holidays=leave_type.exclude_holidays,
+         display_order=leave_type.display_order, color_code=leave_type.color_code,
++        date_rule=leave_type.date_rule,
+         is_active=leave_type.is_active, effctv_dt=leave_type.effctv_dt, trmntn_dt=leave_type.trmntn_dt,
+         policy_summary=_default_policy_summary(db, tenant_id, leave_type.id),
+     )
+@@ -314,6 +324,7 @@ def create_leave_type(db: Session, principal: AuthPrincipal, payload: LeaveTypeI
+         gender_applicable=payload.gender_applicable, applicable_after_days=payload.applicable_after_days,
+         exclude_week_offs=payload.exclude_week_offs, exclude_holidays=payload.exclude_holidays,
+         display_order=payload.display_order, color_code=payload.color_code,
++        date_rule=payload.date_rule,
+         effctv_dt=payload.effctv_dt, trmntn_dt=payload.trmntn_dt,
+         created_by_id=principal.user.id,
+     )
+@@ -342,6 +353,17 @@ def update_leave_type(
+     new_trmntn_dt = data.get("trmntn_dt", leave_type.trmntn_dt)
+     if new_trmntn_dt is not None and new_effctv_dt is not None and new_trmntn_dt < new_effctv_dt:
+         raise HTTPException(422, detail="trmntn_dt must be on or after effctv_dt")
++    if data.get("date_rule") == DATE_RULE_OPTIONAL_HOLIDAY and leave_type.date_rule != DATE_RULE_OPTIONAL_HOLIDAY:
++        # Switching an existing type over: every live rule must already fit the Optional-holiday
++        # shape, or the tenant would get a quota spanning two calendar years.
++        for rule in db.scalars(
++            select(LeavePolicyDetail).where(
++                LeavePolicyDetail.care_delivery_program_master_id == principal.tenant_id,
++                LeavePolicyDetail.leave_type_master_id == leave_type.id,
++                LeavePolicyDetail.archive.is_(False),
++            )
++        ).all():
++            validate_date_rule_policy(DATE_RULE_OPTIONAL_HOLIDAY, rule.accrual_frequency, rule.reset_month)
+     for field, value in data.items():
+         setattr(leave_type, field, value)
+     leave_type.updated_by_id = principal.user.id
+@@ -398,6 +420,24 @@ def archive_leave_type(db: Session, principal: AuthPrincipal, leave_type_id: int
+ 
+ # ── Leave policies ───────────────────────────────────────────────────────────
+ 
++def validate_date_rule_policy(date_rule: str | None, accrual_frequency: str, reset_month: int | None) -> None:
++    """Task 186: a rule for an OptionalHoliday leave type must be a Yearly quota on a January
++    leave year. Holiday calendars run Jan-Dec; on the April fallback (`resolve_leave_year`) the
++    year's optional holidays would straddle two leave years and an employee could take the quota
++    twice. Called on every rule insert/update and when a type is switched to the rule."""
++    if date_rule != DATE_RULE_OPTIONAL_HOLIDAY:
++        return
++    if accrual_frequency != "Yearly" or reset_month != 1:
++        logger.warning(
++            "Optional-holiday leave rule rejected: accrual_frequency=%s reset_month=%s (needs Yearly / 1)",
++            accrual_frequency, reset_month,
++        )
++        raise HTTPException(
++            422,
++            detail="An optional-holiday leave type needs a Yearly rule with the leave year starting in January",
++        )
++
++
+ def _get_policy(db: Session, principal: AuthPrincipal, policy_id: int) -> LeavePolicyDetail:
+     policy = db.scalar(
+         select(LeavePolicyDetail).where(
+@@ -607,6 +647,8 @@ def update_policy(
+         "prorate_on_joining": data.get("prorate_on_joining", policy.prorate_on_joining),
+         "reset_month": data.get("reset_month", policy.reset_month),
+     }
++    leave_type = db.get(LeaveTypeMaster, policy.leave_type_master_id)
++    validate_date_rule_policy(leave_type.date_rule, merged["accrual_frequency"], merged["reset_month"])
+     changes_text = _policy_diff_text(policy, merged)
+     for field, value in merged.items():
+         setattr(policy, field, value)
+@@ -990,6 +1032,44 @@ def validate_no_overlap(
+         raise HTTPException(422, detail="Overlaps with an approved On-Duty/WFH request")
+ 
+ 
++def validate_optional_holiday_dates(
++    db: Session, tenant_id: int, employee_id: int, leave_type: LeaveTypeMaster,
++    day_rows: list[LeaveDayRow], from_half: str | None, to_half: str | None,
++) -> None:
++    """Task 186: a `date_rule='OptionalHoliday'` type may only cover the Optional/Restricted
++    holidays in the employee's own resolved calendar (`resolve_optional_holiday` — the same
++    calendar chain the day-type resolver uses), as whole days. How many they take is the
++    policy quota's job (the balance gate), not this one's."""
++    if leave_type.date_rule != DATE_RULE_OPTIONAL_HOLIDAY:
++        return
++    if from_half or to_half:
++        logger.warning(
++            "Optional-holiday gate rejected employee %s leave_type %s tenant %s: half day %s/%s",
++            employee_id, leave_type.id, tenant_id, from_half, to_half,
++        )
++        raise HTTPException(422, detail="Optional holidays are taken as full days")
++
++    counted = [r for r in day_rows if r.day_fraction > 0]
++    if not counted:
++        first = day_rows[0].leave_date
++        logger.warning(
++            "Optional-holiday gate rejected employee %s leave_type %s tenant %s: no working day in %s..%s",
++            employee_id, leave_type.id, tenant_id, first, day_rows[-1].leave_date,
++        )
++        raise HTTPException(422, detail=f"{first.isoformat()} is already a week-off or holiday for you")
++
++    for row in counted:
++        resolved_shift = resolve_effective_shift(db, tenant_id, employee_id, row.leave_date)
++        if resolve_optional_holiday(db, tenant_id, row.leave_date, resolved_shift) is None:
++            logger.warning(
++                "Optional-holiday gate rejected employee %s leave_type %s tenant %s: %s is not an optional holiday",
++                employee_id, leave_type.id, tenant_id, row.leave_date,
++            )
++            raise HTTPException(
++                422, detail=f"{row.leave_date.isoformat()} is not an optional holiday in your calendar",
++            )
++
++
+ def validate_balance(leave_type: LeaveTypeMaster, total_days: Decimal, available_balance: Decimal) -> None:
+     """ledger.md §6 row 9. Caller reads `available_balance` via
+     `app.services.ledger_service.get_available_balance` inside the same locked transaction —
+@@ -1350,6 +1430,10 @@ def _evaluate_apply_gates(
+ 
+     if day_rows:
+         _check("max_consecutive_days", validate_max_consecutive_days, leave_type, day_rows)
++        _check(
++            "optional_holiday_date", validate_optional_holiday_dates,
++            db, tenant_id, employee.id, leave_type, day_rows, from_half, to_half,
++        )
+         _check("overlap", validate_no_overlap, db, tenant_id, employee.id, day_rows, exclude_request_id)
+ 
+     leave_year = resolve_leave_year(policy, from_date)
+@@ -1831,6 +1915,96 @@ def get_my_balances(db: Session, principal: AuthPrincipal) -> LeaveBalancesOut:
+     return _balances_for_employee(db, principal.tenant_id, employee)
+ 
+ 
++def list_my_optional_holidays(db: Session, principal: AuthPrincipal, year: int | None) -> MyOptionalHolidaysOut:
++    """Task 186: the caller's own Optional/Restricted holidays for `year`, each with whether
++    they have taken/requested it, plus the quota of the tenant's OptionalHoliday leave type.
++    A picker for the apply form — `validate_optional_holiday_dates` stays the authority.
++
++    Candidates are every Optional/Restricted holiday in this tenant's calendars for the year;
++    a date is kept only when the employee's *own* resolved calendar on that date carries it
++    (`resolve_optional_holiday`), so a mid-year location move is honoured per date.
++    """
++    employee = _require_self_employee(db, principal)
++    tenant_id = principal.tenant_id
++    today = date.today()
++    target_year = year or today.year
++
++    candidate_dates = db.scalars(
++        select(HolidayDetail.holiday_date)
++        .join(HolidayCalendarMaster, HolidayCalendarMaster.id == HolidayDetail.holiday_calendar_master_id)
++        .where(
++            HolidayCalendarMaster.care_delivery_program_master_id == tenant_id,
++            HolidayCalendarMaster.year == target_year,
++            HolidayDetail.care_delivery_program_master_id == tenant_id,
++            HolidayDetail.holiday_type.in_(OPTIONAL_HOLIDAY_TYPES),
++            HolidayDetail.is_active.is_(True),
++            HolidayDetail.archive.is_(False),
++        )
++        .distinct()
++    ).all()
++    holidays: list[HolidayDetail] = []
++    for holiday_date in sorted(candidate_dates):
++        resolved_shift = resolve_effective_shift(db, tenant_id, employee.id, holiday_date)
++        holiday = resolve_optional_holiday(db, tenant_id, holiday_date, resolved_shift)
++        if holiday is not None:
++            holidays.append(holiday)
++
++    leave_type = db.scalar(
++        select(LeaveTypeMaster)
++        .where(
++            LeaveTypeMaster.care_delivery_program_master_id == tenant_id,
++            LeaveTypeMaster.date_rule == DATE_RULE_OPTIONAL_HOLIDAY,
++            LeaveTypeMaster.is_active.is_(True),
++            LeaveTypeMaster.archive.is_(False),
++        )
++        .order_by(LeaveTypeMaster.display_order, LeaveTypeMaster.id)
++    )
++
++    status_by_date: dict[date, str] = {}
++    quota: Decimal | None = None
++    used = pending = available = Decimal("0")
++    if leave_type is not None:
++        if holidays:
++            for leave_date, status in db.execute(
++                select(LeaveRequestDayDetail.leave_date, LeaveRequestDetail.status)
++                .join(LeaveRequestDetail, LeaveRequestDetail.id == LeaveRequestDayDetail.leave_request_detail_id)
++                .where(
++                    LeaveRequestDetail.care_delivery_program_master_id == tenant_id,
++                    LeaveRequestDetail.employee_master_id == employee.id,
++                    LeaveRequestDetail.leave_type_master_id == leave_type.id,
++                    LeaveRequestDetail.status.in_(("Pending", "Approved")),
++                    LeaveRequestDetail.archive.is_(False),
++                    LeaveRequestDayDetail.day_fraction > 0,
++                    LeaveRequestDayDetail.leave_date.in_([h.holiday_date for h in holidays]),
++                )
++            ).all():
++                if status == "Approved" or leave_date not in status_by_date:
++                    status_by_date[leave_date] = "Taken" if status == "Approved" else "Pending"
++
++        as_of = min(max(today, date(target_year, 1, 1)), date(target_year, 12, 31))
++        policy = resolution.resolve_policy_detail(db, tenant_id, employee, leave_type.id, as_of)
++        if policy is not None:
++            quota = policy.accrual_quantity
++            leave_year = resolve_leave_year(policy, as_of)
++            _, pending, available = ledger_service.get_available_balance(
++                db, tenant_id, employee.id, leave_type.id, leave_year,
++            )
++            used = _used_ytd(db, tenant_id, employee.id, leave_type.id, leave_year)
++
++    return MyOptionalHolidaysOut(
++        year=target_year,
++        leave_type_master_id=leave_type.id if leave_type is not None else None,
++        quota=quota, used=used, pending=pending, available_balance=available,
++        holidays=[
++            MyOptionalHolidayOut(
++                holiday_detail_id=h.id, holiday_date=h.holiday_date, name=h.name, holiday_type=h.holiday_type,
++                status=status_by_date.get(h.holiday_date) or ("Past" if h.holiday_date < today else "Available"),
++            )
++            for h in holidays
++        ],
++    )
++
++
+ def upload_leave_attachment(
+     db: Session, principal: AuthPrincipal, request_id: int, file_bytes: bytes, content_type: str,
+ ) -> LeaveAttachmentOut:
+diff --git a/backend/app/services/calendar_resolver_service.py b/backend/app/services/calendar_resolver_service.py
+index c3022f3..108161a 100644
+--- a/backend/app/services/calendar_resolver_service.py
++++ b/backend/app/services/calendar_resolver_service.py
+@@ -35,6 +35,8 @@ from app.modules.shifts.service import resolve_employee_shift
+ 
+ DEFAULT_TIME_ZONE = "Asia/Kolkata"  # config-knobs.md §1.2 default_time_zone — not exposed anywhere
+ DEFAULT_WEEK_OFF_DAYS = (6, 7)  # ISO Sat, Sun — config-knobs.md §1.2 default_week_off_days="6,7"
++#: holiday_details.holiday_type values an employee may opt into through an OptionalHoliday leave type.
++OPTIONAL_HOLIDAY_TYPES = ("Optional", "Restricted")
+ 
+ 
+ @dataclass
+@@ -142,14 +144,15 @@ def resolve_effective_shift_cached(
+     return cache[target_date]
+ 
+ 
+-def _resolve_holiday(
++def _resolve_calendar(
+     db: Session, tenant_id: int, target_date: date, resolved_shift: ResolvedShift | None,
+-) -> HolidayDetail | None:
++) -> HolidayCalendarMaster | None:
+     """assembler.md §3.2's calendar fallback chain, adapted from
+     `app.modules.attendance.service.get_resolved_holidays` rather than re-derived: assignment's
+     calendar (filtered by year) -> the resolved location's calendar for the year -> the
+     all-locations calendar for the year. Location-specific beats all-locations; multiple
+-    matches pick the lowest id (assembler.md §3.2's tie-break).
++    matches pick the lowest id (assembler.md §3.2's tie-break). Shared by the Public-holiday
++    lookup below and `resolve_optional_holiday`, so both always read the same calendar.
+     """
+     calendar: HolidayCalendarMaster | None = None
+ 
+@@ -185,6 +188,14 @@ def _resolve_holiday(
+             .order_by(HolidayCalendarMaster.id.asc())
+         )
+ 
++    return calendar
++
++
++def _resolve_holiday(
++    db: Session, tenant_id: int, target_date: date, resolved_shift: ResolvedShift | None,
++) -> HolidayDetail | None:
++    """The Public holiday on target_date in the resolved calendar (`_resolve_calendar`)."""
++    calendar = _resolve_calendar(db, tenant_id, target_date, resolved_shift)
+     if calendar is None:
+         return None
+ 
+@@ -198,6 +209,30 @@ def _resolve_holiday(
+     )
+ 
+ 
++def resolve_optional_holiday(
++    db: Session, tenant_id: int, target_date: date, resolved_shift: ResolvedShift | None,
++) -> HolidayDetail | None:
++    """The Optional/Restricted holiday on target_date in the employee's resolved calendar —
++    what a `date_rule='OptionalHoliday'` leave type may be taken on (task 186). Same calendar
++    as `_resolve_holiday`, so another location's optional holiday never counts. The day itself
++    stays Working (§4.2); only the leave gate reads this."""
++    calendar = _resolve_calendar(db, tenant_id, target_date, resolved_shift)
++    if calendar is None:
++        return None
++
++    return db.scalar(
++        select(HolidayDetail)
++        .where(
++            HolidayDetail.holiday_calendar_master_id == calendar.id,
++            HolidayDetail.holiday_date == target_date,
++            HolidayDetail.holiday_type.in_(OPTIONAL_HOLIDAY_TYPES),
++            HolidayDetail.is_active.is_(True),
++            HolidayDetail.archive.is_(False),
++        )
++        .order_by(HolidayDetail.id.asc())
++    )
++
++
+ def _nth_occurrence(target_date: date) -> int:
+     """assembler.md §4.1: the Nth occurrence of this weekday *in the month*, not the ISO
+     calendar week — e.g. week_of_month=2, day_of_week=6 means the 2nd Saturday (day-of-month
+diff --git a/backend/app/tests/modules/test_leave_optional_holiday.py b/backend/app/tests/modules/test_leave_optional_holiday.py
+new file mode 100644
+index 0000000..376e9a7
+--- /dev/null
++++ b/backend/app/tests/modules/test_leave_optional_holiday.py
+@@ -0,0 +1,412 @@
++"""Task 186: optional holidays as a quota'd leave type.
++
++The N holidays are `holiday_details` rows of type Optional/Restricted; a leave type with
++`date_rule='OptionalHoliday'` may only be applied on those dates in the employee's own resolved
++calendar, and its policy's Yearly quota (on a January leave year) caps how many are taken.
++
++No shift is assigned in these tests, so the calendar resolver falls back to the all-locations
++calendar and the Sat/Sun default week-off.
++"""
++
++from datetime import date, timedelta
++from decimal import Decimal
++
++import pytest
++
++from app.models import (
++    CareDeliveryProgramMaster,
++    CorpMaster,
++    EmployeeMaster,
++    HolidayCalendarMaster,
++    HolidayDetail,
++    LeavePolicyDetail,
++    LeaveTypeMaster,
++    StatusMaster,
++    WorkLocationMaster,
++)
++from app.modules.leave import service as leave_service
++from app.services import ledger_service
++from app.tests.modules.test_leave import (
++    LEAVE_PREVIEW,
++    LEAVE_REQUESTS,
++    LEAVE_TYPES,
++    _apply_payload,
++    _auth,
++    _create_type,
++    _decrypt,
++    _encrypt,
++    _login,
++    _master,
++    _policy_payload,
++    _public_key,
++    _self_employee_with_manager,
++    admin_token,  # noqa: F401 — fixture
++)
++
++MY_OPTIONAL = "/api/v1/leave/me/optional-holidays"
++
++
++@pytest.fixture(autouse=True)
++def _leave_statuses(db_session, tenant):
++    """The apply flow dual-writes `status_master_id`; seed the four LEAVE_REQUEST rows inside the
++    test transaction when the database has none, and drop the id cache either side so an id from
++    a rolled-back row never leaks into the next test."""
++    leave_service._LEAVE_STATUS_ID_CACHE.clear()
++    for code in ("Pending", "Approved", "Rejected", "Cancelled"):
++        exists = db_session.query(StatusMaster).filter_by(source_activity="LEAVE_REQUEST", status_code=code).first()
++        if exists is None:
++            db_session.add(StatusMaster(
++                status_code=code, status_name=code, source_activity="LEAVE_REQUEST",
++                created_by_id=tenant.user.id, updated_by_id=tenant.user.id,
++            ))
++    db_session.flush()
++    yield
++    leave_service._LEAVE_STATUS_ID_CACHE.clear()
++
++
++def _week() -> list[date]:
++    """Mon..Sun of the first full week at least two weeks ahead that sits inside one calendar year
++    (the quota is per calendar year, so a week straddling 31-Dec would split it)."""
++    start = date.today() + timedelta(days=14)
++    monday = start + timedelta(days=(-start.weekday()) % 7)
++    if (monday + timedelta(days=6)).year != monday.year:
++        monday += timedelta(days=7)
++    return [monday + timedelta(days=i) for i in range(7)]
++
++
++def _calendar(db, cdp_id: int, year: int, *, location_id: int | None = None) -> HolidayCalendarMaster:
++    cal = HolidayCalendarMaster(
++        care_delivery_program_master_id=cdp_id, name=f"Cal {year} {location_id}", year=year,
++        work_location_master_id=location_id,
++    )
++    db.add(cal)
++    db.flush()
++    return cal
++
++
++def _holiday(db, cal: HolidayCalendarMaster, day: date, holiday_type: str = "Optional", name: str = "") -> HolidayDetail:
++    h = HolidayDetail(
++        care_delivery_program_master_id=cal.care_delivery_program_master_id,
++        holiday_calendar_master_id=cal.id, holiday_date=day, name=name or f"Holiday {day}",
++        holiday_type=holiday_type,
++    )
++    db.add(h)
++    db.flush()
++    return h
++
++
++def _oh_type(db, cdp_id: int, *, quota: int = 2, year: int, employee: EmployeeMaster | None = None, **overrides):
++    """An OptionalHoliday leave type with a Yearly/January rule in the DEFAULT policy, and (when
++    `employee` is given) that year's accrual already credited."""
++    defaults = dict(
++        care_delivery_program_master_id=cdp_id, name="Optional Holiday", code="OH",
++        effctv_dt=date(2020, 1, 1), date_rule="OptionalHoliday", allow_half_day=True,
++        min_notice_days=0, requires_approval=False,
++    )
++    defaults.update(overrides)
++    lt = LeaveTypeMaster(**defaults)
++    db.add(lt)
++    db.flush()
++    db.add(LeavePolicyDetail(
++        care_delivery_program_master_id=cdp_id, leave_type_master_id=lt.id,
++        leave_policy_master_id=_master(db, cdp_id).id, accrual_frequency="Yearly",
++        accrual_quantity=quota, accrual_timing="Pre", reset_month=1, prorate_on_joining=False,
++    ))
++    db.flush()
++    if employee is not None:
++        ledger_service.write_ledger_entry(db, cdp_id, employee.id, lt.id, year, "Accrual", Decimal(quota), date(year, 1, 1))
++        db.flush()
++    return lt
++
++
++@pytest.fixture()
++def setup(client, db_session, tenant):
++    """Employee (tenant.user) + manager, an all-locations calendar with Optional holidays on
++    Mon/Tue/Wed, a Public holiday on Thu and an Optional one on Sat, and an OH type with quota 2."""
++    week = _week()
++    emp, manager = _self_employee_with_manager(db_session, tenant)
++    cal = _calendar(db_session, tenant.org.id, week[0].year)
++    optional = [_holiday(db_session, cal, d) for d in week[0:3]]
++    public = _holiday(db_session, cal, week[3], "Public")
++    saturday = _holiday(db_session, cal, week[5], "Restricted")
++    lt = _oh_type(db_session, tenant.org.id, year=week[0].year, employee=emp)
++    return dict(week=week, emp=emp, manager=manager, cal=cal, optional=optional, public=public,
++                saturday=saturday, lt=lt, token=_login(client))
++
++
++def _apply(client, token, lt_id: int, day: date, **overrides):
++    return client.post(
++        LEAVE_REQUESTS, json=_apply_payload(lt_id, day.isoformat(), day.isoformat(), **overrides), headers=_auth(token),
++    )
++
++
++# ── leave type: date_rule CRUD ────────────────────────────────────────────────
++
++def test_leave_type_date_rule_roundtrips_and_clears(client, admin_token):  # noqa: F811
++    created = _create_type(client, admin_token, code="OHX", date_rule="OptionalHoliday")
++    assert created["date_rule"] == "OptionalHoliday"
++
++    r = client.patch(f"{LEAVE_TYPES}/{created['id']}", json={"date_rule": None}, headers=_auth(admin_token))
++    assert r.status_code == 200, r.text
++    assert r.json()["date_rule"] is None
++
++    plain = _create_type(client, admin_token, code="PLAIN")
++    assert plain["date_rule"] is None
++
++
++def test_unknown_date_rule_rejected(client, admin_token):  # noqa: F811
++    r = client.post(LEAVE_TYPES, json={
++        "name": "Birthday", "code": "BDAY", "date_rule": "Birthday", "effctv_dt": "2026-01-01",
++    }, headers=_auth(admin_token))
++    assert r.status_code == 422, r.text
++
++
++# ── policy guard rails ────────────────────────────────────────────────────────
++
++@pytest.mark.parametrize("overrides", [
++    {"accrual_frequency": "Monthly", "reset_month": 1},
++    {"accrual_frequency": "Yearly", "reset_month": 4},
++    {"accrual_frequency": "Yearly"},  # reset_month NULL falls back to April
++])
++def test_optional_type_rule_must_be_yearly_january(client, admin_token, overrides):  # noqa: F811
++    lt = _create_type(client, admin_token, code="OHP", date_rule="OptionalHoliday")
++    r = client.post(
++        f"{LEAVE_TYPES}/{lt['id']}/policies",
++        json=_policy_payload(accrual_quantity="2", max_balance=None, **overrides), headers=_auth(admin_token),
++    )
++    assert r.status_code == 422, r.text
++    assert "January" in r.json()["detail"]
++
++
++def test_optional_type_rule_patch_cannot_move_reset_month(client, admin_token):  # noqa: F811
++    lt = _create_type(client, admin_token, code="OHQ", date_rule="OptionalHoliday")
++    ok = client.post(
++        f"{LEAVE_TYPES}/{lt['id']}/policies",
++        json=_policy_payload(accrual_frequency="Yearly", accrual_quantity="2", max_balance=None, reset_month=1),
++        headers=_auth(admin_token),
++    )
++    assert ok.status_code == 201, ok.text
++    r = client.patch(
++        f"/api/v1/leave/policy-details/{ok.json()['id']}", json={"reset_month": 4}, headers=_auth(admin_token),
++    )
++    assert r.status_code == 422, r.text
++
++
++def test_switching_type_to_optional_rejected_while_a_rule_misfits(client, admin_token):  # noqa: F811
++    lt = _create_type(client, admin_token, code="OHS")
++    client.post(f"{LEAVE_TYPES}/{lt['id']}/policies", json=_policy_payload(), headers=_auth(admin_token))  # Monthly
++    r = client.patch(f"{LEAVE_TYPES}/{lt['id']}", json={"date_rule": "OptionalHoliday"}, headers=_auth(admin_token))
++    assert r.status_code == 422, r.text
++    assert client.get(LEAVE_TYPES, headers=_auth(admin_token)).json()[0]["date_rule"] is None
++
++
++# ── apply gate ────────────────────────────────────────────────────────────────
++
++def test_quota_allows_two_of_three_optional_holidays(client, setup):
++    s = setup
++    first = _apply(client, s["token"], s["lt"].id, s["optional"][0].holiday_date)
++    assert first.status_code == 201, first.text
++    assert first.json()["status"] == "Approved"
++    second = _apply(client, s["token"], s["lt"].id, s["optional"][1].holiday_date)
++    assert second.status_code == 201, second.text
++
++    third = _apply(client, s["token"], s["lt"].id, s["optional"][2].holiday_date)
++    assert third.status_code == 422, third.text
++    assert "balance" in third.json()["detail"].lower()
++
++
++def test_working_day_and_public_holiday_rejected(client, setup):
++    s = setup
++    friday = s["week"][4]
++    r = _apply(client, s["token"], s["lt"].id, friday)
++    assert r.status_code == 422, r.text
++    assert r.json()["detail"] == f"{friday.isoformat()} is not an optional holiday in your calendar"
++
++    # A Public holiday is excluded from the count (fraction 0) — nothing left to take.
++    r = _apply(client, s["token"], s["lt"].id, s["public"].holiday_date)
++    assert r.status_code == 422, r.text
++
++
++def test_multi_day_range_must_be_all_optional_holidays(client, setup):
++    s = setup
++    week = s["week"]
++    ok = client.post(
++        LEAVE_REQUESTS, json=_apply_payload(s["lt"].id, week[0].isoformat(), week[1].isoformat()),
++        headers=_auth(s["token"]),
++    )
++    assert ok.status_code == 201, ok.text
++    assert Decimal(str(ok.json()["total_days"])) == Decimal("2")
++
++
++def test_other_location_calendar_does_not_count(client, setup, db_session, tenant):
++    s = setup
++    corp = db_session.get(CorpMaster, s["emp"].corp_master_id)
++    location = WorkLocationMaster(care_delivery_program_master_id=tenant.org.id, corp_master_id=corp.id, name="Pune")
++    db_session.add(location)
++    db_session.flush()
++    loc_cal = _calendar(db_session, tenant.org.id, s["week"][0].year, location_id=location.id)
++    friday = s["week"][4]
++    _holiday(db_session, loc_cal, friday)
++
++    r = _apply(client, s["token"], s["lt"].id, friday)
++    assert r.status_code == 422, r.text
++    assert "not an optional holiday" in r.json()["detail"]
++
++
++def test_other_tenant_calendar_does_not_count(client, setup, db_session):
++    s = setup
++    other = CareDeliveryProgramMaster(name="Other Org", is_active=True)
++    db_session.add(other)
++    db_session.flush()
++    friday = s["week"][4]
++    _holiday(db_session, _calendar(db_session, other.id, friday.year), friday)
++
++    r = _apply(client, s["token"], s["lt"].id, friday)
++    assert r.status_code == 422, r.text
++    assert "not an optional holiday" in r.json()["detail"]
++
++
++def test_half_day_rejected(client, setup):
++    s = setup
++    r = _apply(client, s["token"], s["lt"].id, s["optional"][0].holiday_date, from_half="FirstHalf")
++    assert r.status_code == 422, r.text
++    assert r.json()["detail"] == "Optional holidays are taken as full days"
++
++
++def test_optional_holiday_on_week_off_rejected(client, setup):
++    s = setup
++    saturday = s["saturday"].holiday_date
++    r = _apply(client, s["token"], s["lt"].id, saturday)
++    assert r.status_code == 422, r.text
++    assert r.json()["detail"] == f"{saturday.isoformat()} is already a week-off or holiday for you"
++
++
++def test_same_holiday_twice_rejected_by_overlap(client, setup):
++    s = setup
++    day = s["optional"][0].holiday_date
++    assert _apply(client, s["token"], s["lt"].id, day).status_code == 201
++    r = _apply(client, s["token"], s["lt"].id, day)
++    assert r.status_code == 422, r.text
++    assert "Overlaps" in r.json()["detail"]
++
++
++def test_preview_reports_optional_holiday_violation(client, setup):
++    s = setup
++    friday = s["week"][4].isoformat()
++    r = client.post(LEAVE_PREVIEW, json=_apply_payload(s["lt"].id, friday, friday), headers=_auth(s["token"]))
++    assert r.status_code == 200, r.text
++    assert "optional_holiday_date" in [v["code"] for v in r.json()["violations"]]
++
++
++def test_types_without_date_rule_are_unaffected(client, setup, db_session, tenant):
++    s = setup
++    plain = LeaveTypeMaster(
++        care_delivery_program_master_id=tenant.org.id, name="Casual", code="CL", effctv_dt=date(2020, 1, 1),
++        min_notice_days=0, requires_approval=False, allow_negative_balance=True,
++    )
++    db_session.add(plain)
++    db_session.flush()
++    db_session.add(LeavePolicyDetail(
++        care_delivery_program_master_id=tenant.org.id, leave_type_master_id=plain.id,
++        leave_policy_master_id=_master(db_session, tenant.org.id).id, accrual_frequency="Yearly", accrual_quantity=0,
++    ))
++    db_session.flush()
++    r = _apply(client, s["token"], plain.id, s["week"][4])  # an ordinary working Friday
++    assert r.status_code == 201, r.text
++
++
++# ── GET /leave/me/optional-holidays ───────────────────────────────────────────
++
++def test_my_optional_holidays_requires_authentication(client):
++    assert client.get(MY_OPTIONAL).status_code == 401
++
++
++def test_my_optional_holidays_statuses_and_quota(client, setup, db_session, tenant):
++    s = setup
++    # Pending needs an approver path: a second OH-type request through requires_approval=True.
++    s["lt"].requires_approval = True
++    db_session.flush()
++    assert _apply(client, s["token"], s["lt"].id, s["optional"][1].holiday_date).status_code == 201  # Pending
++    s["lt"].requires_approval = False
++    db_session.flush()
++    assert _apply(client, s["token"], s["lt"].id, s["optional"][0].holiday_date).status_code == 201  # Approved
++
++    r = client.get(MY_OPTIONAL, params={"year": s["week"][0].year}, headers=_auth(s["token"]))
++    assert r.status_code == 200, r.text
++    body = r.json()
++    assert body["leave_type_master_id"] == s["lt"].id
++    assert Decimal(str(body["quota"])) == Decimal("2")
++    assert Decimal(str(body["used"])) == Decimal("1")
++    assert Decimal(str(body["pending"])) == Decimal("1")
++    assert Decimal(str(body["available_balance"])) == Decimal("0")
++    by_date = {h["holiday_date"]: h for h in body["holidays"]}
++    # Public holiday never listed; the Restricted Saturday is.
++    assert set(by_date) == {d.isoformat() for d in s["week"][0:3]} | {s["week"][5].isoformat()}
++    assert by_date[s["week"][0].isoformat()]["status"] == "Taken"
++    assert by_date[s["week"][1].isoformat()]["status"] == "Pending"
++    assert by_date[s["week"][2].isoformat()]["status"] == "Available"
++    assert by_date[s["week"][5].isoformat()]["holiday_type"] == "Restricted"
++
++
++def test_my_optional_holidays_cancel_makes_date_available_again(client, setup):
++    s = setup
++    day = s["optional"][0].holiday_date
++    req = _apply(client, s["token"], s["lt"].id, day)
++    assert req.status_code == 201, req.text
++    assert client.post(f"{LEAVE_REQUESTS}/{req.json()['id']}/cancel", headers=_auth(s["token"])).status_code == 200
++
++    body = client.get(MY_OPTIONAL, params={"year": day.year}, headers=_auth(s["token"])).json()
++    status = {h["holiday_date"]: h["status"] for h in body["holidays"]}
++    assert status[day.isoformat()] == "Available"
++    assert Decimal(str(body["used"])) == Decimal("0")
++    assert Decimal(str(body["available_balance"])) == Decimal("2")
++
++
++def test_my_optional_holidays_excludes_other_location_and_tenant(client, setup, db_session, tenant):
++    s = setup
++    year = s["week"][0].year
++    corp = db_session.get(CorpMaster, s["emp"].corp_master_id)
++    location = WorkLocationMaster(care_delivery_program_master_id=tenant.org.id, corp_master_id=corp.id, name="Pune")
++    db_session.add(location)
++    db_session.flush()
++    _holiday(db_session, _calendar(db_session, tenant.org.id, year, location_id=location.id), s["week"][4])
++    other = CareDeliveryProgramMaster(name="Other Org", is_active=True)
++    db_session.add(other)
++    db_session.flush()
++    _holiday(db_session, _calendar(db_session, other.id, year), s["week"][6])
++
++    body = client.get(MY_OPTIONAL, params={"year": year}, headers=_auth(s["token"])).json()
++    listed = {h["holiday_date"] for h in body["holidays"]}
++    assert s["week"][4].isoformat() not in listed
++    assert s["week"][6].isoformat() not in listed
++
++
++def test_my_optional_holidays_past_year_marks_past(client, setup, db_session, tenant):
++    s = setup
++    last_year = date.today().year - 1
++    _holiday(db_session, _calendar(db_session, tenant.org.id, last_year), date(last_year, 3, 10))
++    body = client.get(MY_OPTIONAL, params={"year": last_year}, headers=_auth(s["token"])).json()
++    assert [h["status"] for h in body["holidays"]] == ["Past"]
++
++
++def test_my_optional_holidays_without_an_oh_type(client, db_session, tenant):
++    week = _week()
++    _self_employee_with_manager(db_session, tenant)
++    _holiday(db_session, _calendar(db_session, tenant.org.id, week[0].year), week[0])
++    token = _login(client)
++    body = client.get(MY_OPTIONAL, params={"year": week[0].year}, headers=_auth(token)).json()
++    assert body["leave_type_master_id"] is None
++    assert body["quota"] is None
++    assert [h["status"] for h in body["holidays"]] == ["Available"]
++
++
++def test_encrypted_my_optional_holidays_roundtrip(client, setup):
++    s = setup
++    pub = _public_key(client)
++    headers, _, aes_key = _encrypt(pub, None)
++    headers["Authorization"] = f"Bearer {s['token']}"
++    r = client.get(MY_OPTIONAL, params={"year": s["week"][0].year}, headers=headers)
++    assert r.status_code == 200, r.text
++    assert r.headers.get("X-Encrypted") == "1"
++    data = _decrypt(aes_key, r.json())
++    assert data["leave_type_master_id"] == s["lt"].id
+diff --git a/docs/leave-and-attendance/leave/admin-configuration.md b/docs/leave-and-attendance/leave/admin-configuration.md
+index a235e87..2ce38da 100644
+--- a/docs/leave-and-attendance/leave/admin-configuration.md
++++ b/docs/leave-and-attendance/leave/admin-configuration.md
+@@ -44,6 +44,7 @@ confirm dialog. **No accrual fields here**; those are per policy (§5.2).
+ | Applicable after (days) | `applicable_after_days` (blank = no gate) | Probation gate |
+ | Exclude week-offs / holidays | `exclude_week_offs`, `exclude_holidays` | — |
+ | Display order, colour | `display_order`, `color_code` (≤10) | Balance-card colours |
++| Can be taken on | `date_rule` — blank = any date; `OptionalHoliday` = only the employee's optional holidays (§5.5) | — |
+ | Effective / termination date | `effctv_dt`, `trmntn_dt` (both optional) | — |
+ 
+ ### 5.2 Leave policy — the accrual rules
+@@ -149,6 +150,44 @@ decision list.
+ | *Enable comp-off*, *Expiry window*, *Require manager approval* | Comp-off | Comp-off has no earning mechanism at all |
+ | *Approver: HR* | Regularization | v1 honours Reporting Manager only |
+ 
++### 5.5 Optional holidays — list N, each employee takes M (task 186)
++
++E.g. six optional holidays in the year, any two per employee. There is **no selection table**:
++the holidays live in the holiday calendar, the "two" is a leave policy quota, and an employee's
++pick is an ordinary leave request — so approval, cancellation, the ledger, attendance and year
++close all work unchanged.
++
++**Set up:**
++
++1. **Holiday calendar** for the year: add the six days with type **Optional** (or
++   **Restricted** — both count). They stay working days for everyone else; only Public holidays
++   close the office.
++2. **Leave type**, e.g. `OH` "Optional Holiday": *Can be taken on* = **Optional holidays only**,
++   paid, half day off (the screen turns it off; halves are refused anyway), approval as the
++   organisation prefers.
++3. **Leave policy rule** for `OH`: **Yearly**, quantity **2**, credited at the start of the
++   year, leave year starting **January**, no carry forward, not encashable, **no proration**.
++
++**Enforced by the server:**
++
++- A request of an `OptionalHoliday` type may only cover dates that are Optional/Restricted
++  holidays **in the employee's own resolved calendar** (assignment calendar → location
++  calendar → all-locations calendar, the same chain the attendance resolver uses). Another
++  location's or another tenant's optional holiday is refused. Error code `optional_holiday_date`
++  in preview.
++- Whole days only; an optional holiday that falls on the employee's week-off is refused.
++- The quota is the ordinary balance gate; taking the same date twice is the overlap gate.
++- A rule for an `OptionalHoliday` type must be **Yearly with `reset_month = 1`** — saving
++  anything else is a `422`, and so is switching a type to the rule while one of its rules
++  doesn't fit. **Why January:** holiday calendars are per calendar year; on the tenant's April
++  leave-year fallback the year's holidays would span two leave years and an employee could take
++  the quota twice.
++- **Proration** isn't enforced, but leave it off: a mid-year joiner would get e.g. 0.83 days,
++  which can't be used for a whole-day holiday.
++
++The employee's apply form swaps the date range for a list of their optional holidays with what
++they've taken (`GET /leave/me/optional-holidays`, [api-and-pages §4.17](api-and-pages.md)).
++
+ ---
+ 
+ ## 6. Runbook — changing a policy
+diff --git a/docs/leave-and-attendance/leave/api-and-pages.md b/docs/leave-and-attendance/leave/api-and-pages.md
+index 1ce5253..75ca32c 100644
+--- a/docs/leave-and-attendance/leave/api-and-pages.md
++++ b/docs/leave-and-attendance/leave/api-and-pages.md
+@@ -221,6 +221,7 @@ Every rule mutation writes one `leave_policy_audits` row in the same transaction
+ | GET | `/types` | ✓ | Leave types (`?active_only=`) — self callers are always forced to `active_only=true` server-side |
+ | GET | `/me/balances` | ✓ | Balance cards (uses `available_balance`) |
+ | GET | `/me/policy` | ✓ | The caller's resolved policy and per-type rules (§4.14). "No policy" is a `200`, not an error (task 148) |
++| GET | `/me/optional-holidays` | ✓ | The caller's Optional/Restricted holidays for `?year=` with taken/pending status and the OptionalHoliday type's quota (§4.17, task 186) |
+ | GET | `/me/ledger` | ✓ | The caller's own ledger rows, oldest first, with type labels (task 148) |
+ | POST | `/requests/preview` | ✓ | Dry-run: day rows, `total_days`, balance impact, gate failures |
+ | POST | `/requests` | ✓ | Apply |
+@@ -465,6 +466,32 @@ optional.
+ The frontend's `AssignmentConflictError` (`lib/api.ts`) carries `conflicting_assignment` so the
+ modal can show it inline.
+ 
++### 4.17 `GET /api/v1/leave/me/optional-holidays`
++
++Self-service and ungated (task 186). `?year=` defaults to the current year. Lists the
++Optional/Restricted holidays in **the caller's own resolved calendar** — each date is resolved
++through the same calendar chain the day-type resolver uses, so another location's or another
++tenant's holidays never appear.
++
++```json
++{
++  "year": 2026, "leave_type_master_id": 9, "quota": "2.00", "used": "1.00", "pending": "0.00",
++  "available_balance": "1.00",
++  "holidays": [
++    { "holiday_detail_id": 41, "holiday_date": "2026-01-14", "name": "Pongal", "holiday_type": "Optional", "status": "Past" },
++    { "holiday_detail_id": 42, "holiday_date": "2026-11-01", "name": "Kannada Rajyotsava", "holiday_type": "Restricted", "status": "Taken" },
++    { "holiday_detail_id": 43, "holiday_date": "2026-12-24", "name": "Christmas Eve", "holiday_type": "Optional", "status": "Available" }
++  ]
++}
++```
++
++- `status`: `Taken` (an Approved request of the OptionalHoliday type covers it), `Pending`, `Past`
++  (before today, not taken) or `Available`.
++- `leave_type_master_id` is the tenant's active `date_rule='OptionalHoliday'` type (lowest
++  display order); `null` when there is none — the list is then informational and `quota` is null.
++- `quota` is the resolved policy rule's `accrual_quantity`; null when no policy covers the caller.
++- A picker only — `POST /requests` re-checks the date ([admin-configuration §5.5](admin-configuration.md)).
++
+ > `GET`/`PUT /api/v1/leave/config` is **not** sampled here — its shape and its fully-aspirational
+ > framing (no leave module exists to serve it) live in [`config-knobs.md`](config-knobs.md), since
+ > that file is where the config-knobs fork reasoning belongs.
+diff --git a/frontend/src/dashboards/Employee/MyLeave.tsx b/frontend/src/dashboards/Employee/MyLeave.tsx
+index ac514db..034b673 100644
+--- a/frontend/src/dashboards/Employee/MyLeave.tsx
++++ b/frontend/src/dashboards/Employee/MyLeave.tsx
+@@ -2,15 +2,15 @@
+ import { useEffect, useState } from "react";
+ import { toast } from "react-toastify";
+ import { Icon } from "../shell";
+-import { DateField } from "@/components/ui/DateField";
++import { DateField, formatDDMMMYY } from "@/components/ui/DateField";
+ import {
+-  applyLeaveRequest, cancelLeaveRequest, getMyLeaveBalances, getMyLeaveLedger, getMyLeavePolicy, listLeaveTypes,
+-  listMyLeaveRequests, previewLeaveRequest, uploadLeaveAttachment,
++  applyLeaveRequest, cancelLeaveRequest, getMyLeaveBalances, getMyLeaveLedger, getMyLeavePolicy, getMyOptionalHolidays,
++  listLeaveTypes, listMyLeaveRequests, previewLeaveRequest, uploadLeaveAttachment,
+   type LeaveBalance, type LeaveHalf, type LeaveLedgerRow, type LeaveRequest, type LeaveRequestPreview, type LeaveType,
+-  type Me, type MyLeavePolicy, type MyLeaveRule,
++  type Me, type MyLeavePolicy, type MyLeaveRule, type MyOptionalHoliday, type MyOptionalHolidays,
+ } from "@/lib/api";
+ import {
+-  ShimmerButton, ShimmerForm, ShimmerLine, ShimmerPill, ShimmerTable,
++  ShimmerButton, ShimmerForm, ShimmerLine, ShimmerList, ShimmerPill, ShimmerTable,
+ } from "@/components/ui/Shimmer";
+ 
+ const BALANCE_PALETTE = ["#1B8682", "#4C6FBF", "#8B5CF6", "#DD4A3B", "#D97706", "#0EA5E9"];
+@@ -364,6 +364,109 @@ function LeavePreviewPanel({ preview }: { preview: LeaveRequestPreview | null })
+   );
+ }
+ 
++const OPTIONAL_STATUS_STYLES: Record<MyOptionalHoliday["status"], string> = {
++  Available: "bg-teal-50 text-teal-800",
++  Pending: "bg-amber-50 text-amber-700",
++  Taken: "bg-ink-50 text-ink-600",
++  Past: "bg-ink-50 text-ink-400",
++};
++
++/**
++ * Task 186 — replaces the From/To dates for a leave type whose `date_rule` is "OptionalHoliday":
++ * the caller's own Optional/Restricted holidays (resolved server-side from their calendar), each
++ * with whether they've taken/requested it, and how much of the quota is used. Only "Available"
++ * rows are selectable; the apply gate stays the authority. `refreshKey` reloads after a submit.
++ */
++function OptionalHolidayPicker({
++  selected, onSelect, refreshKey,
++}: { selected: string; onSelect: (iso: string) => void; refreshKey: number }) {
++  const thisYear = new Date().getFullYear();
++  const [year, setYear] = useState(thisYear);
++  // Tagged with the request it answers, so a year switch shows the skeleton again without a
++  // synchronous setState inside the effect. data null = failed to load.
++  const [loaded, setLoaded] = useState<{ key: string; data: MyOptionalHolidays | null } | null>(null);
++  const key = `${year}:${refreshKey}`;
++
++  useEffect(() => {
++    const ctrl = new AbortController();
++    getMyOptionalHolidays(year, ctrl.signal)
++      .then((data) => setLoaded({ key, data }))
++      .catch(() => { if (!ctrl.signal.aborted) setLoaded({ key, data: null }); });
++    return () => ctrl.abort();
++  }, [year, key]);
++
++  const data = loaded?.key === key ? loaded.data : undefined;
++  const used = Number(data?.used ?? 0);
++  const pending = Number(data?.pending ?? 0);
++
++  return (
++    <div className="mb-4">
++      <div className="mb-1.5 flex items-center justify-between gap-3">
++        <label className="text-[12.5px] text-ink-500">Optional holiday</label>
++        <select
++          className="rounded-[8px] border border-border-soft px-2 py-1 text-[12px] text-ink-700 outline-none focus:border-teal-500"
++          value={year} onChange={(e) => setYear(Number(e.target.value))}
++        >
++          {[thisYear, thisYear + 1].map((y) => <option key={y} value={y}>{y}</option>)}
++        </select>
++      </div>
++      {data === undefined ? (
++        <div className="overflow-hidden rounded-[10px] border border-border-soft">
++          <ShimmerList
++            rows={4}
++            rowProps={{ avatarSize: 16, avatarShape: "circle", lines: 2, lineWidths: ["45%", "25%"], trailing: <ShimmerPill width={64} /> }}
++            rowClassName="px-3 py-2.5 border-b border-border-soft last:border-b-0"
++          />
++        </div>
++      ) : data === null ? (
++        <p className="text-[12px] text-danger">Couldn&apos;t load your optional holidays. Refresh to try again.</p>
++      ) : (
++        <>
++          <p className="mb-1.5 text-[12px] text-ink-500">
++            {data.quota == null
++              ? "No optional-holiday quota applies to you — contact HR."
++              : `${used} of ${Number(data.quota)} used${pending > 0 ? ` · ${pending} pending` : ""}`}
++          </p>
++          {data.holidays.length === 0 ? (
++            <p className="rounded-[10px] border border-border-soft px-3 py-3 text-[12.5px] text-ink-400">
++              No optional holidays in your calendar for {year}.
++            </p>
++          ) : (
++            <div className="overflow-hidden rounded-[10px] border border-border-soft">
++              {data.holidays.map((h) => {
++                const selectable = h.status === "Available";
++                return (
++                  <label
++                    key={h.holiday_detail_id}
++                    className={`flex items-center gap-3 border-b border-border-soft px-3 py-2.5 last:border-b-0 ${
++                      selectable ? "cursor-pointer hover:bg-ink-50/60" : "cursor-not-allowed opacity-70"
++                    } ${selected === h.holiday_date ? "bg-teal-50/60" : ""}`}
++                  >
++                    <input
++                      type="radio" name="optional-holiday" className="accent-teal-800"
++                      disabled={!selectable} checked={selected === h.holiday_date}
++                      onChange={() => onSelect(h.holiday_date)}
++                    />
++                    <div className="min-w-0 flex-1">
++                      <div className="truncate text-[13px] font-medium text-ink-900">{h.name}</div>
++                      <div className="text-[11.5px] text-ink-500">
++                        {formatDDMMMYY(h.holiday_date)}{h.holiday_type === "Restricted" ? " · Restricted" : ""}
++                      </div>
++                    </div>
++                    <span className={`rounded-full px-2 py-[2px] text-[11px] font-semibold ${OPTIONAL_STATUS_STYLES[h.status]}`}>
++                      {h.status}
++                    </span>
++                  </label>
++                );
++              })}
++            </div>
++          )}
++        </>
++      )}
++    </div>
++  );
++}
++
+ /**
+  * The actual "Apply for Leave" form — leave type, dates, half-day options,
+  * reason, contact, attachment, live preview, and submit. Extracted out of
+@@ -398,11 +501,23 @@ export function ApplyLeaveForm({
+ 
+   const [submitting, setSubmitting] = useState(false);
+   const [submitError, setSubmitError] = useState<string | null>(null);
++  const [optionalRefresh, setOptionalRefresh] = useState(0);
+ 
+   const effectiveLeaveTypeId = leaveTypeId;
+ 
+   const selectedType = leaveTypes.find((t) => t.id === effectiveLeaveTypeId) ?? null;
+   const selectedRule = selectedType ? ruleByType.get(selectedType.id) ?? null : null;
++  // Picked from the caller's optional holidays instead of a free date range, always a full day.
++  const isOptionalHoliday = selectedType?.date_rule === "OptionalHoliday";
++
++  function selectLeaveType(id: number | "") {
++    setLeaveTypeId(id);
++    if (leaveTypes.find((t) => t.id === id)?.date_rule === "OptionalHoliday") {
++      setFromDate(""); setToDate(""); setFromHalf(""); setToHalf("");
++    } else if (!fromDate) {
++      setFromDate(todayIso()); setToDate(todayIso());
++    }
++  }
+   const isSingleDay = fromDate === toDate;
+   const canPreview = effectiveLeaveTypeId !== "" && fromDate !== "" && toDate !== "";
+ 
+@@ -461,6 +576,10 @@ export function ApplyLeaveForm({
+       setFile(null);
+       setFromHalf("");
+       setToHalf("");
++      if (isOptionalHoliday) {
++        setFromDate(""); setToDate("");
++        setOptionalRefresh((n) => n + 1);
++      }
+       onSubmitted?.();
+     } catch (err) {
+       setSubmitError(err instanceof Error ? err.message : "Failed to submit leave request");
+@@ -475,7 +594,7 @@ export function ApplyLeaveForm({
+           <select
+             className={`${inputCls} mb-4`}
+             value={leaveTypeId}
+-            onChange={(e) => setLeaveTypeId(e.target.value === "" ? "" : Number(e.target.value))}
++            onChange={(e) => selectLeaveType(e.target.value === "" ? "" : Number(e.target.value))}
+           >
+             {leaveTypes.length === 0 ? (
+               <option value="">No leave types available</option>
+@@ -502,6 +621,12 @@ export function ApplyLeaveForm({
+         </div>
+       )}
+ 
++      {isOptionalHoliday ? (
++        <OptionalHolidayPicker
++          selected={fromDate} refreshKey={optionalRefresh}
++          onSelect={(iso) => { setFromDate(iso); setToDate(iso); }}
++        />
++      ) : (
+       <div className="grid grid-cols-2 gap-3 mb-4">
+         <div>
+           <label className={labelCls}>From</label>
+@@ -518,8 +643,9 @@ export function ApplyLeaveForm({
+           <DateField value={toDate} min={fromDate} onChange={setToDate} />
+         </div>
+       </div>
++      )}
+ 
+-      {selectedType?.allow_half_day && (
++      {selectedType?.allow_half_day && !isOptionalHoliday && (
+         isSingleDay ? (
+           <div className="mb-4">
+             <label className={labelCls}>Half day</label>
+diff --git a/frontend/src/dashboards/hrAdmin/Leave_components/LeavePolicies.tsx b/frontend/src/dashboards/hrAdmin/Leave_components/LeavePolicies.tsx
+index 4800a32..d7dd277 100644
+--- a/frontend/src/dashboards/hrAdmin/Leave_components/LeavePolicies.tsx
++++ b/frontend/src/dashboards/hrAdmin/Leave_components/LeavePolicies.tsx
+@@ -344,10 +344,13 @@ function PolicyEditor({
+ 
+   function addRule(typeId: number) {
+     const key = `n${Date.now()}`;
++    // An optional-holiday type only saves as a Yearly quota on a January leave year (the
++    // holiday calendar's year); proration would leave a joiner a fraction they can't take.
++    const optionalHoliday = typeById.get(typeId)?.date_rule === "OptionalHoliday";
+     setRules((rs) => [...rs, {
+       key, id: null, leave_type_master_id: typeId, accrual_frequency: "Yearly",
+-      accrual_quantity: "12", accrual_timing: defaultAccrualTiming("Yearly"), max_balance: "", carry_forward: false, max_carry_forward: "", encashable: false,
+-      max_encashment: "", prorate_on_joining: true, reset_month: 4, is_active: true,
++      accrual_quantity: optionalHoliday ? "2" : "12", accrual_timing: defaultAccrualTiming("Yearly"), max_balance: "", carry_forward: false, max_carry_forward: "", encashable: false,
++      max_encashment: "", prorate_on_joining: !optionalHoliday, reset_month: optionalHoliday ? 1 : 4, is_active: true,
+     }]);
+     setOpenKey(key);
+   }
+diff --git a/frontend/src/dashboards/hrAdmin/Leave_components/LeaveTypes.tsx b/frontend/src/dashboards/hrAdmin/Leave_components/LeaveTypes.tsx
+index ace0af6..46cc04b 100644
+--- a/frontend/src/dashboards/hrAdmin/Leave_components/LeaveTypes.tsx
++++ b/frontend/src/dashboards/hrAdmin/Leave_components/LeaveTypes.tsx
+@@ -139,6 +139,9 @@ export function LeaveTypes() {
+                     <div className="flex items-center gap-[8px]">
+                       <span className="h-[10px] w-[10px] flex-none rounded-full" style={{ background: t.color_code ?? "#94A3B8" }} />
+                       <span className="text-[13.5px] font-semibold text-ink-900">{t.name}</span>
++                      {t.date_rule === "OptionalHoliday" && (
++                        <span className="rounded-full bg-amber-50 px-[8px] py-[2px] text-[10.5px] font-semibold text-amber-800">Optional holidays</span>
++                      )}
+                     </div>
+                   </td>
+                   <td className="px-3.5 py-3 text-[12px] font-bold tracking-[.06em] text-ink-600">{t.code}</td>
+@@ -205,7 +208,7 @@ type Draft = {
+   max_consecutive_days: string; min_notice_days: string; allow_negative_balance: boolean;
+   gender_applicable: LeaveType["gender_applicable"]; applicable_after_days: string;
+   exclude_week_offs: boolean; exclude_holidays: boolean; display_order: string;
+-  color_code: string; effctv_dt: string; trmntn_dt: string;
++  color_code: string; date_rule: LeaveType["date_rule"]; effctv_dt: string; trmntn_dt: string;
+ };
+ 
+ const num = (v: number | null | undefined) => (v == null ? "" : String(v));
+@@ -220,7 +223,8 @@ function toDraft(t: LeaveType | null): Draft {
+     allow_negative_balance: t?.allow_negative_balance ?? false, gender_applicable: t?.gender_applicable ?? null,
+     applicable_after_days: num(t?.applicable_after_days), exclude_week_offs: t?.exclude_week_offs ?? true,
+     exclude_holidays: t?.exclude_holidays ?? true, display_order: num(t?.display_order ?? 0),
+-    color_code: t?.color_code ?? "#14716F", effctv_dt: t?.effctv_dt ?? "", trmntn_dt: t?.trmntn_dt ?? "",
++    color_code: t?.color_code ?? "#14716F", date_rule: t?.date_rule ?? null,
++    effctv_dt: t?.effctv_dt ?? "", trmntn_dt: t?.trmntn_dt ?? "",
+   };
+ }
+ 
+@@ -234,7 +238,7 @@ function toInput(d: Draft): LeaveTypeInput {
+     allow_negative_balance: d.allow_negative_balance, gender_applicable: d.gender_applicable,
+     applicable_after_days: optInt(d.applicable_after_days), exclude_week_offs: d.exclude_week_offs,
+     exclude_holidays: d.exclude_holidays, display_order: optInt(d.display_order) ?? 0,
+-    color_code: d.color_code.trim() || null,
++    color_code: d.color_code.trim() || null, date_rule: d.date_rule,
+     effctv_dt: d.effctv_dt || null, trmntn_dt: d.trmntn_dt || null,
+   };
+ }
+@@ -376,6 +380,24 @@ function LeaveTypeFormModal({ type, onClose, onSaved }: { type: LeaveType | null
+               </select>
+             </div>
+             <div><label className={labelCls}>Display order</label>{numberInput("display_order", "0")}</div>
++            <div className="col-span-3 max-[600px]:col-span-1">
++              <label className={labelCls}>Can be taken on</label>
++              <select className={inputCls} value={draft.date_rule ?? ""}
++                onChange={(e) => {
++                  const rule = (e.target.value || null) as Draft["date_rule"];
++                  // An optional holiday is a whole day — the server rejects halves for it anyway.
++                  patch(rule ? { date_rule: rule, allow_half_day: false } : { date_rule: null });
++                }}>
++                <option value="">Any date</option>
++                <option value="OptionalHoliday">Optional holidays only</option>
++              </select>
++              {draft.date_rule === "OptionalHoliday" && (
++                <p className="mt-[6px] mb-0 text-[11.5px] text-ink-500">
++                  Employees pick from the Optional/Restricted holidays in their holiday calendar. Set how many in the
++                  leave policy: credited Yearly, leave year starting January, no proration.
++                </p>
++              )}
++            </div>
+           </div>
+ 
+           <div className="text-[11px] font-bold tracking-[.05em] text-ink-400 uppercase pt-2 border-t border-border-soft">Validity</div>
+diff --git a/frontend/src/lib/api.ts b/frontend/src/lib/api.ts
+index 5c60cb3..94da55f 100644
+--- a/frontend/src/lib/api.ts
++++ b/frontend/src/lib/api.ts
+@@ -3601,6 +3601,9 @@ export type LeaveType = {
+   exclude_holidays: boolean;
+   display_order: number;
+   color_code: string | null;
++  /** Which dates a request may cover: null = any; "OptionalHoliday" = only the employee's
++   * Optional/Restricted holidays, capped by the policy's yearly quota (task 186). */
++  date_rule: "OptionalHoliday" | null;
+   is_active: boolean;
+   /** null = in force from the start. */
+   effctv_dt: string | null;
+@@ -4256,6 +4259,36 @@ export async function getMyLeaveBalances(): Promise<LeaveBalance[]> {
+   return data.balances;
+ }
+ 
++export type MyOptionalHoliday = {
++  holiday_detail_id: number;
++  holiday_date: string;
++  name: string;
++  holiday_type: "Optional" | "Restricted";
++  status: "Available" | "Pending" | "Taken" | "Past";
++};
++
++export type MyOptionalHolidays = {
++  year: number;
++  /** The tenant's OptionalHoliday leave type; null = none configured (list is informational). */
++  leave_type_master_id: number | null;
++  /** The resolved policy's yearly quota; null = no policy applies to the caller. */
++  quota: string | null;
++  used: string;
++  pending: string;
++  available_balance: string;
++  holidays: MyOptionalHoliday[];
++};
++
++/** The caller's Optional/Restricted holidays for a year, with what they've taken (self-service). */
++export async function getMyOptionalHolidays(year?: number, signal?: AbortSignal): Promise<MyOptionalHolidays> {
++  const qs = year ? `?year=${year}` : "";
++  const { ok, status, data } = await secureFetch<MyOptionalHolidays>(
++    `/api/v1/leave/me/optional-holidays${qs}`, { token: getToken(), signal },
++  );
++  if (!ok) throw new ApiError(status, _detailMessage(data, "Failed to load optional holidays"));
++  return data;
++}
++
+ /** The caller's own ledger rows, oldest first (self-service). */
+ export async function getMyLeaveLedger(): Promise<LeaveLedgerRow[]> {
+   const { ok, status, data } = await secureFetch<LeaveLedgerRow[]>("/api/v1/leave/me/ledger", { token: getToken() });
