@@ -1,0 +1,19 @@
+CR-138 / ATT-D1	High	Locked attendance day cannot be corrected by HR (423). Backend override with reason added (task 234); clear message and shift-edit warning pending (task 235). Day also auto-locks after the regularization window.	Highest	Owner to be assigned	In Progress
+CR-139 / ATT-D2 / HR:ATTENDANCE-B3	Medium	Present day with no clock-out shows Attendance 0% and Worked hours '-' with no hint in the Day panel (task 236).	Highest	Owner to be assigned	Not Started
+CR-140 / ATT-D3 / Admin:INS-B3	Medium	Late is counted independently of status: Absent + Late, and late days can exceed present days.	High	Owner to be assigned	Not Started
+CR-141 / ATT-D4 / HR:ATTENDANCE-B2	Medium	Punctuality denominator differs from Present count (28 of 50 on time vs 49 Present).	High	Owner to be assigned	Not Started
+CR-142 / ATT-D5 / HR:ATTENDANCE-B1	High	Attendance department filter lists 14 options for 9 departments (duplicate department rows).	High	Owner to be assigned	Not Started
+CR-143 / SHF-D1 / W-SHIFTS-1	High	New shift Save does nothing: overtime defaults fail validation and the error is hidden in a collapsed section.	Highest	Owner to be assigned	Not Started
+CR-144 / SHF-D2 / HR:ROSTER-B1	Medium	Roster 'Shifts this week' counts OFF days as shifts (402 + 154 = 556).	High	Owner to be assigned	Not Started
+CR-145 / SHF-D3 / HR:ROSTER-B5	Medium	Roster shows '-' for most days with a shift on one day only (single-day assignments from cell clicks).	High	Owner to be assigned	Not Started
+CR-146 / SHF-D4 / HR:ATTENDANCE-B4	Medium	Shift form 'inherited' full/half-day label does not match the backend default (8.5h / 4.5h); Override sends 0 and does nothing.	High	Owner to be assigned	Not Started
+CR-147 / SHF-D5	Medium	New-shift form defaults (flexible, no grace) differ from API defaults (not flexible, grace 0).	High	Owner to be assigned	Not Started
+CR-148 / LEV-D1	High	My Leave balance bar is misleading: 'Entitled' shows the balance cap, 'Accrued' folds in opening, carry-forward and adjustments, leave-year start hard-coded to 1-April.	Highest	Owner to be assigned	Not Started
+CR-149 / LEV-D2	Medium	Auto-approved leave does not rebuild attendance for the leave dates.	High	Owner to be assigned	Not Started
+CR-150 / LEV-D3	Medium	Probation / eligibility message has no date and ignores applicable-after-days when a probation end date is set.	High	Owner to be assigned	Not Started
+CR-151 / LEV-D4	Medium	Seed leave types have future effective dates (COF 08-Dec-26, SICK 18-Sep-26), blocking them.	High	Owner to be assigned	Not Started
+CR-152 / LEV-D5 / Admin:LEAVE-B1	Medium	Leave types exist (SICK, EL, ML, PL, COF) but no policy rule credits them; only Casual Leave works (task 194 pending).	High	Owner to be assigned	Not Started
+CR-153 / HOL-D1 / Admin:HOLIDAYS-B1	Medium	Holiday admin 'Remote Work' location filter shows 0 and hides org-wide holidays.	High	Owner to be assigned	Not Started
+CR-154 / HOL-D2	High	Location holiday calendar replaces org-wide holidays instead of adding to them, so national holidays can be lost for employees with a location calendar.	Highest	Owner to be assigned	Not Started
+CR-155 / HOL-D3 / Admin:HOLIDAYS-B2,B3	Medium	Holiday type chips act as hide toggles and the stat cards ignore them.	High	Owner to be assigned	Not Started
+CR-156 / HOL-D4	Medium	Holiday resolver logic is duplicated in three places; the attendance copy ignores archived rows.	High	Owner to be assigned	Not Started
