@@ -1,7 +1,7 @@
 ---
 task: 237
 title: "How status is decided" legend on the attendance register
-status: ongoing
+status: done
 depends_on: []
 ---
 
@@ -59,3 +59,6 @@ Written by `_attendance_status` (`backend/app/services/attendance_recompute_serv
 - [ ] Popover appears on the HR Manager register, employee Day/Week/Month view and HR Admin insights.
 - [ ] Tests: values match `day_thresholds` for override, default and half-day-week-off cases; tenant isolation; 401/403.
 - [ ] Verified in the browser against the General shift (4h/2h override visible and labelled "override").
+
+Completed: 2026-10-23
+Note: closed on the user's instruction. Backend tests green (new status-rules tests in test_attendance.py / test_attendance_dashboard.py; attendance, dashboard, recompute and shifts modules pass apart from the existing test_hardening_manager_scope_sweep failure) and `tsc` clean. The browser check against the General shift was left to the user and is not recorded here.
