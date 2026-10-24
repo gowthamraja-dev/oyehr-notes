@@ -435,7 +435,10 @@ sees their own data).
 | Attendance | `GET /attendance/me/daily` | Paginated daily log. |
 | Attendance | `GET /attendance/me/analytics` | Period (day/week/month) aggregate. |
 | Attendance | `GET /attendance/me/this-month` | Month summary card. |
-| Attendance | `GET /attendance/me/requests` | The caller's own regularization requests. |
+| Attendance | `GET /attendance/me/requests` | The caller's own attendance requests — regularizations and WFH (`?request_type=Regularization\|WFH`, `?status=`). Each row has `request_type`; a WFH row has `to_date` and `punch: null`. |
+| Attendance | `GET /attendance/me/wfh-setup` | Before showing the work-from-home form: `{approver, remote_site_name}`. If either is null the request would be refused (no approver / no remote work location), so say so and disable submit. |
+| Attendance | `POST /attendance/requests/wfh` | Raise a work-from-home request for a date range — `{from_date, to_date, reason}`, ≤ 31 days. Self-service. 422 when there is no approver or the organisation has no remote work location, or on overlap with another WFH request or leave. Approval moves those days' work location to the remote site — it has no attendance or payroll effect, and an Approved request can't be cancelled. |
+| Attendance | `POST /attendance/requests/{id}/cancel` | Cancel the caller's own **Pending** request (regularization or WFH). |
 | Shifts | `GET /shifts/me/{target_date}` | The employee's resolved shift for one date. |
 | Leave | `GET /leave/me/requests` | The caller's own leave requests. |
 | Leave | `GET /leave/me/balances` | Leave balances by type. |

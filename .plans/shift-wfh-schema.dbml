@@ -1,0 +1,198 @@
+// WFH request -> remote work location — schema draft
+// STATUS: approved         (draft → approved → superseded)
+// CLONE: hrms   (workspace-1/hrms — the user directed workspace-1 for the shift-scheduling series)
+// APPROVED_ON: 2026-10-24  (all four open questions decided as recommended — see Decided below)
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/shift-wfh-plan.md
+// Task this unblocks: .plans/tasks/ongoing/247-employee-wfh-request-raise-and-approve.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project shift_wfh {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. An employee raises a WFH request; when a manager approves it, the days in the request
+     switch to the tenant's **remote** work location (task 247). Nothing else changes: no
+     attendance row, no payroll effect, the shift and calendar stay as they are.
+  2. For that, the system has to know which work location is "the remote one". Today
+     `work_location_masters` has no type marker, so this adds one boolean, `is_remote`, set by HR
+     on the Work Locations screen. At most one live remote location per tenant, enforced by a
+     partial unique index. This is the same shape as the existing `is_org_default`.
+  3. That is the **only** schema change. `attendance_request_details` already holds WFH
+     requests (`request_type = 'WFH'`, `from_date`..`to_date` range, times NULL, status via
+     `status` + `status_master_id`), and `employee_shift_details.work_location_master_id` already
+     holds the per-day location the approval writes (the location-only write from task 242).
+
+  ## Feasibility
+  - ✅ Tenant scoping: no new table. `work_location_masters` is already CDP-scoped. Every read
+       and write goes through `_get_work_location(db, principal, id)` (filters on
+       `principal.tenant_id`). The "find this tenant's remote location" lookup must filter on
+       `care_delivery_program_master_id` AND `is_remote` AND NOT `archive` AND `is_active`.
+  - ✅ Conventions: NOT NULL boolean with a DB default (`server_default false`), like
+       `is_org_default` / `mobile_punch_enabled`.
+  - ✅ Soft delete: the table already carries `is_active` / `archive` / `archived_*`. The unique
+       index excludes archived rows, so archiving the remote location frees the slot. Archive
+       of the remote location must stay allowed, but an approved request needs a live remote
+       location (see Q3).
+  - ✅ Audit: `created_by_id` / `updated_by_id` / timestamps already exist. Nothing new.
+  - ✅ FKs: none. The flag is read by a tenant-scoped lookup, and the approval writes the
+       resolved id into the existing `employee_shift_details.work_location_master_id`.
+  - ✅ Indexes: one partial unique index, `ix_work_location_masters_one_remote_per_cdp`, on
+       `(care_delivery_program_master_id) WHERE is_remote = true AND archive = false`. It is also
+       the lookup path ("which location is remote for this tenant") — one row, one index probe.
+  - ✅ Existing data: the column has a default of false, so every existing site is non-remote and no
+       backfill is needed. A tenant that never marks a site remote simply cannot use WFH
+       approval (the request form says so and blocks submit — same as "no approver").
+  - ✅ Overlap: nothing else stores this. Closest checked: `is_org_default` (system-managed
+       default branch; different meaning), `mobile_punch_check_mode = 'NoCheck'` (punch rule,
+       not a place type), and `corp_master_id` (legal-entity link, not a type).
+  - ⚠️ Mutual exclusion: a site can't be both the org default and the remote site. A DB CHECK,
+       `ck_work_location_masters_remote_not_default` (`NOT (is_remote AND is_org_default)`), backs
+       the service rule, because `_sync_default_work_location` (organizations/service.py) picks
+       the default by `is_org_default` and must never pick the remote site.
+  - ⚠️ Punch policy follows the location. `get_punch_policy` and `clock_in` resolve the work
+       location from today's shift row, so on an approved WFH day the employee's punch rules are
+       the **remote site's**. If the remote site isn't switched on for app punching
+       (`mobile_punch_enabled`), employees get `site_not_enabled` and can't clock in from home. A
+       `NoCheck` site needs no coordinates or networks (`_assert_site_ready_for_app_punch`), so the
+       remote site should be `NoCheck` (see Q2 for whether the system enforces that).
+  - ⚠️ `corp_master_id` is NOT NULL on `work_location_masters`, so the remote site still belongs
+       to a corp. HR picks one on the existing form; `time_zone` defaults to Asia/Kolkata. The
+       zone matters: it is what shift clock-faces on WFH days are interpreted in.
+  - ✅ Write paths — every place that must keep the flag consistent:
+       (a) `POST /attendance/work-locations` and `PATCH /attendance/work-locations/{id}`
+           (`create_work_location` / `update_work_location`) take `is_remote`. Setting it true
+           when another live site already holds it is a 409 naming that site (the DB index is the
+           backstop for a race), the same pattern as the one-default rule.
+       (b) `organizations.service._sync_default_work_location` — never sets or clears it; its
+           default-site lookup is unaffected.
+       (c) `WorkLocationOut` / `WorkLocationDetailOut` return it so the screen and the 247
+           request form can show/resolve it. No importer, subscriber or scheduled job writes
+           work locations.
+       (d) The 247 approval path reads it (read-only here).
+  - ✅ Migrations: a plain Alembic revision on the HRMS branch, applied via
+       `scripts/migrate.py upgrade heads` (current HRMS head `9c1d4e7a2b36`). No nhforms tables are
+       touched. The shared hrms-dev DB can't be `alembic upgrade`d (stamped at the orphan
+       `8012104013b3`), so the revision is hand-written and existence-guarded (add column
+       `IF NOT EXISTS`, create index / constraint only if missing) and its DDL is applied there
+       directly — same as `c4f1a9d2e7b8` / `f0c6938b77d3` / `3c8e5a1f7d20`. Autogenerate against
+       hrms-dev also proposes unrelated DROPs; keep only this change. Downgrade drops the index,
+       constraint and column.
+  - ✅ RBAC: writes are already gated (`require_grid_permission` `CREATE` / `UPDATE` on
+       `ATTENDANCE`). No new resource or action. Reading the remote location id for the request
+       form is self-service and returns only the location's name / id.
+  - ✅ Cloud fit: DB-only state.
+
+  ## Alternatives considered
+  - Match by convention (`code` is `WFH` / `REMOTE`): no schema change, but invisible in the UI and
+    breaks silently if HR renames or re-codes the site. Rejected 24-Oct-26.
+  - A per-tenant setting holding the location id: no new column, but hidden from the Work
+    Locations screen and not constrained to a live, same-tenant site. Rejected 24-Oct-26.
+  - `work_mode` enum (`OnSite` / `Remote` / `Hybrid`): more general, but nothing in this feature
+    needs Hybrid, and a many-remote-sites model forces a choice of *which* remote site a request
+    uses. Not needed now; a later migration can widen `is_remote` into an enum if required.
+  - Storing the prior location per request so a cancel can undo it: **not in this draft**. See Q1.
+
+  ## Decided (24-Oct-26, user: "approved, go with your recommendations")
+  1. No undo: an Approved request can't be cancelled or revoked later; cancel stays Pending-only.
+     So no extra table or column is needed, and this schema is final for that point.
+  2. Marking a site remote requires `mobile_punch_check_mode = 'NoCheck'`, enforced in the
+     service (not a DB CHECK). Changing that mode away from NoCheck on the remote site is refused
+     while it is remote.
+  3. The remote site may be archived. Approval of a new request then fails with a clear
+     message until a live remote site exists. Days already written keep pointing at the archived
+     site.
+  4. One live remote site per tenant (the unique index as drawn).
+
+  ## Open questions (as drafted — all answered above)
+  1. **Undo.** Can an Approved WFH request be cancelled / revoked later, restoring the days' previous
+     location? Recommendation: **no** — cancel stays Pending-only, so no extra table or column is
+     needed. If yes, the previous location must be stored per request and day (a new child table, or a
+     jsonb snapshot on `attendance_request_details`), and this draft needs a revision.
+  2. **Enforce NoCheck on the remote site?** Recommendation: yes, in the service (not as a DB
+     CHECK): marking a site remote requires `mobile_punch_check_mode = 'NoCheck'`, and changing
+     that mode on the remote site is refused while it is remote. This is so employees can punch from
+     home. Without it, HR could mark a Wi-Fi + geofence site as remote and nobody could clock
+     in on WFH days. The alternative is to leave it to HR and show a warning.
+  3. **Archiving the remote site while requests rely on it.** Recommendation: allow it, and make
+     approval of a new request fail with a clear message when there is no live remote site.
+     Already-applied days keep pointing at the archived site, as any archived location does today.
+  4. **One remote site per tenant is enough?** (matches the unique index.) If different
+     corps / time zones each need their own remote site, the index becomes
+     `(care_delivery_program_master_id, corp_master_id)` and the request must say which corp.
+  '''
+}
+
+// ── existing table that gains a column ──────────────────────────────────────────
+
+Table work_location_masters [headercolor: #EF6C00] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant — every query filters on this']
+  corp_master_id bigint [not null, ref: > corp_masters.id]
+  name varchar(120) [not null]
+  code varchar(50)
+  time_zone varchar(64) [not null, default: 'Asia/Kolkata']
+  mobile_punch_enabled boolean [not null, default: false, note: 'remote site must be switched on to allow app clock-in on WFH days']
+  mobile_punch_check_mode varchar(20) [not null, default: 'WifiAndGeofence', note: 'remote site recommended NoCheck (Q2)']
+  web_punch_enabled boolean [not null, default: false]
+  web_punch_check_mode varchar(20) [not null, default: 'Geofence']
+  is_org_default boolean [not null, default: false, note: 'system-managed default branch']
+  is_remote boolean [not null, default: false, note: '[NEW] HR-set: the tenant\'s remote / work-from-home site. Approved WFH requests move the days to this site. Never true together with is_org_default.']
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+  archived_by_id bigint
+  archived_at timestamptz
+  created_by_id bigint
+  updated_by_id bigint
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (care_delivery_program_master_id) [unique, name: 'ix_work_location_masters_one_default_per_cdp', note: 'existing — WHERE is_org_default = true']
+    (care_delivery_program_master_id) [unique, name: 'ix_work_location_masters_one_remote_per_cdp', note: '[NEW] WHERE is_remote = true AND archive = false — one live remote site per tenant; also the lookup path']
+  }
+
+  Note: '''
+  Existing — app/models/work_location_master.py → WorkLocationMaster. Gains `is_remote` plus
+  the partial unique index above and CHECK `ck_work_location_masters_remote_not_default`
+  (`NOT (is_remote AND is_org_default)`). Pydantic `WorkLocationIn` / `WorkLocationPatch` /
+  `WorkLocationOut` gain `is_remote`.
+  '''
+}
+
+// ── existing, read only (trimmed) ────────────────────────────────────────────────
+
+Table attendance_request_details [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id]
+  employee_master_id bigint [not null, ref: > employee_masters.id]
+  request_type varchar(30) [note: "Regularization | OnDuty | WFH | ShortLeave — task 247 starts writing 'WFH'"]
+  from_date date [not null]
+  to_date date [not null, note: 'a range for WFH (equal only for Regularization / ShortLeave)']
+  reason text
+  status varchar(30) [not null, default: 'Pending']
+  status_master_id bigint [ref: > status_masters.id, note: 'dual-written with status']
+  approver_employee_master_id bigint [ref: > employee_masters.id]
+  Note: 'Existing, unchanged. No migration. The approval reads from_date..to_date and the employee, then writes employee_shift_details.'
+}
+
+Table employee_shift_details [headercolor: #616161] {
+  id bigint [pk]
+  employee_master_id bigint [not null, ref: > employee_masters.id]
+  shift_master_id bigint [not null]
+  work_location_master_id bigint [ref: > work_location_masters.id, note: 'written by the approval: the remote site, location-only (shift + calendar kept)']
+  holiday_calendar_master_id bigint
+  effctv_dt date [not null]
+  trmntn_dt date
+  Note: 'Existing, unchanged. Dated timeline rows; the approval reuses the task-242 location-only range write (carves bounded rows).'
+}
+
+TableGroup shift_wfh {
+  work_location_masters
+  attendance_request_details
+  employee_shift_details
+}
