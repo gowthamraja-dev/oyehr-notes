@@ -396,6 +396,19 @@ place: the HR Admin → Roles & Permissions screen (`/api/v1/roles/admin/*`,
   to write. Deactivated policies and overrides for inactive memberships are deliberate
   states and are NOT swept by default.
 
+## File imports — the staged import engine, attendance first
+Bulk "upload a CSV/XLSX" features run on one engine (`hrms/backend/app/modules/file_import/`, tables `import_batches` /
+`import_field_mappings` / `import_rows`): the upload only stores rows; validation, commit and settling run in a
+resumable background runner (heartbeat claim, per-chunk commits, a 5-minute `file_import_resume` job, 30-day
+scratch-row retention). A new import type is one `ImportHandler` + one grid row + one frontend config — **never a new
+table family or runner**. Every route is gated by `require_grid_permission` on the handler's own grid row (a role with
+no saved grid is refused) and filtered by tenant AND `import_type`. Full reference: `hrms/docs/file-import.md`.
+
+**Attendance bulk import** (`hrms/backend/app/modules/attendance_import/`, `/api/v1/attendance-import`, grid row `ATTENDANCE_IMPORT`):
+one row = one employee-day, with or without In/Out times (no times = present for the scheduled shift). It writes raw
+`Import` punches and lets `recompute_attendance_day` derive the day — never `employee_attendance_details` directly.
+Locked days need org-wide scope + a reason; imports can be undone. Full reference: `hrms/docs/attendance-bulk-import.md`.
+
 ## Testing — every module ships with tests
 Every backend module MUST have tests under `hrms/backend/app/tests/modules/test_<module>.py`, run with
 `uv run pytest`. Use the shared fixtures in `hrms/backend/app/tests/conftest.py` (transactional rollback

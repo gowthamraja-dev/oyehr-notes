@@ -1,0 +1,316 @@
+// Attendance bulk import (many employees, many days, one file) — schema draft v2
+// STATUS: superseded       (draft → approved → superseded) — by attendance-bulk-import-schema-v2.dbml (type-agnostic staging tables); pending approval of v2
+// CLONE: workspace-2/hrms
+// APPROVED_ON: 2026-10-26  (Q1 amended to "with or without times", Q2/Q4 as recommended, the rest as recommended)
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/attendance-bulk-import-plan.md
+//
+// v2 change: follows nh_server_app's upload-staging pattern (tmp_file_upload_masters /
+// tmp_file_upload_field_mappings / upload_temp_data) — header + column mapping + staged rows with a
+// per-row validation result — trimmed to the columns this feature actually reads.
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project attendance_bulk_import {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. HR needs to load attendance for many employees at once (legacy back-fill, muster sheet, a site whose
+     device was offline). Today HR can only fix one employee-day (`POST /attendance/employees/{id}/regularize`)
+     or receive device punches.
+  2. The import writes RAW PUNCHES only (`attendance_punch_details`, punch_source "Import", IN/OUT). It never
+     writes `employee_attendance_details`: that row is derived by `recompute_attendance_day`, and the nightly
+     sweep would overwrite a hand-written one. Status, late/early, OT and payable fraction therefore come out
+     exactly as for an app punch.
+  3. Flow (staging, like nh_server_app): upload -> parse -> HR maps columns -> every row is validated and
+     STAGED with its result -> HR reviews the counts / rejected rows -> confirms -> the staged Valid rows are
+     committed as punches -> a background runner recomputes the touched days. The file itself is NOT stored
+     (nh_server_app `uploaded_file` URL is dropped): the staged rows are the data, so nothing else needs the file.
+  4. Recompute is ~60 ms per employee-day (`devices/service.py` RECOMPUTE_BUDGET_SECONDS: 500 days ~ 31 s), far past
+     a request timeout for a month of a large site, and NOTHING schedules `pending_attendance_rebuild` (only the
+     device router calls `rebuild_attendance_days`); the nightly `attendance_sweep` covers [today-7, today] and
+     skips locked days. So the import must finish its own recompute and be resumable. Resumability comes from state
+     already in these tables: staged rows still "Valid" = not committed; committed punches with
+     `processed_at IS NULL` = not recomputed.
+
+  ## What gets written
+  - Per staged row: up to two `attendance_punch_details` (IN, OUT) with `import_batch_id`. Dedupe-safe through the
+    existing `uq_attendance_punch_details_dedupe` (`ON CONFLICT DO NOTHING`), so re-uploading is idempotent.
+  - Per recomputed day: one `attendance_audit_logs` row (old -> new), action "BulkImported", or "LockedDayOverride"
+    when forced. `action` is varchar(40), its value list only a model comment — no schema change.
+  - Per batch: one `user_activity_details` row (hrms-activity-logging).
+
+  ## Feasibility
+  - ✅ Tenant scoping: `care_delivery_program_master_id` NOT NULL on the batch AND on the staged rows (denormalised
+       so row queries filter on it directly). No RLS: every batch/row read (history, review, confirm, undo,
+       resume job) must filter on it. Employees resolve through
+       `employee_masters.corp_master_id -> corp_masters.care_delivery_program_master_id` (employee_masters has no
+       CDP column), so each file row employee lookup is tenant-filtered.
+  - ✅ Conventions: `id bigint`, NOT NULL + DB defaults, timestamptz, varchar status vocabularies (value lists in the
+       column notes). `row_data` / `validation_errors` are jsonb blobs read whole, never filtered on.
+  - ✅ Soft delete: the batch carries is_active / archive / archived_by_id / archived_at (history list must exclude
+       archive = true; discarding a Staged batch archives it). Mapping and staged rows are children of a batch and
+       are not independently archived — they follow the batch (queries join through it).
+  - ✅ Audit: batch has created_by_id / updated_by_id / created_at / updated_at / undone_by_id / undone_at. Child tables
+       carry created_at only (never edited by users).
+  - ✅ FKs: real refs everywhere the target exists. No polymorphic pair (nh_server_app reference_type/reference_id
+       and hospital/service master ids are dropped: nothing here is attached to a hospital or service).
+  - ✅ Indexes: history (cdp, created_at); open-batch lookup for the resume job; staged-row paths
+       (batch, row_number) unique and (batch, status); the punch work-queue (partial).
+  - ✅ Existing data: one nullable column on `attendance_punch_details`, no default, no backfill. Three new tables.
+  - ⚠️ Adding the FK to `attendance_punch_details` validates every existing row (all NULL, cheap) but takes a brief
+       lock on a table device ingest writes constantly. Add it NOT VALID then VALIDATE, or run in a quiet window.
+  - ✅ Overlap: closest existing are `employee_import` (no tables: re-uploads the file at commit, all-or-nothing,
+       synchronous), `attendance_request_details` (one approval request per day; wrong for thousands) and
+       `employee_attendance_details.source` ("Import" is listed in its comment but unused; recompute overwrites
+       source, so it cannot carry provenance). None can hold a staged, reviewable, resumable batch.
+  - ✅ Write paths: (a) parse/validate/stage endpoint, (b) confirm -> commit, (c) background recompute runner,
+       (d) undo, (e) resume job, (f) discard. No nhforms submit and no employee-app path writes these.
+  - ⚠️ Migrations: plain Alembic revision on the HRMS branch (`scripts/migrate.py upgrade heads`). The shared hrms-dev
+       DB cannot be `alembic upgrade`d (stamped at orphan 8012104013b3) — hand-written, existence-guarded DDL there,
+       like c4f1a9d2e7b8. No nhforms-owned table is touched.
+  - ✅ RBAC: see Q8. Locked-day override also requires `sees_whole_org(db, principal, "ATTENDANCE")`.
+  - ✅ Cloud fit: no local disk, no in-process state; any Fargate replica can finish a batch; a per-batch advisory lock
+       (pattern of `attendance_assembler_job._try_acquire_lock`) keeps two replicas off one batch.
+  - ⚠️ Behaviour that decides what data lands (not schema):
+       * `recompute_attendance_day` attaches an unlinked punch to a day only inside the shift attribution window
+         (shift start/end ± 240 min). An imported punch outside every window is stored but attached to no day; the
+         runner detects it (punch.employee_attendance_detail_id still NULL after recompute) and counts it in
+         days_failed rather than as imported.
+       * Two punches < 60 s apart collapse (PUNCH_DEBOUNCE_SECONDS) — validation rejects an IN/OUT gap under 1 minute.
+       * Importing onto a day that already has real punches moves its first-in / last-out. See Q3.
+       * `employee_masters.emp_id` is indexed but NOT unique: a value matching two employees is rejected as ambiguous.
+       * A worked week-off creates Pending OT (`overtime/sync.sync_day`); payroll already run is not re-run (Q5).
+       * Staged rows hold the file personal-ish data (employee ids, times) until purged; see Q11.
+
+  ## Alternatives considered
+  - v1 of this draft: ONE batch table with a capped `row_report` jsonb and re-upload at commit. Rejected after the
+    staging pattern was shared: it could not show every rejected row, forced a second upload to confirm, and had no
+    per-row state to resume from.
+  - Keep nh_server_app tables 1:1 (hospital_master_id, service_master_id, reference_type/id, uploaded_file URL,
+    status_id -> status master, per-row is_active/archive/archived_by/archived_at, created_by/updated_by on every row):
+    rejected as unneeded here; status is a varchar like the other HRMS import/job tables, and the file is not kept.
+  - Write `employee_attendance_details` directly: rejected (recompute owns it; the 23:59 sweep would revert it).
+  - One Approved `attendance_request_details` per employee-day via `regularize_on_behalf`: correct "Regularized"
+    provenance and window-independent attribution, but N requests / notifications / workflow checks. Rejected for volume.
+
+  ## Open questions (recommendation first)
+  1. File grain: one row = employee-day with In/Out times (maps 1:1 onto Manual punches). Raw punch logs can be a second
+     layout later. A status-only sheet (P/A/L, no times) is NOT supported — status is derived from punches. Confirm.
+  2. Bad rows: import the valid rows, skip the rejected ones (they stay visible in the staged rows and can be downloaded);
+     re-uploading corrected rows is idempotent. Alternative: all-or-nothing like employee import.
+  3. Day already has active punches: default Skip (row marked "Skipped"), explicit Merge option, never replace.
+  4. Locked days: opt-in per batch with a written reason and org-wide attendance scope; recompute runs force=True, row
+     stays locked, audited "LockedDayOverride". Nearly every back-fill hits locked days.
+  5. Dates inside a payroll period that is processed / approved / locked (payroll_periods.processed_at, approved_at or
+     locked_at not null): reject the row, "reopen payroll first". No schema change.
+  6. Finishing after a crash: background task at confirm AND a scheduled per-CDP resume job (~5 min) for batches with a
+     stale heartbeat_at. Alternative: manual "Resume" button only.
+  7. Undo: include in v1 — archives the batch punches and re-settles the days (status Undone). Refused for a paid period.
+  8. Permission: new grid resource ATTENDANCE_IMPORT (READ, CREATE) mirroring EMPLOYEE_IMPORT, added to the default HR Admin
+     grid and re-seeded for existing tenants. Alternative: reuse ATTENDANCE CREATE.
+  9. Time zone of the file times: the employee resolved shift time zone (`resolve_timezone`); a night shift whose OUT
+     is earlier than its IN is read as the next day.
+  10. Size cap: 5,000 employee-days per file (~5 min of recompute), refused up front with the excess row count.
+  11. Staged-row retention: delete (hard, they are scratch data) the rows of Done / Undone / archived batches after 30 days by a
+      sweep, keeping the batch header and counters. Alternative: keep forever.
+
+  ## Decided (2026-10-26)
+  1. AMENDED: the file may carry times or not. A row with In/Out times writes those as IN/OUT punches. A row with NO
+     times is read as "Present for the scheduled shift": IN = the day shift start and OUT = its shift end are written
+     as punches (punch.raw = {"synthesized": true}), the staged row gets times_from_shift = true and a warning, so the
+     day settles Present with no late/early minutes. An optional Status column is honoured only to SKIP a row: Absent /
+     Leave / Week-off / Holiday values mark the row "Skipped" (nothing written; an Absent day settles by itself, leave
+     comes from the leave module). Half-day and other partial statuses are out of scope. A row with only one of In/Out
+     is imported as a single punch with a warning. Raw swipe-per-row logs remain out of scope for v1.
+  2. Yes: import the valid rows, skip the rejected ones; rejected rows stay visible in attendance_import_rows.
+  3. Skip by default, Merge as an explicit option, never replace.
+  4. Yes: locked days only as an opt-in with a written override_reason and org-wide attendance scope (force=True).
+  5. Reject rows dated inside a processed / approved / locked payroll period.
+  6. Background task at confirm + scheduled per-CDP resume job for stale batches.
+  7. Undo included in v1.
+  8. New ATTENDANCE_IMPORT grid resource (READ, CREATE).
+  9. Times are read in the employee resolved shift time zone; a night-shift OUT earlier than IN rolls to the next day.
+  10. 5,000 rows (employee-days) per file.
+  11. Staged rows are hard-deleted 30 days after a batch is Done / Undone / archived.
+  12. AMENDMENT (vocabulary only, no column change): validation is not done inside the upload request — the shift
+      resolver costs ~3 queries per employee-day, so 5,000 rows would run for minutes. The upload request only parses
+      and stages rows as "Pending" (batch "Validating"); the same resumable runner then validates them in chunks and
+      moves the batch to "Staged". Undo likewise runs as a background step (batch "Undoing" -> "Undone"). Both new
+      batch values and the row value "Pending" fit the existing varchar(12) / varchar(10) widths.
+  '''
+}
+
+// ── Enums (varchar-backed) ────────────────────────────────────────────────
+
+Enum attendance_import_status {            // batch: varchar(12)
+  Validating                               // rows staged unvalidated; the runner is validating them in chunks (heartbeat_at advancing)
+  Staged                                   // every row validated; waiting for HR to confirm (or discard)
+  Running                                  // confirmed; runner committing punches, then recomputing days
+  Done                                     // every day settled; counters final
+  Failed                                   // runner gave up; last_error set; resumable
+  Undoing                                  // Undo requested; runner archiving punches and re-settling days
+  Undone                                   // punches archived and days re-settled
+}
+
+Enum attendance_import_row_status {        // staged row: varchar(10)
+  Pending                                  // staged, not validated yet
+  Valid                                    // passed validation; not committed yet
+  Rejected                                 // failed validation; validation_errors says why
+  Skipped                                  // valid but nothing to write (existing day under Skip, or all punches already present)
+  Imported                                 // its punches were written
+}
+
+// ── New tables ───────────────────────────────────────────────────────────
+
+Table attendance_import_batches [headercolor: #2E7D32] {   // ≈ tmp_file_upload_masters
+  id                              bigint       [pk, increment]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id, note: 'tenant']
+  file_name                       varchar(255) [not null, note: 'display name only (≈ unique_name); the file is not stored']
+  status                          varchar(12)  [not null, default: 'Validating', note: 'Validating | Staged | Running | Done | Failed | Undoing | Undone']
+
+  existing_day_policy             varchar(10)  [not null, default: 'Skip', note: 'Skip | Merge (Q3)']
+  override_locked                 boolean      [not null, default: false, note: 'true = locked days imported with force=True (Q4)']
+  override_reason                 varchar(500) [null, note: 'required when override_locked; copied to each attendance_audit_logs.reason']
+
+  row_count                       integer      [not null, default: 0, note: 'data rows in the file (≈ row_count)']
+  rows_rejected                   integer      [not null, default: 0]
+  rows_imported                   integer      [not null, default: 0]
+  punches_inserted                integer      [not null, default: 0]
+  days_total                      integer      [not null, default: 0, note: 'distinct (employee, date) to recompute']
+  days_recomputed                 integer      [not null, default: 0]
+  days_failed                     integer      [not null, default: 0, note: 'recompute raised, or a punch attached to no day']
+  last_error                      text         [null, note: 'runner-level failure, not a row error']
+
+  started_at                      timestamptz  [null, note: 'confirm pressed / runner first picked it up']
+  heartbeat_at                    timestamptz  [null, note: 'advanced after every recompute chunk; stale => resumable (Q6)']
+  finished_at                     timestamptz  [null]
+  undone_at                       timestamptz  [null]
+  undone_by_id                    bigint       [null, ref: > users.id]
+
+  is_active                       boolean      [not null, default: true]
+  archive                         boolean      [not null, default: false]
+  archived_by_id                  bigint       [null, note: 'logical']
+  archived_at                     timestamptz  [null]
+  created_by_id                   bigint       [null, ref: > users.id]
+  updated_by_id                   bigint       [null, ref: > users.id]
+  created_at                      timestamptz  [not null, default: `now()`]
+  updated_at                      timestamptz  [not null, default: `now()`, note: 'onupdate now()']
+
+  Indexes {
+    (care_delivery_program_master_id, created_at) [name: 'ix_attendance_import_batches_cdp_created', note: 'history list, newest first']
+    (care_delivery_program_master_id, status) [name: 'ix_attendance_import_batches_open', note: 'WHERE status IN ("Running","Failed") — resume job and "import in progress" banner']
+  }
+
+  Note: '[NEW] app/models/attendance_import_batch.py -> AttendanceImportBatch (table attendance_import_batches). Register in app/models/__init__.py.'
+}
+
+Table attendance_import_field_mappings [headercolor: #2E7D32] {   // ≈ tmp_file_upload_field_mappings
+  id                              bigint       [pk, increment]
+  attendance_import_batch_id      bigint       [not null, ref: > attendance_import_batches.id]
+  column_name                     varchar(255) [not null, note: 'the file"s header text (≈ column_name); keys row_data']
+  target_field                    varchar(20)  [not null, note: 'employee_id | date | in_time | out_time | status (≈ source). Required: employee_id, date. in_time/out_time/status optional (Q1).']
+  created_at                      timestamptz  [not null, default: `now()`]
+
+  Indexes {
+    (attendance_import_batch_id, target_field) [unique, name: 'uq_attendance_import_field_mappings_batch_target', note: 'one file column per target field']
+  }
+
+  Note: '[NEW] app/models/attendance_import_field_mapping.py -> AttendanceImportFieldMapping. Dropped from nh_server_app: column_id, is_mandate (the required target fields are fixed in code), is_active/archive*/created_by/updated_by.'
+}
+
+Table attendance_import_rows [headercolor: #2E7D32] {   // ≈ upload_temp_data
+  id                              bigint       [pk, increment]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id, note: 'tenant (denormalised from the batch)']
+  attendance_import_batch_id      bigint       [not null, ref: > attendance_import_batches.id]
+  row_number                      integer      [not null, note: '1-based data row, header excluded — what HR sees in an error']
+  row_data                        jsonb        [not null, note: 'the raw row keyed by file header (≈ json_arr)']
+  employee_master_id              bigint       [null, ref: > employee_masters.id, note: 'resolved from the Employee ID cell; NULL when it did not resolve']
+  attendance_date                 date         [null, note: 'parsed date; NULL when unparseable']
+  in_at                           timestamptz  [null, note: 'resolved in the employee"s shift tz, stored UTC']
+  out_at                          timestamptz  [null, note: 'night-shift OUT earlier than IN is already rolled to the next day (Q9)']
+  times_from_shift                boolean      [not null, default: false, note: 'true = the row had no times; in_at/out_at are the shift start/end (Q1)']
+  status                          varchar(10)  [not null, default: 'Pending', note: 'Pending | Valid | Rejected | Skipped | Imported']
+  validation_errors               jsonb        [null, note: '[{level: error|warning, message}] (≈ validtn_resp); warnings do not reject a row']
+  created_at                      timestamptz  [not null, default: `now()`]
+
+  Indexes {
+    (attendance_import_batch_id, row_number) [unique, name: 'uq_attendance_import_rows_batch_row']
+    (attendance_import_batch_id, status) [name: 'ix_attendance_import_rows_batch_status', note: 'confirm picks Valid; review lists Rejected; counts']
+    (care_delivery_program_master_id) [name: 'ix_attendance_import_rows_cdp']
+  }
+
+  Note: '[NEW] app/models/attendance_import_row.py -> AttendanceImportRow. Scratch data, hard-deleted by the retention sweep (Q11). Dropped from nh_server_app: name, service_master_id, status as int, is_active/archive*/created_by/updated_by/updated_at.'
+}
+
+// ── Existing table that gains a column ─────────────────────────────────────
+
+Table attendance_punch_details [headercolor: #EF6C00] {
+  id                              bigint       [pk]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id]
+  employee_master_id              bigint       [null, ref: > employee_masters.id]
+  punch_at                        timestamptz  [not null, note: 'UTC']
+  punch_source                    varchar(30)  [not null, default: 'Biometric', note: 'gains a new VALUE "Import" (free varchar, no schema change); direction is trusted for it (only "Biometric" is in DIRECTION_UNTRUSTED_SOURCES)']
+  direction                       varchar(10)  [null, note: 'IN | OUT — always set for Import']
+  employee_attendance_detail_id   bigint       [null, ref: > employee_attendance_details.id, note: 'set by recompute; still NULL afterwards = punch matched no day']
+  processed_at                    timestamptz  [null, note: 'NULL = recompute still to do (the queue predicate)']
+  archive                         boolean      [not null, default: false, note: 'Undo sets true']
+  import_batch_id                 bigint       [null, ref: > attendance_import_batches.id, note: '[NEW] NULL for every non-import punch; no default, no backfill']
+
+  Indexes {
+    (import_batch_id, processed_at) [name: 'ix_attendance_punch_details_import_batch', note: 'WHERE import_batch_id IS NOT NULL — runner queue, progress count, Undo']
+  }
+
+  Note: '[GAINS import_batch_id] app/models/attendance_punch_detail.py -> AttendancePunchDetail. Otherwise append-only; the dedupe index uq_attendance_punch_details_dedupe is unchanged and makes a re-upload idempotent.'
+}
+
+// ── Existing, read only / referenced (columns trimmed) ──────────────────────
+
+Table employee_attendance_details [headercolor: #616161] {
+  id                              bigint       [pk]
+  care_delivery_program_master_id bigint       [not null]
+  employee_master_id              bigint       [not null]
+  attendance_date                 date         [not null]
+  is_locked                       boolean      [not null, note: 'locked => row Rejected unless the batch has override_locked (Q4)']
+  Note: 'Written ONLY by recompute_attendance_day. Unique (cdp, employee, attendance_date). Not written by this feature.'
+}
+
+Table attendance_audit_logs [headercolor: #616161] {
+  id                              bigint       [pk]
+  employee_master_id              bigint       [not null]
+  attendance_request_detail_id    bigint       [null, note: 'NULL for an import — no request row exists']
+  action                          varchar(40)  [not null, note: 'gains VALUE "BulkImported"; "LockedDayOverride" already exists; no schema change']
+  new_value                       jsonb        [null, note: 'carries import_batch_id']
+  reason                          varchar(500) [null, note: '"Bulk import #<id>: <file>" or the override reason']
+  Note: 'Append-only, one row per recomputed day.'
+}
+
+Table employee_masters [headercolor: #616161] {
+  id                              bigint       [pk]
+  corp_master_id                  bigint       [not null, note: 'tenant via corp_masters.care_delivery_program_master_id']
+  emp_id                          varchar(50)  [null, note: 'indexed, not unique']
+  joining_date                    date         [null, note: 'rows before it are Rejected']
+  relieving_date                  date         [null, note: 'rows after it are Rejected']
+  Note: 'Read only.'
+}
+
+Table payroll_periods [headercolor: #616161] {
+  id                              bigint       [pk]
+  care_delivery_program_master_id bigint       [not null]
+  period_start                    date         [not null]
+  period_end                      date         [not null]
+  processed_at                    timestamptz  [null]
+  approved_at                     timestamptz  [null]
+  locked_at                       timestamptz  [null]
+  Note: 'Read only guard (Q5): a row dated inside a period with any of these set is Rejected.'
+}
+
+TableGroup bulk_import_tables {
+  attendance_import_batches
+  attendance_import_field_mappings
+  attendance_import_rows
+  attendance_punch_details
+}

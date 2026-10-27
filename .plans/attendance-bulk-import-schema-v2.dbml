@@ -1,0 +1,215 @@
+// File import staging tables, made type-agnostic — schema draft v2 (changes vs attendance-bulk-import-schema.dbml)
+// STATUS: approved         (draft → approved → superseded)
+// CLONE: workspace-2/hrms
+// APPROVED_ON: 2026-10-26  (Q1 drop v1 migration, Q2 /attendance-import, Q3 leave employee_import, Q4 options JSON; Q5 as recommended)
+// Paste into https://dbdiagram.io (DBML). Supersedes: .plans/attendance-bulk-import-schema.dbml (v1, marked superseded)
+// Plan (updated alongside): .plans/attendance-bulk-import-plan.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table (replaces the v1 table of the same role)
+//   orange #EF6C00  existing table that GAINS / CHANGES columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this version. "logical" = plain bigint, no FK constraint.
+
+Project file_import_staging {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why a v2
+  v1 named and shaped the three staging tables for ONE import (attendance): `attendance_import_batches /
+  _field_mappings / _rows`, with attendance columns baked in (employee_master_id, attendance_date, in_at, out_at,
+  existing_day_policy, override_locked, punches_inserted, days_*). The same staging pattern (nh_server_app's
+  tmp_file_upload_masters / _field_mappings / upload_temp_data was generic: unique_name, reference_type/id,
+  service_master_id) should carry other file imports too — leave opening balances, shift assignments, the employee
+  import (today synchronous and all-or-nothing) — without a new table family per import.
+
+  v2 keeps everything v1 decided (staging, validate -> review -> confirm, resumable runner, undo, 30-day retention,
+  `attendance_punch_details.import_batch_id`) and changes only WHAT THE TABLES ARE CALLED and WHERE TYPE-SPECIFIC DATA LIVES:
+  - three tables lose the `attendance_` prefix: `import_batches`, `import_field_mappings`, `import_rows`;
+  - `import_batches.import_type` says which handler owns a batch ('ATTENDANCE' is the only one built);
+  - type-specific batch options and counters move to two jsonb columns (`options`, `stats`); the counters every
+    import has stay real columns (`row_count`, `rows_rejected`, `rows_imported`) and the "units of settling work"
+    that drive the progress bar are generic (`units_total / units_done / units_failed` — attendance: employee-days);
+  - type-specific row data moves from attendance columns to `import_rows.reference_id` (the resolved target entity,
+    logical id), `dedupe_key` (what makes two rows "the same thing", indexed) and `parsed` (jsonb, read whole by
+    the type's commit step).
+  Code side (plan, not schema): one generic engine (parse, stage, runner, lifecycle, resume job, router factory)
+  and one `ImportHandler` per type; attendance becomes the first handler.
+
+  ## Mapping v1 -> v2
+  | v1 (attendance_import_batches)            | v2 (import_batches)                                           |
+  | existing_day_policy, override_locked,     | options jsonb: {"existing_day_policy", "override_locked",     |
+  |   override_reason                         |   "override_reason"}  (+ the undo reason, appended)           |
+  | punches_inserted                          | stats jsonb: {"punches_inserted": n}                          |
+  | days_total / days_recomputed / days_failed| units_total / units_done / units_failed                       |
+  | (none)                                    | import_type varchar(30) NOT NULL                              |
+  | attendance_import_rows                    | import_rows                                                   |
+  | employee_master_id (FK)                   | reference_id bigint (logical; attendance = employee_masters.id)|
+  | attendance_date + in_at + out_at +        | parsed jsonb: {"attendance_date", "in_at", "out_at",          |
+  |   times_from_shift                        |   "times_from_shift"}                                         |
+  | (duplicate check on employee+date cols)   | dedupe_key varchar(120): attendance = "<employee_id>:<date>"  |
+  | attendance_import_field_mappings          | import_field_mappings (target_field widened to varchar(40))   |
+
+  ## Feasibility (only what changed from v1; every v1 line not mentioned still holds)
+  - ✅ Tenant scoping: `care_delivery_program_master_id` NOT NULL on batches and rows, unchanged. Every read (history,
+       review, confirm, undo, resume job, retention) still filters on it, and now ALSO on `import_type` wherever a
+       screen is type-specific (a user with ATTENDANCE_IMPORT must never list or act on another type's batches).
+  - ✅ Conventions: new NOT NULL jsonb columns carry a DB default (`'{}'`); `import_type` has no default on purpose
+       (a batch must say what it is). jsonb is only ever read whole (options, stats, parsed) — never filtered on;
+       the one thing that IS searched (duplicate rows) is the real column `dedupe_key`.
+  - ✅ Soft delete / audit: unchanged (batch carries is_active / archive*, created_by / updated_by; rows are scratch).
+  - ✅ FKs: `reference_id` is logical on purpose (its target depends on `import_type`), so v1's real FK
+       `employee_master_id -> employee_masters` is given up. Cross-tenant safety does not rest on it: the handler
+       resolves the id through the tenant-filtered lookup before storing it. `attendance_punch_details.import_batch_id`
+       keeps a real FK, retargeted to `import_batches`.
+  - ✅ Indexes: history gains `import_type`; resume-job open-batch index unchanged; rows gain (batch, dedupe_key).
+  - ✅ Existing data: nothing in any shared environment. v1's migration b5d1f8a3c726 is untracked in git and was applied
+       only to the local test DB (hrms-test-pg :5433); see Q1.
+  - ⚠️ Retention (30 days after Done / Undone / archived) is now generic: the sweep deletes rows of ANY type's finished
+       batches. A type that needs its staged rows longer must say so in its handler (not built; noted for later).
+  - ⚠️ Moving typed columns into jsonb makes `import_rows` rows slightly bigger and the commit step parse `parsed`
+       per row. At the 5,000-row cap this is negligible; revisit only if a type raises the cap a lot.
+  - ✅ Overlap: closest is still `employee_import` (no tables). v2 deliberately does NOT migrate it now (Q3).
+  - ✅ RBAC: each type brings its own grid resource (attendance keeps ATTENDANCE_IMPORT); the generic router factory takes
+       the resource from the handler, so two types can never share a gate by accident.
+  - ✅ Cloud fit: unchanged (no local disk, no in-process state, heartbeat claim).
+
+  ## Alternatives considered
+  - Keep v1 and add a second table family per import type: rejected — three tables per import, and the engine (runner,
+    lifecycle, resume job, retention) would need to be copied or made table-polymorphic anyway.
+  - One generic table with a wide set of nullable typed columns (employee_master_id, date, amount, ...): rejected — grows
+    a column per new import and most are NULL for most rows.
+  - Polymorphic `(reference_type, reference_id)` like nh_server_app: rejected for now — `import_type` already names the
+    handler, and the handler knows what `reference_id` points at; a second discriminator adds nothing.
+  - Store typed values only in `row_data` (no `parsed`): rejected — `row_data` is the file as uploaded; re-parsing it at
+    commit time could disagree with what HR reviewed (e.g. a shift edited in between).
+
+  ## Open questions (recommendation first)
+  1. v1's migration (b5d1f8a3c726, creates the attendance_* tables) exists only in this working copy and on the local test
+     DB. Recommend REPLACING it: delete that revision, drop the v1 tables and the punch FK/column from the local DB, and
+     write one revision that creates v2. The alternative (keep b5d1 and add a revision that renames and reshapes) leaves a
+     create-then-rewrite history in a migration nobody has run elsewhere. Needs your OK because it removes an applied
+     migration on the local DB (nothing else has it). The RBAC revision c3a7e1d9f402 is unaffected (re-parented).
+  2. URL shape. Recommend keeping `/attendance-import/...` (per-type prefix, mounted by a router factory) so the
+     permission gate, frontend client and docs stay per type. The alternative is one `/file-imports/{type}/...`.
+  3. The existing employee importer: leave it as is for now (recommend), or move it onto the engine in this work.
+  4. `options` on the API: attendance's stage endpoint takes one `options` JSON form field instead of separate
+     `existing_day_policy` / `override_locked` / `override_reason` fields (recommend; every type validates its own).
+  5. Retention stays 30 days for every type (recommend), unless a handler asks otherwise later.
+
+  ## Decided (2026-10-26)
+  1. Drop it: the v1 revision b5d1f8a3c726 and the v1 tables/column on the local test DB are removed; one v2 revision creates the
+     generic tables. The RBAC revision c3a7e1d9f402 is re-parented onto it.
+  2. URLs stay `/api/v1/attendance-import/...` (per-type prefix from the router factory).
+  3. `employee_import` is left as it is.
+  4. `stage` takes one `options` JSON form field; each handler validates its own options.
+  5. Retention stays 30 days for every type.
+  '''
+}
+
+// ── New generic tables (replace v1's attendance_import_*) ────────────────────
+
+Table import_batches [headercolor: #2E7D32] {   // was attendance_import_batches
+  id                              bigint       [pk, increment]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id, note: 'tenant']
+  import_type                     varchar(30)  [not null, note: '[NEW] owning handler: ''ATTENDANCE'' today. No default — a batch must say what it is.']
+  file_name                       varchar(255) [not null, note: 'display name only; the file is not stored']
+  status                          varchar(12)  [not null, default: 'Validating', note: 'Validating | Staged | Running | Done | Failed | Undoing | Undone (a type that cannot undo never reaches Undoing)']
+
+  options                         jsonb        [not null, default: `'{}'`, note: '[NEW] handler-defined, set at stage. ATTENDANCE: {existing_day_policy: Skip|Merge, override_locked: bool, override_reason: str}; the undo reason is appended to override_reason. Read whole, never filtered on.']
+
+  row_count                       integer      [not null, default: 0, note: 'data rows in the file']
+  rows_rejected                   integer      [not null, default: 0]
+  rows_imported                   integer      [not null, default: 0]
+  units_total                     integer      [not null, default: 0, note: '[NEW] handler-defined unit of settling work after rows are committed. ATTENDANCE: employee-days to recompute. (was days_total)']
+  units_done                      integer      [not null, default: 0, note: '[NEW] (was days_recomputed)']
+  units_failed                    integer      [not null, default: 0, note: '[NEW] (was days_failed)']
+  stats                           jsonb        [not null, default: `'{}'`, note: '[NEW] handler-defined result counters. ATTENDANCE: {punches_inserted: n}. Read whole, never filtered on.']
+  last_error                      text         [null, note: 'runner-level failure, prefixed with the step it died in: "Running: ..."']
+
+  started_at                      timestamptz  [null]
+  heartbeat_at                    timestamptz  [null, note: 'advanced after every chunk; stale => resumable']
+  finished_at                     timestamptz  [null]
+  undone_at                       timestamptz  [null]
+  undone_by_id                    bigint       [null, ref: > users.id]
+
+  is_active                       boolean      [not null, default: true]
+  archive                         boolean      [not null, default: false]
+  archived_by_id                  bigint       [null, note: 'logical']
+  archived_at                     timestamptz  [null]
+  created_by_id                   bigint       [null, ref: > users.id]
+  updated_by_id                   bigint       [null, ref: > users.id]
+  created_at                      timestamptz  [not null, default: `now()`]
+  updated_at                      timestamptz  [not null, default: `now()`, note: 'onupdate now()']
+
+  Indexes {
+    (care_delivery_program_master_id, import_type, created_at) [name: 'ix_import_batches_cdp_type_created', note: 'history list for one type, newest first']
+    (care_delivery_program_master_id, status) [name: 'ix_import_batches_open', note: 'WHERE status IN (''Validating'',''Running'',''Failed'',''Undoing'') — resume job and "import in progress" banner, all types']
+  }
+
+  Note: '[NEW] app/models/import_batch.py -> ImportBatch (table import_batches). Replaces v1 attendance_import_batch.py. Register in app/models/__init__.py.'
+}
+
+Table import_field_mappings [headercolor: #2E7D32] {   // was attendance_import_field_mappings
+  id                              bigint       [pk, increment]
+  import_batch_id                 bigint       [not null, ref: > import_batches.id]
+  column_name                     varchar(255) [not null, note: 'the file''s header text; keys import_rows.row_data']
+  target_field                    varchar(40)  [not null, note: 'a key from the owning handler''s target-field list. ATTENDANCE: employee_id | date | in_time | out_time | status']
+  created_at                      timestamptz  [not null, default: `now()`]
+
+  Indexes {
+    (import_batch_id, target_field) [unique, name: 'uq_import_field_mappings_batch_target', note: 'one file column per target field']
+  }
+
+  Note: '[NEW] app/models/import_field_mapping.py -> ImportFieldMapping. Replaces v1 attendance_import_field_mapping.py.'
+}
+
+Table import_rows [headercolor: #2E7D32] {   // was attendance_import_rows
+  id                              bigint       [pk, increment]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id, note: 'tenant (denormalised from the batch)']
+  import_batch_id                 bigint       [not null, ref: > import_batches.id]
+  row_number                      integer      [not null, note: '1-based data row, header excluded — what HR sees in an error']
+  row_data                        jsonb        [not null, note: 'the raw row keyed by file header, mapped columns only']
+  reference_id                    bigint       [null, note: '[NEW] logical: the entity the row resolved to; target depends on import_type. ATTENDANCE: employee_masters.id (resolved through the tenant-filtered lookup). (was employee_master_id FK)']
+  dedupe_key                      varchar(120) [null, note: '[NEW] what makes two rows "the same thing" within one file. ATTENDANCE: "<employee_id>:<YYYY-MM-DD>". NULL = no duplicate rule.']
+  parsed                          jsonb        [null, note: '[NEW] the values the handler resolved at validation, read whole by its commit step. ATTENDANCE: {attendance_date, in_at, out_at, times_from_shift}. (was four columns)']
+  status                          varchar(10)  [not null, default: 'Pending', note: 'Pending | Valid | Rejected | Skipped | Imported']
+  validation_errors               jsonb        [null, note: '[{level: error|warning, message}]; warnings do not reject a row']
+  created_at                      timestamptz  [not null, default: `now()`]
+
+  Indexes {
+    (import_batch_id, row_number) [unique, name: 'uq_import_rows_batch_row']
+    (import_batch_id, status) [name: 'ix_import_rows_batch_status', note: 'confirm picks Valid; review lists Rejected; counts']
+    (import_batch_id, dedupe_key) [name: 'ix_import_rows_batch_dedupe', note: 'WHERE dedupe_key IS NOT NULL — duplicate-in-file check']
+    (care_delivery_program_master_id) [name: 'ix_import_rows_cdp']
+  }
+
+  Note: '[NEW] app/models/import_row.py -> ImportRow. Scratch data, hard-deleted by the retention sweep 30 days after its batch is Done / Undone / archived. Replaces v1 attendance_import_row.py.'
+}
+
+// ── Existing table: FK retargeted ───────────────────────────────────────────
+
+Table attendance_punch_details [headercolor: #EF6C00] {
+  id                              bigint       [pk]
+  care_delivery_program_master_id bigint       [not null, ref: > care_delivery_program_masters.id]
+  employee_master_id              bigint       [null, ref: > employee_masters.id]
+  punch_source                    varchar(30)  [not null, note: 'value ''Import'' for punches written by an attendance import (unchanged from v1)']
+  processed_at                    timestamptz  [null, note: 'NULL = recompute still to do (the queue predicate; unchanged)']
+  import_batch_id                 bigint       [null, ref: > import_batches.id, note: '[CHANGED] FK now targets import_batches (v1: attendance_import_batches). Still NULL for every non-import punch; no default, no backfill.']
+
+  Indexes {
+    (import_batch_id, processed_at) [name: 'ix_attendance_punch_details_import_batch', note: 'WHERE import_batch_id IS NOT NULL — unchanged']
+  }
+
+  Note: 'app/models/attendance_punch_detail.py -> AttendancePunchDetail. Only the FK target changes; the column, its index and the dedupe index are as in v1.'
+}
+
+Table employee_masters [headercolor: #616161] {
+  id                              bigint       [pk]
+  Note: 'ATTENDANCE handler: import_rows.reference_id = employee_masters.id, resolved via corp_masters.care_delivery_program_master_id. Read only.'
+}
+
+TableGroup file_import_staging {
+  import_batches
+  import_field_mappings
+  import_rows
+}
