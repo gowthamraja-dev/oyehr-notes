@@ -1,0 +1,301 @@
+// Work-mode policy (strict office / hybrid / remote) — schema draft
+// STATUS: draft            (draft → approved → superseded)
+// CLONE: workspace-2/hrms
+// APPROVED_ON:
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/work-mode-policy-plan.md
+// Builds on the approved WFH schema: .plans/shift-wfh-schema.dbml (its `is_remote` column is already live in hrms-dev).
+// Existing tables below were checked read-only against the shared hrms-dev DB on 28-Oct-26 (stamp 8012104013b3).
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns   (none in this draft)
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project work_mode_policy {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. Today "can this person work from home?" has no answer in the data. Every employee on the General
+     shift can raise a WFH request and a manager's approval is the only control. There is no
+     strict-office, hybrid or remote status, no quota, and no way to report on it.
+  2. This adds a **work-mode policy**: `OnSite` (WFH requests refused), `Hybrid` (requests allowed up to a
+     quota, optional weekdays that must be in office) and `Remote`. It is attached to people the same way
+     leave policies are (`leave_policy_provider_mappings`): to the whole CDP as a default, to an employee
+     type or department, or to one employee, with a priority and an effective date range.
+  3. It is **not** stored on the shift. Everyone shares the General shift; the shift decides *when*, the
+     policy decides *where*. The place itself is still `employee_shift_details.work_location_master_id`
+     and punch verification still follows that location (unchanged).
+
+  ## What the shared hrms-dev DB shows (read-only, 28-Oct-26)
+  - 1,194 active employees in 16 tenants that have shifts. 30 live work locations, 1 of them remote.
+  - WFH has been used once: 1 request ever (Approved), 12 live `employee_shift_details` rows on the remote site.
+  - 250 of 769 live `employee_shift_details` rows (32%) are already single-day rows (`effctv_dt = trmntn_dt`).
+    That is the fragmentation a fixed hybrid pattern would multiply, which is why this draft does NOT make
+    the policy write location rows (see Alternatives).
+  - `leave_policy_provider_mappings` has 48 `CareDeliveryProgramMaster` + 2 `DepartmentMaster` rows and no
+    `EmployeeTypeMaster` rows: the polymorphic shape exists and works, but type-based attachment is unproven.
+  - `employee_masters.employee_type_master_id` is a plain nullable bigint (no FK) and is **NULL for 1,053 of
+    1,194 active employees (88%)**; `department_master_id` is NULL for 856 (72%). Type and department are
+    barely populated, so they cannot be what a policy hangs on in practice. See the ⚠️ below.
+  - `employee_masters` has no `care_delivery_program_master_id` column; its tenant comes through `corp_master_id`.
+
+  ## Feasibility
+  - ✅ Tenant scoping: both new tables carry NOT NULL `care_delivery_program_master_id`. There is no RLS.
+       Every policy list, every mapping list and the "resolve this employee's policy" lookup must filter on it,
+       and `provider_id` must be validated to belong to the same tenant when a mapping is written (a
+       `provider_type` + `provider_id` pair is logical, so the DB cannot do it).
+  - ✅ Conventions: `id bigint [pk]`, NOT NULL booleans/ints with DB defaults, `timestamptz` audit columns,
+       one model file per table. `required_office_weekdays` is `jsonb` because it is only ever read and written
+       whole (a list of ISO weekdays), never filtered in SQL.
+  - ✅ Soft delete: both tables carry `is_active`, `archive`, `archived_by_id`, `archived_at`. Every list and the
+       resolver must exclude `archive = true` and `is_active = false`. Archiving a policy must be refused (or
+       cascade-archive its mappings) while live mappings point at it.
+  - ✅ Audit: `created_by_id`, `updated_by_id`, `created_at`, `updated_at` on both.
+  - ✅ FKs: real refs to `care_delivery_program_masters` and (mapping → policy). `provider_id` is logical
+       (polymorphic). Allowed `provider_type` values: `CareDeliveryProgramMaster`, `EmployeeTypeMaster`,
+       `DepartmentMaster`, `EmployeeMaster` (CHECK-constrained).
+  - ✅ Indexes: tenant + provider lookup (the resolver path), policy id (the "who is on this policy" path), and a
+       partial unique so one provider cannot start two live mappings on the same date.
+  - ✅ Existing data: no existing table is altered, so no backfill. With no mapping, an employee resolves to
+       **no policy**, which behaves exactly as today (WFH requests allowed, approval-only). Deploying this and
+       configuring nothing changes nothing — the same stance as "unconfigured roles are unrestricted" in RBAC.
+  - ✅ Overlap: closest checked, `is_remote` + `mobile_punch_check_mode` on `work_location_masters` (a *place*
+       rule, not a *person* rule), `leave_policy_provider_mappings` (same shape, leave domain, reused as a
+       pattern not a table), `shift_masters.policy_config` (per-shift timing/grace, no location concept) and
+       `employee_type_masters` (a label, carries no behaviour). None of them stores "may this person WFH".
+       No table in hrms-dev has work_mode / wfh / remote / hybrid in its name.
+  - ⚠️ Overlap resolution is application logic, not a constraint: two live mappings can match one employee
+       (say CDP default + employee type + the employee). The resolver picks the most specific `provider_type`
+       first (`EmployeeMaster` > `EmployeeTypeMaster` / `DepartmentMaster` > `CareDeliveryProgramMaster`), then
+       highest `priority`, then latest `effctv_dt`. Type vs department at the same level is a tie that only
+       `priority` breaks (Q4). The service must reject a mapping that leaves a tie unresolved.
+  - ⚠️ Type and department attachment are only as good as the data, and today the data is thin: 88% of active
+       employees have no type and 72% have no department (no FK on either). Those employees fall through to the
+       CDP default mapping or to "no policy". In practice the **CDP default + per-employee mappings** carry the
+       policy, and type / department are a convenience for tenants that fill them in (Q3).
+  - ⚠️ `employee_masters` has no CDP column, so the resolver and any "everyone on this policy" list must scope
+       through the tenant-owned mapping rows and `corp_master_id`, never by trusting an employee id alone.
+  - ⚠️ Quota counting has no stored column. It counts working days covered by Pending + Approved
+       `attendance_request_details` (`request_type = 'WFH'`) in the period. A request can span a week-off or a
+       holiday, so the count must use the same day-classification the approval uses. An approval that is later
+       skipped for locked / no-shift days makes the request count slightly high (Q5).
+  - ✅ Write paths — everything that must read or keep the policy consistent:
+       (a) policy CRUD and mapping CRUD (new endpoints, HR);
+       (b) `_validate_wfh_request` / `submit_wfh_request` (employee raises: refuse for OnSite, check quota,
+           refuse on required office weekdays), and `_approve_wfh_request` (re-check, because the policy may have
+           changed since the request was raised);
+       (c) HR flows that deliberately bypass it: roster location-only assign and range-regularize "Work from home".
+           They stay unrestricted (HR override) but should show a warning for an OnSite employee (Q6);
+       (d) the mobile `/me` surface (`hrms-mobile-api-integration`): the app should be told the caller's mode
+           so it can hide the WFH button. Read-only.
+       No importer, nhforms subscriber or scheduled job writes these tables.
+  - ✅ Migrations: a plain Alembic revision on the HRMS branch, applied through `scripts/migrate.py upgrade heads`
+       (current head to be confirmed when the migration task starts). No nhforms tables are touched. The shared
+       hrms-dev DB cannot be `alembic upgrade`d (stamped at the orphan `8012104013b3`), so the DDL is also
+       written as a hand-written, existence-guarded copy and applied there only on the user's go-ahead.
+       Remember the shared DB gap: new tables there get no `backup_user` grant by default.
+  - ✅ RBAC: policy and mapping writes gated on the existing `ATTENDANCE` row, `UPDATE`, through
+       `require_grid_permission` (no new `permissions.py` resource; unconfigured grids are refused, as for
+       the rest of Attendance & Shifts). Reads of the caller's own mode are self-service and ungated.
+  - ✅ Cloud fit: DB-only state, nothing on local disk.
+
+  ## Alternatives considered
+  - **One nullable column on `employee_masters`** (`work_mode_policy_master_id`, like `leave_policy_master_id`,
+    which 211 of 1,194 employees use). Simplest, but it has no history (a Hybrid→OnSite change cannot be
+    reasoned about for last month's request), no CDP/type/department defaults (1,194 rows to set by hand) and
+    no end date. Rejected for those three reasons; cheap to fall back to if provider mappings feel heavy.
+  - **Effective-dated per-employee rows** (a sibling of `employee_shift_details`). Gives history, still needs
+    one row per employee for a default. The provider mapping covers it with one CDP row.
+  - **Put the mode on `shift_masters.policy_config` / a second shift per mode.** Wrong axis: it would force a
+    duplicate General shift per mode, and rosters, week-offs, holidays and day swaps would have to be kept in
+    step across the copies.
+  - **Policy writes `employee_shift_details` location rows itself** (Hybrid fixed days materialised as remote
+    rows). Rejected: it multiplies the single-day rows (already 32%), races with HR's manual roster edits and
+    makes "undo this policy" a data migration. The policy only *gates*; HR still rosters locations.
+  - **A `work_mode` column on `work_location_masters`** (widening `is_remote` into an enum, as the WFH schema
+    suggested). That is a property of a place. The need here is a property of a person. Not needed.
+
+  ## Open questions
+  1. **Remote employees.** Should assigning a `Remote` policy also make the remote site the employee's standing
+     location? Recommendation: **no** — the policy gates; HR assigns the standing location on the roster. If yes,
+     that is a write path into `employee_shift_details`, which this draft avoids.
+  2. **Fixed office days or only a count?** Draft has both: `wfh_quota_days` per `Week` | `Month`, and an
+     optional `required_office_weekdays` list (ISO weekdays, 1 = Monday). If you want only the count, drop the
+     jsonb column.
+  3. **Type / department attachment.** With 88% of employees having no type and 72% no department, keep
+     `EmployeeTypeMaster` and `DepartmentMaster` as providers? Recommendation: **yes, keep them** (they cost
+     nothing in the schema and suit tenants that do fill them in) but treat the CDP default + `EmployeeMaster`
+     rows as the main path. The alternative is to drop those two provider types from the CHECK and add them
+     later by widening it. Filling in the missing types is a data task, not part of this schema.
+  4. **Precedence.** Draft precedence is `EmployeeMaster` > `EmployeeTypeMaster` / `DepartmentMaster` >
+     `CareDeliveryProgramMaster`, then `priority`, then latest `effctv_dt`. Is "a department rule beats an
+     employee-type rule" ever wanted? If so, `priority` decides and the service must make HR set it.
+  5. **Quota counts requests or days?** Recommendation: working days covered by Pending + Approved requests in the
+     period. The alternative, counting only Approved, lets an employee over-request while approvals are pending.
+  6. **HR bypass.** Roster assign and range-regularize "Work from home" stay unrestricted. Warn on OnSite, or
+     refuse? Recommendation: warn only; HR is the override and the audit log records it.
+  7. **Approval still required for Hybrid?** The draft has no `approval_required` column: every WFH request is
+     still approved by the manager, as now. Add `wfh_approval_required boolean` if some hybrid staff should be
+     auto-approved within quota.
+  8. **Which tenants first?** The policy defaults to "no policy" everywhere. Is a one-off seed wanted for a pilot
+     tenant (CDP default = Hybrid), or is it HR-configured only?
+  '''
+}
+
+Enum work_mode {
+  OnSite
+  Hybrid
+  Remote
+  Note: 'varchar(20). OnSite = WFH requests refused. Hybrid = requests allowed within quota. Remote = no request needed; the standing location is rostered by HR (Q1).'
+}
+
+Enum wfh_quota_period {
+  Week
+  Month
+  Note: 'varchar(10). Week = ISO week, Monday start. Month = calendar month.'
+}
+
+Enum work_mode_provider_type {
+  CareDeliveryProgramMaster
+  EmployeeTypeMaster
+  DepartmentMaster
+  EmployeeMaster
+  Note: 'varchar(50). Mirrors leave_policy_provider_mappings.provider_type. Logical id; no FK constraint.'
+}
+
+// ── new tables ───────────────────────────────────────────────────────────────────
+
+Table work_mode_policy_masters [headercolor: #2E7D32] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant — every query filters on this']
+  name varchar(120) [not null, note: 'e.g. "Strict office", "Hybrid 2 days / week"']
+  code varchar(50)
+  work_mode varchar(20) [not null, note: 'OnSite | Hybrid | Remote (CHECK)']
+  wfh_quota_days smallint [note: 'Hybrid only; NULL = no cap. 0 is not allowed (that is OnSite)']
+  wfh_quota_period varchar(10) [note: 'Week | Month; NULL iff wfh_quota_days is NULL (CHECK)']
+  required_office_weekdays jsonb [note: 'e.g. [2,4] = Tue and Thu must be in office; WFH requests covering them are refused. NULL = none. Read whole, never queried.']
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+  archived_by_id bigint
+  archived_at timestamptz
+  created_by_id bigint
+  updated_by_id bigint
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (care_delivery_program_master_id) [name: 'ix_work_mode_policy_masters_care_delivery_program_master_id']
+    (care_delivery_program_master_id, name) [unique, name: 'uq_work_mode_policy_masters_cdp_name', note: 'WHERE archive = false — a tenant cannot have two live policies with one name']
+  }
+
+  Note: '''
+  [NEW] app/models/work_mode_policy_master.py → WorkModePolicyMaster
+
+  CHECKs: `ck_work_mode_policy_masters_work_mode` (work_mode IN OnSite/Hybrid/Remote);
+  `ck_work_mode_policy_masters_quota_pair` (wfh_quota_days and wfh_quota_period are both NULL or both set);
+  `ck_work_mode_policy_masters_quota_hybrid_only` (a quota is only allowed when work_mode = 'Hybrid');
+  `ck_work_mode_policy_masters_quota_positive` (wfh_quota_days > 0).
+  '''
+}
+
+Table work_mode_policy_provider_mappings [headercolor: #2E7D32] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant — every query filters on this']
+  work_mode_policy_master_id bigint [not null, ref: > work_mode_policy_masters.id]
+  provider_type varchar(50) [not null, note: 'CareDeliveryProgramMaster | EmployeeTypeMaster | DepartmentMaster | EmployeeMaster (CHECK)']
+  provider_id bigint [not null, note: 'logical — polymorphic. Must belong to the same tenant; validated in the service.']
+  priority integer [not null, default: 0, note: 'higher wins within the same provider_type level']
+  effctv_dt date [not null, note: 'unlike the leave table this is NOT NULL: history is the point']
+  trmntn_dt date [note: 'NULL = open-ended. CHECK trmntn_dt >= effctv_dt']
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+  archived_by_id bigint
+  archived_at timestamptz
+  created_by_id bigint
+  updated_by_id bigint
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (care_delivery_program_master_id, provider_type, provider_id) [name: 'ix_work_mode_policy_mappings_provider', note: 'resolver path: an employee, their type, their department, the CDP']
+    (work_mode_policy_master_id) [name: 'ix_work_mode_policy_mappings_policy', note: '"who is on this policy"']
+    (care_delivery_program_master_id, provider_type, provider_id, effctv_dt) [unique, name: 'uq_work_mode_policy_mappings_provider_start', note: 'WHERE archive = false — one provider cannot start two live mappings on one date']
+  }
+
+  Note: '''
+  [NEW] app/models/work_mode_policy_provider_mapping.py → WorkModePolicyProviderMapping
+
+  Shape mirrors `leave_policy_provider_mappings` on purpose. Overlapping date ranges for one provider are
+  rejected in the service (a range-overlap cannot be a plain index); the unique index above only stops the
+  exact-same-start duplicate and a race on it.
+
+  CHECKs: `ck_work_mode_policy_mappings_provider_type`, `ck_work_mode_policy_mappings_dates`.
+  '''
+}
+
+// ── existing, read only (trimmed) ────────────────────────────────────────────────
+
+Table employee_masters [headercolor: #616161] {
+  id bigint [pk]
+  corp_master_id bigint [not null, note: 'tenant comes through the corp; employee_masters has NO care_delivery_program_master_id']
+  employee_type_master_id bigint [note: 'logical — no FK, NULL for 88% of active rows in hrms-dev. Resolver reads this to match an EmployeeTypeMaster provider']
+  department_master_id bigint [note: 'logical — NULL for 72% of active rows in hrms-dev. Resolver reads this to match a DepartmentMaster provider']
+  reporting_manager_id bigint
+  joining_date date
+  relieving_date date
+  is_active boolean [not null]
+  archive boolean [not null]
+  Note: 'Existing, unchanged. Read only by the resolver. Not trimmed to every column.'
+}
+
+Table employee_type_masters [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id]
+  corp_master_id bigint
+  employee_type varchar(100) [not null, note: 'free text per tenant (Full-Time, Contract, Intern, ...)']
+  Note: 'Existing, unchanged. A provider_id target when provider_type = EmployeeTypeMaster.'
+}
+
+Table attendance_request_details [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id]
+  employee_master_id bigint [not null, ref: > employee_masters.id]
+  request_type varchar(30) [not null, note: "'WFH' rows are what the quota counts"]
+  from_date date [not null]
+  to_date date [not null]
+  status varchar(30) [not null, default: 'Pending']
+  Note: 'Existing, unchanged. Read by the quota check; written by the existing WFH flow only. Index ix_attendance_request_details_employee_from_date already serves the quota query.'
+}
+
+Table employee_shift_details [headercolor: #616161] {
+  id bigint [pk]
+  employee_master_id bigint [not null, ref: > employee_masters.id]
+  shift_master_id bigint [not null]
+  work_location_master_id bigint [ref: > work_location_masters.id, note: 'the place; punch verification follows this. NOT written by the policy (see Alternatives)']
+  effctv_dt date [not null]
+  trmntn_dt date
+  Note: 'Existing, unchanged. The policy gates what may be written here; it never writes here.'
+}
+
+Table work_location_masters [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id]
+  name varchar(120) [not null]
+  is_remote boolean [not null, default: false, note: 'live in hrms-dev; one live remote site per tenant']
+  mobile_punch_check_mode varchar(20) [not null, default: 'WifiAndGeofence']
+  Note: 'Existing, unchanged. A Hybrid/Remote policy is only useful where the tenant has a live remote site (the existing WFH gate).'
+}
+
+TableGroup work_mode_policy {
+  work_mode_policy_masters
+  work_mode_policy_provider_mappings
+}
+
+TableGroup resolver_reads {
+  employee_masters
+  employee_type_masters
+  attendance_request_details
+  employee_shift_details
+  work_location_masters
+}

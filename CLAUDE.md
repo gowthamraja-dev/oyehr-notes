@@ -409,6 +409,19 @@ one row = one employee-day, with or without In/Out times (no times = present for
 `Import` punches and lets `recompute_attendance_day` derive the day — never `employee_attendance_details` directly.
 Locked days need org-wide scope + a reason; imports can be undone. Full reference: `hrms/docs/attendance-bulk-import.md`.
 
+## File exports — the shared export engine
+Every "download as CSV / XLSX" feature runs on one engine (`hrms/backend/app/modules/file_export/`): a report type is one `ExportHandler`
+(params model + `build` returning an `ExportTable`) and the engine owns the route, the READ gate, the cell limit (250,000), CSV
+(UTF-8 BOM) and XLSX writers, the `'` formula-injection guard, the filename and the audit hook — **never a new endpoint family or a
+second CSV writer**. Exports are stateless: no tables, no runner, no migration. Plain `APIRouter` (binary body; `EncryptedRoute` can't
+carry it) and plain `fetch` on the frontend (`getExportCatalogue` / `downloadExport`), driven by `FileExportDialog`. Handlers must scope by
+`principal.tenant_id`. Full reference: `hrms/docs/file-export.md`.
+
+**Attendance reports** (`hrms/backend/app/modules/attendance_export/`, `/api/v1/attendance-export`, `ATTENDANCE` READ): `attendance_ledger` (employee rows x date
+columns, status codes), `hours_ledger`, `monthly_summary`, `daily_log` — all read the register's own employee-day rows, so scope and status rules match the screen.
+`/attendance/register/export` is the `daily_log` builder in its original shape and must stay byte-identical (golden files in `hrms/backend/app/tests/golden/`).
+Full reference: `hrms/docs/attendance-export.md`.
+
 ## Testing — every module ships with tests
 Every backend module MUST have tests under `hrms/backend/app/tests/modules/test_<module>.py`, run with
 `uv run pytest`. Use the shared fixtures in `hrms/backend/app/tests/conftest.py` (transactional rollback
