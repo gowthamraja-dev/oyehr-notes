@@ -1,0 +1,181 @@
+// My Shifts — shift change requests — schema draft
+// STATUS: approved         (draft → approved → superseded)
+// CLONE: workspace-2/hrms
+// APPROVED_ON: 2026-10-29  (all five open questions decided as recommended — see Decided below)
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/my-shifts-plan.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project my_shifts {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. The employee's "My Shifts" screen needs (a) a monthly calendar, (b) the list of shifts they
+     may ask to move to, and (c) submit / list / cancel of a shift change request. (a) and (b)
+     are read-only over existing tables. Only (c) needs storage.
+  2. A shift change request is "move me to shift X for dates A..B, because R", approved by the
+     reporting manager. `attendance_request_details` already is the one table for every
+     self-service correction request (Regularization, WFH; OnDuty/ShortLeave reserved) with
+     approver, status, reason, from/to dates, audit log, in-app notifications, the
+     ATTENDANCE_REQUEST workflow hook and a generic cancel. The only thing it cannot say is
+     WHICH shift was asked for.
+  3. So the proposal is `request_type = 'ShiftChange'` on that table plus TWO nullable columns,
+     `requested_shift_master_id` and `current_shift_master_id`. No new table.
+  4. Why the current shift is stored (revised after the mobile mockup): the Requests list and the
+     Request Details screen show "Evening -> General Shift" for an APPROVED request too. Once
+     approved, the day's shift IS the requested one, so the shift the employee was on can no
+     longer be derived from `employee_shift_details`. It is snapshotted at submit time.
+  5. The mockup's form has a single "Select Date", so a ShiftChange is ONE day:
+     `from_date = to_date` (the table stays range-shaped for its other request types).
+
+  ## Feasibility
+  - ✅ Tenant scoping: table already carries `care_delivery_program_master_id` NOT NULL. Every
+       read/write must filter on it AND on `employee_master_id` for the caller's own rows. The
+       requested shift must be looked up with `ShiftMaster.care_delivery_program_master_id ==
+       principal.tenant_id` so a foreign tenant's shift id is a 404/422, never accepted.
+  - ✅ Conventions: new column is nullable, plain FK, no default needed.
+  - ✅ Soft delete: table already has is_active / archive / archived_*. Cancel is a status flip
+       to 'Cancelled' (existing behaviour), never a DELETE.
+  - ✅ Audit: created_by_id / updated_by_id / timestamps exist; `attendance_audit_logs` rows are
+       written on Submitted / Cancelled exactly as for WFH.
+  - ✅ FKs: `requested_shift_master_id -> shift_masters.id` (real FK, target exists).
+  - ✅ Indexes: no new index. The list path is the existing
+       `ix_attendance_request_details_employee_from_date (employee_master_id, from_date)`.
+       The new column is only read per row, never searched.
+  - ✅ Existing data: nullable, so existing Regularization / WFH rows are untouched, no backfill.
+       Rows with request_type 'ShiftChange' must have it set — enforced by the service, and by a
+       CHECK (below) so a bad write can't slip in.
+  - ✅ Overlap: closest checked — `attendance_request_details` (reused), `shift_day_overrides`
+       (org/shift-wide WeekOff/Working swap by HR, not per-employee), `employee_shift_details`
+       (the assignment itself — what approval WRITES, not a request).
+  - ⚠️ Request-list consumers: `RequestOut` and the manager inbox / `GET /attendance/me/requests`
+       currently assume Regularization-or-WFH (`_request_out` branches on request_type == 'WFH'
+       and `_audit_action` yields 'Wfh…'/'Regularization…'). They must learn 'ShiftChange', or a
+       shift change shows up in HR's regularization inbox looking like a regularization.
+  - ⚠️ Approval must DO something. Approving a ShiftChange has to apply the new shift for the
+       range. Existing `approve_request` has a WFH branch and a regularization default; a third
+       branch is needed or an approved request changes nothing. It must go through the existing
+       day-writing planner (`_plan_and_apply_employee_days` / `set_employee_shift_for_range`),
+       never a second writer, and skip locked / week-off / holiday / on-leave days.
+  - ✅ Write paths: (a) POST /shifts/me/change-requests (new), (b) cancel — reuse
+       `cancel_my_request`, (c) approve/reject — new ShiftChange branch in `approve_request`
+       / `reject_request`, (d) workflow-engine multi-stage path — already keyed on the request id.
+       No importer, nhforms subscriber or scheduled job writes this table.
+  - ✅ Migrations: plain Alembic revision on the HRMS branch, applied via
+       `scripts/migrate.py upgrade heads`. Touches no nhforms table. The shared hrms-dev DB cannot
+       be `alembic upgrade`d (stamped at orphan `8012104013b3`), so the revision is hand-written
+       and existence-guarded and its DDL applied directly — see reference-shared-hrms-dev-db.
+  - ✅ RBAC: employee self-service routes under `/shifts/me/*` stay ungated (own record only),
+       like the rest of `/me/*`. Approving uses the existing APPROVE ATTENDANCE gate.
+  - ✅ Cloud fit: no local state.
+
+  ## Alternatives considered
+  A. New table `shift_change_requests`. Rejected: it would duplicate approver, status,
+     status_master_id, reason, dates, audit linkage, notifications, the workflow hook and the
+     cancel/approve plumbing, and the inbox would need a second query path. Cost is a table family
+     for one extra column.
+  B. (proposed) Reuse `attendance_request_details`, add `requested_shift_master_id`.
+  C. Store the requested shift in a jsonb blob on the row. Rejected: loses the FK, can't be
+     joined, and CLAUDE.md reserves jsonb for never-queried blobs.
+
+  ## Decided from the mobile mockup (.plans/my-shifts-mockup.jpeg)
+  - Single day per request (from_date = to_date). Reason required, max 500 chars.
+  - Statuses shown: Pending, Approved, Rejected, Cancelled; list has an "All Status" filter.
+  - Rejected rows show the approver's remarks (`approver_remarks`, already a column).
+  - Details screen shows "Submitted on" (`applied_at`) and a Cancel button while Pending.
+
+  ## Decided (2026-10-29, all as recommended)
+  1. Reuse `attendance_request_details` (+2 nullable FK columns, +1 CHECK). No new table.
+  2. Today and future dates allowed; past refused; today refused once the employee has punched in.
+  3. Any active, non-archived shift of the tenant whose effctv/trmntn window covers the date, except the
+     one already assigned. No per-employee allow-list.
+  4. A Pending ShiftChange blocks another Pending ShiftChange for the same employee + date.
+  5. Approval is refused, with a clear reason, when the day is locked / a Public holiday / a week-off /
+     approved leave.
+
+  ## Open questions (as asked — all answered above)
+  1. B vs A above — OK to reuse `attendance_request_details` (+2 nullable columns, +1 CHECK)?
+  2. The form defaults to TODAY's date. Proposal: allow today and future dates; refuse past dates;
+     refuse today once the employee has already punched in (their day is in progress on the old
+     shift). Or require tomorrow-or-later?
+  3. Who may be asked for? Proposal: any active, non-archived shift of the tenant whose
+     effctv_dt/trmntn_dt window covers the date, except the one they are already on. No
+     per-employee allow-list (would be a second schema change).
+  4. A Pending ShiftChange blocks another Pending ShiftChange for the same employee and date.
+     OK? (Different dates are independent.)
+  5. Approval on a day that is locked for attendance/payroll, a holiday, a week-off or approved
+     leave: refuse the approval with a clear reason (single day, so nothing to partially apply).
+     OK?
+  '''
+}
+
+Table attendance_request_details [headercolor: #EF6C00] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant']
+  employee_master_id bigint [not null, ref: > employee_masters.id]
+  request_type varchar(30) [not null, note: 'Regularization | WFH | ShortLeave | OnDuty | [NEW value] ShiftChange']
+  from_date date [not null]
+  to_date date [not null, note: 'ShiftChange: always = from_date (one day)']
+  requested_in_at timestamptz [note: 'NULL for ShiftChange']
+  requested_out_at timestamptz [note: 'NULL for ShiftChange']
+  requested_shift_master_id bigint [ref: > shift_masters.id, note: '[NEW] set iff request_type = ShiftChange; the shift asked for. Must belong to the same tenant (service check)']
+  current_shift_master_id bigint [ref: > shift_masters.id, note: '[NEW] set iff request_type = ShiftChange; the shift the employee was on for that date AT SUBMIT TIME (snapshot — see Why #4). Never rewritten on approval']
+  reason text
+  status varchar(30) [not null, default: 'Pending']
+  status_master_id bigint [ref: > status_masters.id, note: 'dual-written with status; ATTENDANCE_REQUEST domain']
+  approver_user_id bigint [ref: > users.id]
+  approver_employee_master_id bigint [ref: > employee_masters.id]
+  actioned_at timestamptz
+  approver_remarks text
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+
+  Indexes {
+    (employee_master_id, from_date) [name: 'ix_attendance_request_details_employee_from_date', note: 'existing — the list path']
+  }
+
+  Note: '''
+  [CHANGED] app/models/attendance_request_detail.py → AttendanceRequestDetail.
+  Adds two nullable FK columns and one CHECK:
+    ck_attendance_request_details_shift_change_shifts:
+      (request_type = 'ShiftChange')
+        = (requested_shift_master_id IS NOT NULL AND current_shift_master_id IS NOT NULL)
+      AND (request_type <> 'ShiftChange' OR from_date = to_date)
+  Existing rows: request_type never equals 'ShiftChange' and both columns are NULL, so the CHECK holds.
+  No new index: lists read by (employee_master_id, from_date); the shift ids are only read per row.
+  '''
+}
+
+Table shift_masters [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null]
+  name varchar(120)
+  start_time time
+  end_time time
+  is_active boolean
+  archive boolean
+  effctv_dt date
+  trmntn_dt date
+  Note: 'existing, read only. "Available shifts" reads this: tenant + is_active + not archived + effective window.'
+}
+
+Table employee_shift_details [headercolor: #616161] {
+  id bigint [pk]
+  employee_master_id bigint
+  shift_master_id bigint
+  work_location_master_id bigint
+  holiday_calendar_master_id bigint
+  effctv_dt date
+  trmntn_dt date
+  Note: 'existing, read only here. The calendar resolves the day\'s shift from this; an approved ShiftChange WRITES to it through the existing planner (no schema change).'
+}
+
+TableGroup my_shifts_group {
+  attendance_request_details
+  shift_masters
+  employee_shift_details
+}

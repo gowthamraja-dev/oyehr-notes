@@ -1,0 +1,98 @@
+// Per-device punch direction v2 — "Alternate" (odd/even) for single-terminal premises — schema draft
+// STATUS: approved         (draft → approved → superseded)
+// CLONE: workspace-2/hrms
+// APPROVED_ON: 2026-11-04
+// SUPERSEDES (changes only): .plans/device-punch-direction-schema.dbml (v1, approved 2026-11-02, applied to hrms-dev 2026-11-02)
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): update .plans/device-punch-direction-plan.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns / changes a constraint
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. [CHANGED] = existing column, new rule.
+
+Project device_punch_direction_v2 {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. v1 (tasks 323/324) lets HR declare a terminal Entry or Exit. It cannot describe a premises with ONE biometric terminal
+     used for both clocking in and out (Nano Health). That terminal is left on `Auto`; its status byte is `0` (default IN) on
+     nearly every scan (v1 doc: 12,738 of 14,400 K90 Pro records), and since task 324 removed the "untrusted sources" fallback,
+     those stored `IN`s are believed: every departure reads "clocked in" and the day is calculated wrong.
+  2. The alternation rule already exists (`derive_direction`: first punch of the business day = IN, then alternate, 5 s debounce)
+     but is switched on only per CDP through the env list `biometric_trusted_direction_cdp_ids` (100240 = nxti), and only when the
+     status byte says nothing. A single-terminal terminal needs it per DEVICE, and needs it to ignore the status byte.
+  3. Fourth value `Alternate` on the same column: odd punch of the employee's business day = IN, even = OUT.
+
+  ## Change (the whole schema impact)
+  `attendance_device_masters.punch_direction`: CHECK `ck_attendance_device_masters_punch_direction` widens from
+  `IN ('Auto','In','Out')` to `IN ('Auto','In','Out','Alternate')`. No new column, table or index. `varchar(10)` fits
+  `Alternate` (9 chars). Existing rows keep their value; no backfill.
+
+  ## Feasibility
+  - ✅ Tenant scoping: unchanged. Same device row, already CDP-scoped and resolved by (tenant, serial).
+  - ✅ Conventions: same NOT NULL varchar + DB default `'Auto'` + CHECK as v1.
+  - ✅ Soft delete / audit: unchanged.
+  - ✅ FKs / indexes: none.
+  - ✅ Existing data: nothing to rewrite; every row already satisfies the wider CHECK.
+  - ✅ Overlap: closest is `biometric_trusted_direction_cdp_ids` (env, per CDP, only when no status byte). This is per device and
+       does not replace it; `Auto` terminals in a listed CDP behave as today.
+  - ⚠️ Migration after apply: v1's revision `f4a8c2e6b913` is applied on hrms-dev (stamp-less, existence-guarded DDL), so it is NOT
+       edited. A NEW guarded revision drops and re-adds the CHECK with four values. On hrms-dev it must be applied the same
+       hand-run way as `f4a8c2e6b913` (shared DB is stamped at the orphan `8012104013b3`), with `lock_timeout`, in one transaction.
+  - ⚠️ Precedence. `Alternate` is a declared role like `In`/`Out`: it is rule 1 and beats the status byte (a status `0` is
+       exactly the default we must not believe on a shared terminal), and it applies in any CDP, listed or not.
+  - ⚠️ A punch with an unmapped PIN has no previous punch to count from → NULL direction (same as `Auto` today); it settles when
+       the PIN is mapped only if the map/rebuild path re-derives (v1 does not; see Open question 3).
+  - ⚠️ Alternation is only as good as the punch sequence: a missed or extra scan flips every later punch that business day
+       (first = IN, second = OUT, third = IN …). The count restarts on each business day (derive_direction already does this),
+       so a forgotten exit only damages that one day.
+  - ✅ Write paths: Device Integration add/edit form → `POST /devices`, `PATCH /devices/{serial}` (validator `PUNCH_DIRECTIONS`
+       gains `Alternate`; `DeviceOut` unchanged in shape); ingest (`ingest_attlog` → `punch_direction_for`) is the only reader.
+       Attendance import has no device and is untouched.
+  - ✅ RBAC: existing device write gate. ✅ Cloud fit: DB-only state.
+
+  ## Alternatives considered
+  - Add `Nano Health`'s CDP id to `biometric_trusted_direction_cdp_ids`: rejected as the answer. It is env/deploy config, only
+    applies when the status byte is 255 (Nano Health's terminals send 0), and cannot be switched per terminal by HR.
+  - A separate boolean `alternate_direction`: rejected, it would conflict with `In`/`Out` (two settings, one meaning).
+  - Computing odd/even at recompute time instead of ingest: rejected for now, ingest already owns direction and every reader
+    trusts a stored direction (task 324); a second place would break "rule order written once".
+
+  ## Decided (approved 2026-11-04, all four proposed defaults)
+  1. Value `Alternate`; label "Single terminal — scans alternate clock-in / clock-out (odd = in, even = out)".
+  2. `Alternate` ignores the terminal's status byte entirely.
+  3. Unmapped PIN: NULL direction, as `Auto`.
+  4. New punches only. Re-tagging Nano Health's already-stored punches is a separate task, not built here.
+
+  ## Open questions (answered above; kept for the record)
+  1. Value name `Alternate`, UI label "Single terminal — scans alternate clock-in / clock-out (odd = in, even = out)". OK?
+  2. `Alternate` ignores the terminal's status byte entirely (proposed, because status 0 is the default). Or should a real
+     status 1/2/5 (an operator pressed a function key) still win?
+  3. Unmapped PIN: store NULL (proposed) and leave it, as with `Auto`?
+  4. New punches only again (no re-tagging of Nano Health's already-stored punches)? Their stored `IN`s stay `IN` until a separate
+     re-tag task. Proposed: yes, new punches only; offer the re-tag as its own task because it is the part that fixes
+     attendance already calculated.
+  '''
+}
+
+Table attendance_device_masters [headercolor: #EF6C00] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant']
+  serial_no varchar(120) [not null]
+  punch_direction varchar(10) [not null, default: 'Auto', note: '[CHANGED] Auto | In | Out | Alternate. CHECK ck_attendance_device_masters_punch_direction IN (\'Auto\',\'In\',\'Out\',\'Alternate\'). In = entry terminal, Out = exit terminal, Alternate = one terminal for both: odd scan of the business day IN, even OUT']
+
+  Note: 'Existing table: app/models/attendance_device_master.py → AttendanceDeviceMaster. Only the CHECK widens.'
+}
+
+Table attendance_punch_details [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null]
+  employee_master_id bigint [note: 'NULL for an unmapped PIN']
+  attendance_device_master_id bigint [ref: > attendance_device_masters.id]
+  direction varchar(10) [note: 'IN | OUT — for an Alternate terminal written at ingest by derive_direction']
+
+  Note: 'Read only here. No schema change.'
+}
+
+Table care_delivery_program_masters [headercolor: #616161] { id bigint [pk] }

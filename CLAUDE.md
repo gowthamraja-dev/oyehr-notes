@@ -14,30 +14,31 @@ This is the hr-prj workspace root, covering everything the HRMS product spans:
   `hrms/` prefix there.
 - `.planning/codebase/` — generated codebase-analysis docs (architecture, stack, conventions).
 
-- `workspace-2/hrms/` — a **second, independent clone** of the same HRMS repo
+- `workspace-1/hrms/` — a **second, independent clone** of the same HRMS repo
   (`git@bitbucket.org:NanoHealth_India/hrms.git`). **This is where HRMS changes are made.**
+  (`workspace-2/hrms/` is a further clone, currently not the active one — leave it alone.)
 
-## Active HRMS working copy — `workspace-2/hrms/`
+## Active HRMS working copy — `workspace-1/hrms/`
 
-**Make all HRMS code changes in `workspace-2/hrms/`, not in `hrms/`.** The top-level
+**Make all HRMS code changes in `workspace-1/hrms/`, not in `hrms/`.** The top-level
 `hrms/` clone has its own in-progress feature branch and runs the local dev stack — leave
 it untouched (read it for reference only) unless explicitly told otherwise.
 
 - Every `hrms/...` path in this file (and in the `hrms-*` skills) means
-  `workspace-2/hrms/...` when editing — e.g. models go in
-  `workspace-2/hrms/backend/app/models/`, and backend commands (`uv run alembic …`,
-  `uv run pytest`, `scripts/migrate.py`) run from `workspace-2/hrms/backend/`.
-- Branch, commit and push from inside `workspace-2/hrms/` (its own `.git`). Check
-  `git -C workspace-2/hrms status -sb` before starting — don't assume the branch.
+  `workspace-1/hrms/...` when editing — e.g. models go in
+  `workspace-1/hrms/backend/app/models/`, and backend commands (`uv run alembic …`,
+  `uv run pytest`, `scripts/migrate.py`) run from `workspace-1/hrms/backend/`.
+- Branch, commit and push from inside `workspace-1/hrms/` (its own `.git`). Check
+  `git -C workspace-1/hrms status -sb` before starting — don't assume the branch.
 - `.plans/tasks/`, `.design/` and `employeeapp/` stay at this root; only HRMS code moves.
 - **Docker:** both clones live in a directory named `hrms`, so Compose gives them the
-  same default project name (`hrms`) — `docker compose up` from `workspace-2/hrms/` would
+  same default project name (`hrms`) — `docker compose up` from `workspace-1/hrms/` would
   replace the containers started from `hrms/` (and both bind `:8000`). If a stack is
-  needed for workspace-2, use a distinct project name and port, e.g.
-  `docker compose -p hrms-ws2 up -d` with the port changed. (Its `docker-compose.yml` is
-  currently fully commented out.)
-- `workspace-2/hrms/` has no `backend/.venv` or `frontend/node_modules` yet — run
-  `uv sync` / `npm install` there before running tests or builds.
+  needed for workspace-1, use a distinct project name and port, e.g.
+  `docker compose -p hrms-ws1 up -d` with the port changed. (Its `docker-compose.yml` has
+  a single `api` service on `:8000`; there is no `db` service defined.)
+- `workspace-1/hrms/` already has `backend/.venv` and `frontend/node_modules` installed.
+  `frontend/.env.dev` carries a local uncommitted edit — don't commit it unless asked.
 
 The conventions below are HRMS-specific (the `hrms/` sub-project) unless noted otherwise.
 

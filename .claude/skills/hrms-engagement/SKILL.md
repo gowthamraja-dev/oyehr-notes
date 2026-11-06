@@ -19,8 +19,11 @@ Reference app is `nh_server_app` (Rails). HRMS re-implements the *behaviour* nat
 - Integration creds live in `partner_parameter_masters` under **`parameter_master_id = 208`**
   (`parameter_masters` id 208 = `WhatsappAuth`). `parameter_value` is a **JSON string** with keys:
   `phone_number_id, waba_id, business_id, auth_token, webhook_verify_token, app_secret, phone_display`.
-- **Lookup is by the caller's CDP only** (`care_delivery_program_master_id == principal.tenant_id`) —
-  do NOT add a global `0` fallback (product decision). Helper: `_wa_config(db, cdp_id)`.
+- **Lookup**: the caller's own CDP row if it is *complete*, else the platform default stored under
+  **CDP 0** (NXTI's number; product decision 2-Nov-26, replacing the earlier "no 0 fallback"). Helper:
+  `_wa_config(db, cdp_id)`. Server Admin edits CDP 0 in Platform Settings → WhatsApp
+  (`admin_organizations/platform_settings.py`); inbound on the shared number is routed by mobile
+  (`webhooks/service.py:_shared_number_match`). See `hrms/docs/whatsapp-default-config.md`.
 - "Configured" = the JSON has all of `phone_number_id`, `auth_token`, `waba_id`
   (`_config_complete`). The frontend WhatsApp action is enabled only when configured.
 - Never hardcode creds. Seed for dev via env `WHATSAPP_CONFIG_JSON` (passed to `seed_dev`), never commit.

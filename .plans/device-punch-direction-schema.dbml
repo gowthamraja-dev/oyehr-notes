@@ -1,0 +1,119 @@
+// Per-device punch direction (Entry / Exit terminal) — schema draft
+// STATUS: superseded       (draft → approved → superseded) — v2 adds 'Alternate': .plans/device-punch-direction-schema-v2.dbml
+// CLONE: workspace-2/hrms
+// APPROVED_ON: 2026-11-02
+// Paste into https://dbdiagram.io (DBML). Plan (after approval): .plans/device-punch-direction-plan.md
+//
+// Header colours:
+//   green  #2E7D32  NEW table
+//   orange #EF6C00  existing table that GAINS columns
+//   grey   #616161  existing, read only / referenced (columns trimmed)
+// Column notes: [NEW] = added by this feature. "logical" = plain bigint, no FK constraint.
+
+Project device_punch_direction {
+  database_type: 'PostgreSQL'
+  Note: '''
+  ## Why
+  1. CDP 100240 (nxti) has an entry terminal and an exit terminal, but the terminals report ZKTeco status 255
+     ("no in/out"). Ingest (`devices/service.py: ingest_attlog`) therefore falls to `derive_direction()`, which
+     alternates IN/OUT from the employee's previous punch. The terminal a punch came from is never consulted, so a
+     scan on the EXIT terminal is stored as IN whenever it is the employee's first punch of the business day.
+  2. HR declares each terminal's role once: `Auto` (today's behaviour), `In` (entry) or `Out` (exit).
+     A declared role wins over the terminal's status and over alternation. `Auto` changes nothing.
+
+  ## Feasibility
+  - ✅ Tenant scoping: no new table. `attendance_device_masters` already has NOT NULL
+       `care_delivery_program_master_id`; every device read/write already filters on `principal.tenant_id`.
+       Ingest reads the role from the device row it already resolved by (tenant, serial).
+  - ✅ Conventions: NOT NULL varchar with a DB default (`server_default 'Auto'`), plus a CHECK, like
+       `mobile_punch_check_mode` on `work_location_masters`.
+  - ✅ Soft delete / audit: table already carries `is_active`, `archive`, `updated_by_id`. Nothing new.
+  - ✅ FKs / indexes: none. The column is read per row after the device is resolved by the existing unique index
+       `uq_attendance_device_masters_cdp_serial`.
+  - ✅ Existing data: default `Auto` on every existing row, so every live terminal behaves exactly as today and no
+       backfill is needed. Punches already stored keep their direction (see Open question 2).
+  - ✅ Overlap: closest existing thing is `DeviceConfig.trust_device_direction` (a Python-only flag, not a column) and
+       `settings.biometric_trusted_direction_cdp_ids`. Neither says which terminal is an exit; this does not replace them.
+  - ⚠️ Precedence. Order after this change: terminal role (`In`/`Out`) → terminal status (0/1/2…) when
+       `trust_device_direction` → `derive_direction()` (only when the CDP is in `biometric_trusted_direction_cdp_ids`).
+       A terminal set to `In`/`Out` ignores a contrary status byte. Intended, but a change for any CDP that sets a role.
+  - ⚠️ CDPs NOT in `biometric_trusted_direction_cdp_ids` read biometric punches by position, not by direction
+       (`trusts_direction`: Biometric direction is untrusted). A role set there would be stored but not read by the day
+       assembler. Plan: the role is honoured everywhere at ingest, and `trusts_direction` treats a punch from a
+       fixed-role terminal as trusted. See Open question 3.
+  - ⚠️ A punch with an unmapped PIN (employee NULL) currently stays NULL direction. With a fixed role it gets the
+       role (no previous punch is needed), so it is stored with a direction before the employee is known.
+  - ✅ Write paths: Device Integration screen (`AttendanceDevices.tsx`) → `POST /devices` and `PATCH /devices/{serial}`
+       (`DeviceCreate` / `DeviceUpdate`, `DeviceOut` returns it), the live ADMS ingest
+       (`ingest_attlog`) as the only reader. The attendance import stores `attendance_device_master_id = NULL` and its
+       own `direction` option, so it is unchanged.
+  - ✅ Migrations: a plain Alembic revision on the HRMS branch, applied via `scripts/migrate.py upgrade heads`.
+       No nhforms tables touched.
+  - ✅ RBAC: device writes are already gated; no new resource or action.
+  - ✅ Cloud fit: DB-only state.
+
+  ## Decided
+  - Rev 2 (user): the direction rules live in the Device Integration section (devices module + `AttendanceDevices.tsx`),
+    set per terminal on the device's add/edit form and shown on the device list. Direction is NOT left to whatever the
+    terminal sends: the saved device setting is the first rule, the terminal's status byte and alternation are fallbacks.
+    The precedence is written once, in `devices/service.py` next to `derive_direction`, and documented in the devices doc,
+    not repeated in the attendance import or recompute code.
+
+  - Approved 2026-11-02 with the proposed defaults:
+    1. Column `punch_direction`, values `Auto | In | Out`.
+    2. New punches only. Punches already stored are NOT re-tagged and no days are recomputed (a re-tag tool is a separate task if wanted).
+    3. A punch from an `In`/`Out` terminal is trusted for the clocked-in/out display in every CDP.
+       SUPERSEDED implementation note (2026-11-02, user): no stamp. `DIRECTION_UNTRUSTED_SOURCES` / `trusts_direction` are
+       removed instead, so every stored direction is read as stored. No schema impact.
+    4. Any CDP can set it.
+
+  ## Alternatives considered
+  - Reading the direction from the terminal's status byte only: rejected, nxti's terminals send 255 on every punch.
+  - A new `punch_direction` table or per-work-location setting: rejected, direction belongs to the physical terminal and
+    one site can hold both an entry and an exit terminal.
+  - Boolean `is_exit_device`: rejected, it cannot express "no opinion" (Auto) without a nullable tri-state.
+
+  ## Open questions
+  1. Name and values: `punch_direction` with `Auto | In | Out` (labels "Auto", "Entry – every scan is IN", "Exit – every
+     scan is OUT"). OK?
+  2. Backfill: should existing punches from a terminal later set to Exit be re-tagged OUT and their days recomputed, or
+     only new punches from the change onward? (Default proposed: new punches only; an on-demand re-tag is a separate task.)
+  3. Should a punch from a fixed-role terminal be trusted for the clocked-in/out display even in CDPs outside
+     `biometric_trusted_direction_cdp_ids`? (Default proposed: yes.)
+  4. Applies to nxti (100240) only, or any CDP that sets a role? (Default proposed: any CDP; only 100240's terminals need it today.)
+  '''
+}
+
+Table attendance_device_masters [headercolor: #EF6C00] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null, ref: > care_delivery_program_masters.id, note: 'tenant']
+  work_location_master_id bigint [ref: > work_location_masters.id]
+  serial_no varchar(120) [not null]
+  device_name varchar(120)
+  vendor varchar(60)
+  punch_direction varchar(10) [not null, default: 'Auto', note: '[NEW] Auto | In | Out. CHECK ck_attendance_device_masters_punch_direction IN (\'Auto\',\'In\',\'Out\'). In = entry terminal, Out = exit terminal']
+  is_active boolean [not null, default: true]
+  archive boolean [not null, default: false]
+  updated_by_id bigint
+  updated_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (care_delivery_program_master_id, serial_no) [unique, name: 'uq_attendance_device_masters_cdp_serial']
+  }
+
+  Note: 'Existing table: app/models/attendance_device_master.py → AttendanceDeviceMaster. Gains one column.'
+}
+
+Table attendance_punch_details [headercolor: #616161] {
+  id bigint [pk]
+  care_delivery_program_master_id bigint [not null]
+  employee_master_id bigint [note: 'NULL for an unmapped PIN']
+  attendance_device_master_id bigint [ref: > attendance_device_masters.id]
+  punch_source varchar [note: 'Biometric | App | Web | Import …']
+  direction varchar(10) [note: 'IN | OUT — written at ingest from the terminal role / status / alternation']
+
+  Note: 'Read only here (trimmed). No schema change; only the value ingest writes into direction changes.'
+}
+
+Table care_delivery_program_masters [headercolor: #616161] { id bigint [pk] }
+Table work_location_masters [headercolor: #616161] { id bigint [pk] }
