@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My approvals — unified (showcase)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-950:#093D3C;--teal-900:#0E5E5C;--teal-800:#14716F;--teal-700:#1B8682;--teal-100:#D4E8E7;--teal-50:#EAF3F2;
+    --ink-950:#0B1620;--ink-900:#1B2937;--ink-700:#374556;--ink-600:#48586A;--ink-500:#5F6E80;--ink-400:#8390A0;--ink-300:#A8B2BE;--ink-200:#CFD6DD;--ink-100:#E5E9ED;--ink-50:#F1F3F5;
+    --bg-app:#ECEFEE;--card:#fff;--border:#E2E7E6;--border-soft:#EBEEED;
+    --amber-bg:#FBF0DB;--amber-tx:#96690F;--red-bg:#FCEDEB;--red-bd:#F3C9C1;--red-tx:#8F2B20;--green-bg:#E7F3EC;--green-tx:#1E7A46;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg-app);color:var(--ink-900);font-size:13px}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+  h1{font-size:20px;margin:0 0 4px;color:var(--ink-950)} .lead{color:var(--ink-500);margin:0 0 18px;line-height:1.5}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:16px}
+  .seg button{border:0;background:none;padding:7px 14px;border-radius:8px;font:600 12.5px Inter;color:var(--ink-500);cursor:pointer}
+  .seg button.on{background:var(--teal-800);color:#fff}
+  .stage{display:none} .stage.on{display:block}
+  .note{background:#fff;border:1px dashed var(--teal-700);border-radius:12px;padding:12px 16px;margin:0 0 14px;color:var(--ink-700);line-height:1.55}
+  .note b{color:var(--teal-900)}
+  .app{display:flex;height:640px;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 4px 18px rgba(11,22,32,.07)}
+  .side{width:224px;flex:none;background:var(--teal-950);color:#fff;padding:14px 10px;overflow:auto}
+  .side .brand{font-weight:700;font-size:14px;padding:4px 8px 14px}
+  .nav{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#BFD6D5;font-weight:500;margin-bottom:1px}
+  .nav.act{background:rgba(255,255,255,.12);color:#fff}
+  .nav .dot{width:14px;height:14px;border-radius:4px;background:rgba(255,255,255,.22);flex:none}
+  .nav .badge{margin-left:auto;background:#fff;color:var(--teal-900);border-radius:99px;font-size:11px;font-weight:700;padding:1px 7px}
+  .nav.gone{background:rgba(179,55,42,.22);color:#F6C9C3;text-decoration:line-through}
+  .nav.gone::after{content:"removed";margin-left:auto;font-size:10px;text-decoration:none;font-weight:700;background:#B3372A;color:#fff;border-radius:99px;padding:1px 7px}
+  .nav.dup{background:rgba(201,146,18,.22);color:#F3DDA8}
+  .nav.dup::after{content:"duplicate";margin-left:auto;font-size:10px;font-weight:700;background:#C99212;color:#fff;border-radius:99px;padding:1px 7px}
+  .main{flex:1;background:#F4F6F5;overflow:auto;padding:10px}
+  .ph{display:flex;align-items:baseline;gap:10px;margin:2px 4px 10px}
+  .ph h2{margin:0;font-size:16px;color:var(--ink-950)} .ph span{color:var(--ink-500);font-size:12.5px}
+  .tabs{display:flex;gap:8px;margin-bottom:10px}
+  .tab{border-radius:99px;padding:5px 13px;font:600 12.5px Inter;border:1px solid var(--border);background:#fff;color:var(--ink-700);cursor:pointer}
+  .tab.on{background:var(--teal-800);color:#fff;border-color:var(--teal-800)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chip{display:inline-flex;gap:6px;align-items:center;border-radius:9px;padding:6px 11px;font:600 12px Inter;border:1px solid var(--border);background:#fff;color:var(--ink-600);cursor:pointer}
+  .chip b{background:var(--ink-50);border-radius:99px;padding:0 7px;font-size:11px;color:var(--ink-700)}
+  .chip.on{background:var(--teal-50);border-color:var(--teal-700);color:var(--teal-900)} .chip.on b{background:#fff}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(11,22,32,.04),0 4px 18px rgba(11,22,32,.05)}
+  .rowwrap{border-bottom:1px solid var(--border-soft)} .rowwrap:last-of-type{border-bottom:0}
+  .rowwrap .row{border-bottom:0}
+  .row{display:grid;grid-template-columns:minmax(190px,1.5fr) 1.25fr 1.9fr auto;gap:10px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-soft)}
+  .eye{width:30px;height:28px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--ink-500);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .eye:hover,.eye.on{background:var(--teal-50);border-color:var(--teal-700);color:var(--teal-900)}
+  .peek{margin:0 16px 12px 55px;background:#F7FAF9;border:1px solid var(--border-soft);border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:1.4fr 1fr;gap:6px 24px}
+  .peek .k{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-400)}
+  .peek .v{color:var(--ink-800);line-height:1.45;margin-bottom:4px}
+  .nowf{display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber-tx);border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;margin-left:6px}
+  .b[disabled]{opacity:.45;cursor:not-allowed}
+  .banner{display:flex;gap:12px;align-items:flex-start;background:#FFF8E8;border:1px solid #EBD398;border-radius:12px;padding:11px 14px;margin-bottom:10px;color:#6F4E0A;line-height:1.5}
+  .banner b{color:#5A3E05} .banner .b{margin-left:auto;flex:none;background:#fff;border-color:#E3C375;color:#6F4E0A}
+  .who2{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--ink-500)}
+  .who2 select{border:1px solid var(--border);border-radius:8px;padding:4px 8px;font:600 12px Inter;background:#fff;color:var(--ink-800)}
+  .drawer{position:absolute;top:0;right:0;bottom:0;width:430px;background:#fff;box-shadow:-12px 0 40px rgba(0,0,0,.2);display:none;flex-direction:column}
+  .drawer.on{display:flex}
+  .drawer .dh{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px}
+  .drawer .dh h3{margin:0;font-size:15px;flex:1}
+  .drawer .db{padding:16px 18px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:14px}
+  .drawer .df{padding:12px 18px;border-top:1px solid var(--border-soft);display:flex;gap:8px;justify-content:flex-end}
+  .sec{border:1px solid var(--border-soft);border-radius:12px;padding:12px 14px}
+  .sec h4{margin:0 0 6px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500)}
+  .sec.reason{background:var(--teal-50);border-color:var(--teal-100)} .sec.reason p{margin:0;color:var(--ink-900);line-height:1.55;font-size:13.5px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px} .kv span:nth-child(odd){color:var(--ink-500)}
+  .step{display:flex;gap:10px;align-items:flex-start;padding:5px 0}
+  .step i{width:10px;height:10px;border-radius:50%;margin-top:4px;background:var(--ink-200);flex:none}
+  .step.done i{background:var(--teal-700)} .step.cur i{background:#C99212;box-shadow:0 0 0 3px #FBF0DB}
+  .xbtn{border:0;background:none;font-size:20px;color:var(--ink-500);cursor:pointer}
+  .row:last-child{border-bottom:0}
+  .head{background:#F5F8F7;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);padding:9px 16px}
+  .who{display:flex;gap:9px;align-items:center;min-width:0}
+  .av{width:30px;height:30px;border-radius:50%;background:var(--teal-50);border:1px solid var(--teal-100);color:var(--teal-900);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+  .nm{font-weight:600;color:var(--ink-900)} .sub{font:400 11px 'JetBrains Mono',monospace;color:var(--ink-400)}
+  .tp{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 10px;font-size:11.5px;font-weight:600;width:fit-content}
+  .tp i{width:7px;height:7px;border-radius:50%}
+  .t-leave{background:#E6EEFA;color:#23548F} .t-leave i{background:#2F6FC5}
+  .t-wfh{background:#EAF3F2;color:#0E5E5C} .t-wfh i{background:#1B8682}
+  .t-reg{background:var(--amber-bg);color:var(--amber-tx)} .t-reg i{background:#C99212}
+  .t-shift{background:#EFE9FA;color:#5A3C99} .t-shift i{background:#7A55C7}
+  .t-exp{background:#FBE9F0;color:#9A2D5C} .t-exp i{background:#C4457F}
+  .when{font-weight:500;color:var(--ink-800)} .meta{font-size:11.5px;color:var(--ink-500);margin-top:2px}
+  .why{color:var(--ink-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .act{display:flex;gap:6px;justify-content:flex-end}
+  .b{border-radius:8px;padding:5px 11px;font:600 12px Inter;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--ink-700)}
+  .b.ok{background:var(--teal-50);border-color:var(--teal-100);color:var(--teal-800)}
+  .b.no{background:var(--red-bg);border-color:var(--red-bd);color:var(--red-tx)}
+  .over{display:inline-block;background:var(--amber-bg);color:var(--amber-tx);border-radius:99px;padding:1px 8px;font-size:10.5px;font-weight:700;margin-left:6px}
+  .empty{padding:40px;text-align:center;color:var(--ink-500)} .empty b{display:block;color:var(--ink-900);font-size:13.5px;margin-bottom:3px}
+  .foot{padding:9px 16px;border-top:1px solid var(--border-soft);background:#FCFDFC;font-size:12px;color:var(--ink-500)}
+  .modal{position:absolute;inset:0;background:rgba(11,22,32,.45);display:none;align-items:center;justify-content:center}
+  .modal.on{display:flex}
+  .dlg{background:#fff;border-radius:14px;width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .dlg h3{margin:0;padding:15px 20px;font-size:15px;border-bottom:1px solid var(--border-soft)}
+  .dlg .bd{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+  .dlg textarea{width:100%;min-height:80px;border:1px solid var(--border);border-radius:9px;padding:9px;font:13px Inter;resize:vertical}
+  .dlg .ft{padding:12px 20px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;gap:8px}
+  .rel{position:relative}
+  .toast{position:absolute;right:16px;bottom:16px;background:var(--ink-950);color:#fff;border-radius:10px;padding:10px 14px;font-weight:500;display:none}
+  .toast.on{display:block}
+  table.map{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  table.map th,table.map td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+  table.map th{background:#F5F8F7;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-500)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media(max-width:900px){.two{grid-template-columns:1fr}}
+  .lbl{font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);margin:0 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>My approvals — one page for every request</h1>
+  <p class="lead" style="background:#FFF8E8;border:1px solid #EBD398;border-radius:10px;padding:8px 12px;color:#6F4E0A"><b>Reference only.</b> The build keeps the existing My approvals UI (task 331); this mockup is not the implementation target.</p><p class="lead">Showcase only (static mockup, no backend). It shows what changes before any code is written: the Regularization Inbox is removed, and Leave, Work from home, Regularization and Shift change requests are approved from <b>My approvals</b>, next to expense claims.</p>
+
+  <div class="seg" id="seg">
+    <button class="on" data-s="after">After: unified My approvals</button>
+    <button data-s="before">Before: today's sidebar</button>
+    <button data-s="wording">Wording</button>
+  </div>
+
+  <!-- ===================== AFTER ===================== -->
+  <div class="stage on" id="s-after">
+    <p class="note"><b>Try it:</b> (1) click the <b>eye</b> on a row to see the reason and key details without opening Review; (2) <b>Review</b> opens the drawer, where the reason sits at the top with the organisation's approval steps; (3) switch <b>Viewing as</b> between Admin and HR Manager: Work from home has <b>no workflow set</b> in this sample organisation, so its rows can't be decided and the Admin is sent to Approval Setup while the HR Manager is told to ask the Admin; (4) Approve and Reject (reason required) work inline on the other rows.</p>
+    <div class="app rel">
+      <div class="side">
+        <div class="brand">NanoHealth · HR Manager</div>
+        <div class="nav"><span class="dot"></span>Reports &amp; Analytics</div>
+        <div class="nav"><span class="dot"></span>Employee Directory</div>
+        <div class="nav"><span class="dot"></span>Attendance</div>
+        <div class="nav"><span class="dot"></span>Leave</div>
+        <div class="nav act"><span class="dot"></span>My approvals<span class="badge" id="sbBadge">7</span></div>
+        <div class="nav"><span class="dot"></span>Payroll</div>
+        <div class="nav"><span class="dot"></span>Expenses</div>
+        <div class="nav"><span class="dot"></span>Recruitment</div>
+        <div class="nav"><span class="dot"></span>Onboarding</div>
+        <div class="nav"><span class="dot"></span>Shift Scheduling</div>
+        <div class="nav"><span class="dot"></span>Feed</div>
+        <div class="nav"><span class="dot"></span>Visitor Management</div>
+      </div>
+      <div class="main">
+        <div class="ph"><h2>My approvals</h2><span>Requests waiting for your decision</span>
+          <label class="who2">Viewing as <select id="roleSel"><option value="admin">Admin</option><option value="hr">HR Manager</option></select></label></div>
+        <div id="banners"></div>
+        <div class="tabs">
+          <button class="tab on" data-tab="wait" id="tabWait">Waiting (7)</button>
+          <button class="tab" data-tab="done" id="tabDone">Decided by me (2)</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="card" id="list"></div>
+      </div>
+      <div class="modal" id="rej"><div class="dlg">
+        <h3 id="rejT">Reject request</h3>
+        <div class="bd"><div id="rejS" style="color:var(--ink-500)"></div>
+          <label style="font-weight:600">Reason (required)</label>
+          <textarea id="rejR" placeholder="Tell the employee why this was declined"></textarea></div>
+        <div class="ft"><button class="b" id="rejC">Cancel</button><button class="b no" id="rejOk">Reject request</button></div>
+      </div></div>
+      <div class="drawer" id="drawer">
+        <div class="dh"><h3 id="dT">Review</h3><button class="xbtn" id="dX" aria-label="Close">×</button></div>
+        <div class="db" id="dB"></div>
+        <div class="df" id="dF"></div>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <!-- ===================== BEFORE ===================== -->
+  <div class="stage" id="s-before">
+    <p class="note"><b>Today:</b> an HR Manager has requests spread over four places. "My approvals" is listed twice (the second is the older workflow inbox), and attendance requests sit in their own Regularization Inbox.</p>
+    <div class="app">
+      <div class="side">
+        <div class="brand">NanoHealth · HR Manager</div>
+        <div class="nav"><span class="dot"></span>Reports &amp; Analytics</div>
+        <div class="nav"><span class="dot"></span>Employee Directory</div>
+        <div class="nav"><span class="dot"></span>Attendance</div>
+        <div class="nav"><span class="dot"></span>Leave<span class="badge" style="background:#C99212;color:#fff">leave approve here</span></div>
+        <div class="nav act"><span class="dot"></span>My approvals<span class="badge">4</span></div>
+        <div class="nav"><span class="dot"></span>Payroll</div>
+        <div class="nav"><span class="dot"></span>Expenses</div>
+        <div class="nav"><span class="dot"></span>Recruitment</div>
+        <div class="nav"><span class="dot"></span>Onboarding</div>
+        <div class="nav"><span class="dot"></span>Shift Scheduling</div>
+        <div class="nav gone"><span class="dot"></span>Regularization Inbox</div>
+        <div class="nav"><span class="dot"></span>Feed</div>
+        <div class="nav dup"><span class="dot"></span>My Approvals</div>
+        <div class="nav"><span class="dot"></span>Visitor Management</div>
+      </div>
+      <div class="main">
+        <div class="two">
+          <div><p class="lbl">Where each request is approved today</p>
+            <table class="map">
+              <tr><th>Request</th><th>Approved in</th></tr>
+              <tr><td>Leave request</td><td>My approvals (pipeline) <i>or</i> Leave page (legacy single-step)</td></tr>
+              <tr><td>Expense claim</td><td>My approvals</td></tr>
+              <tr><td>Regularization request</td><td>Regularization Inbox</td></tr>
+              <tr><td>Work from home request</td><td>Regularization Inbox</td></tr>
+              <tr><td>Shift change request</td><td>Regularization Inbox</td></tr>
+            </table></div>
+          <div><p class="lbl">After this change</p>
+            <table class="map">
+              <tr><th>Request</th><th>Approved in</th></tr>
+              <tr><td>Leave request</td><td><b>My approvals</b></td></tr>
+              <tr><td>Expense claim</td><td><b>My approvals</b></td></tr>
+              <tr><td>Regularization request</td><td><b>My approvals</b></td></tr>
+              <tr><td>Work from home request</td><td><b>My approvals</b></td></tr>
+              <tr><td>Shift change request</td><td><b>My approvals</b></td></tr>
+            </table>
+            <p style="color:var(--ink-500);line-height:1.5;margin-top:10px">One sidebar entry, one badge count (everything waiting for you), one place to look.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== WORDING ===================== -->
+  <div class="stage" id="s-wording">
+    <p class="note"><b>Proposed wording</b> (one noun phrase per request type, used for the row badge, the filter chip and the toast). Tell me if you want different words.</p>
+    <table class="map">
+      <tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+      <tr><td>Sidebar</td><td>My approvals / My Approvals / Regularization Inbox</td><td>My approvals</td></tr>
+      <tr><td>Type chip: leave</td><td>Leave</td><td>Leave request</td></tr>
+      <tr><td>Type chip: WFH</td><td>Work from home</td><td>Work from home request</td></tr>
+      <tr><td>Type chip: attendance fix</td><td>Regularization</td><td>Regularization request</td></tr>
+      <tr><td>Type chip: shift</td><td>Shift change</td><td>Shift change request</td></tr>
+      <tr><td>Empty state</td><td>"Nothing waiting for you"</td><td>"You're all caught up" · "Leave, work from home, regularization and expense requests waiting for you will show up here."</td></tr>
+      <tr><td>Approve toasts</td><td>"Request approved" / "Leave request approved"</td><td>"Leave request approved" · "Work from home request approved" · "Regularization request approved"</td></tr>
+      <tr><td>Row</td><td>Reason column</td><td>No reason column. An eye icon on the row shows the reason and key details in place; Review shows the reason at the top.</td></tr>
+      <tr><td>No workflow (banner, Admin)</td><td>-</td><td>"No approval workflow is set for work from home requests." · "N waiting requests can't be decided until one is set. Choose who approves them in Approval Setup." [Set up workflow]</td></tr>
+      <tr><td>No workflow (banner, HR Manager / others)</td><td>-</td><td>Same headline · "Ask your Admin to set it up in Approval Setup."</td></tr>
+      <tr><td>No workflow (row)</td><td>-</td><td>"Workflow not set" tag; Approve and Reject disabled</td></tr>
+      <tr><td>Reject dialog</td><td>"Reject leave request" (Leave page only)</td><td>"Reject &lt;type&gt; request", reason required for every type</td></tr>
+    </table>
+  </div>
+</div>
+
+<script>
+const TYPES={leave:["Leave request","t-leave"],wfh:["Work from home request","t-wfh"],reg:["Regularization request","t-reg"],shift:["Shift change request","t-shift"],exp:["Expense claim","t-exp"]};
+// What the organisation's Admin has set up in Approval Setup, per request type (null = not set).
+const WORKFLOW={
+  leave:["Reporting manager","HR approval"],
+  reg:["Reporting manager"],
+  shift:["Reporting manager","HR approval"],
+  exp:["Reporting manager","Finance"],
+  wfh:null
+};
+let items=[
+ {id:1,t:"leave",n:"Asha Menon",e:"EMP-1042 · Design",when:"12-Nov-26 – 14-Nov-26",meta:"Casual leave · 3 days",why:"Family function out of town, travelling on the 11th evening and back on the 15th.",od:true,at:0,extra:[["Leave type","Casual leave"],["Days","3"],["Balance after","6.5 days"]]},
+ {id:2,t:"reg",n:"Rahul Verma",e:"EMP-1187 · Engineering",when:"03-Nov-26",meta:"Requested 09:30 → 18:15",why:"Forgot to punch out, left after the client call ended at 18:15.",at:0,extra:[["Shift","General (09:30–18:30)"],["Recorded","In 09:32 · no out punch"],["Requested","In 09:30 · Out 18:15"]]},
+ {id:3,t:"wfh",n:"Meera Iyer",e:"EMP-0931 · Support",when:"09-Nov-26 – 11-Nov-26",meta:"3 days",why:"Plumber visit at home, need to be there on all three days.",at:0,extra:[["Days","3"],["Work location","Remote site"]]},
+ {id:4,t:"leave",n:"Karthik S",e:"EMP-1203 · Sales",when:"20-Nov-26",meta:"Sick leave · 1 day",why:"Fever, doctor's note will be attached.",at:1,extra:[["Leave type","Sick leave"],["Days","1"],["Balance after","4 days"]]},
+ {id:5,t:"shift",n:"Divya R",e:"EMP-1011 · Operations",when:"10-Nov-26",meta:"General → Evening",why:"Exam in the morning, can work the evening shift instead.",at:0,extra:[["Current shift","General"],["Requested shift","Evening (14:00–22:00)"]]},
+ {id:6,t:"exp",n:"Imran Khan",e:"EMP-0877 · Sales",when:"Submitted 05-Nov-26",meta:"Travel · ₹4,820 · 3 lines",why:"Client visit to Pune, cab and train tickets attached.",at:1,extra:[["Category","Travel"],["Amount","₹4,820"],["Receipts","3 attached"]]},
+ {id:7,t:"reg",n:"Neha Joshi",e:"EMP-1250 · Finance",when:"04-Nov-26",meta:"Requested In 09:45",why:"Biometric was down at the gate, security log has the entry time.",at:0,extra:[["Shift","General (09:30–18:30)"],["Requested","In 09:45"]]}
+];
+let decided=2,filter="all",tab="wait",pend=null,role="admin",open=new Set(),cur=null;
+const $=s=>document.querySelector(s);
+const ini=n=>n.split(" ").map(p=>p[0]).slice(0,2).join("");
+const EYE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ok=i=>WORKFLOW[i.t]!==null;
+const stepsOf=i=>WORKFLOW[i.t]||[];
+function stepsHtml(i){
+  if(!ok(i))return `<div class="meta">No approval workflow is set for ${TYPES[i.t][0].toLowerCase()}s.</div>`;
+  return stepsOf(i).map((s,k)=>`<div class="step ${k<i.at?"done":k===i.at?"cur":""}"><i></i><div><b>${k+1}. ${s}</b><div class="meta">${k<i.at?"Approved":k===i.at?"Waiting for this step":"Starts after the step above"}</div></div></div>`).join("");
+}
+function render(){
+  const counts={all:items.length};Object.keys(TYPES).forEach(k=>counts[k]=items.filter(i=>i.t===k).length);
+  $("#chips").innerHTML=[["all","All"],...Object.entries(TYPES).map(([k,v])=>[k,v[0]])].map(([k,l])=>
+    `<button class="chip ${filter===k?"on":""}" data-f="${k}">${l}<b>${counts[k]}</b></button>`).join("");
+  // Banners: one per request type that has waiting requests but no workflow.
+  const missing=Object.keys(TYPES).filter(k=>WORKFLOW[k]===null&&counts[k]>0);
+  $("#banners").innerHTML=missing.map(k=>`<div class="banner"><span style="font-size:16px">⚠</span><div><b>No approval workflow is set for ${TYPES[k][0].toLowerCase()}s.</b><br>${counts[k]} waiting request${counts[k]===1?"":"s"} can't be decided until one is set. ${role==="admin"?"Choose who approves them in Approval Setup.":"Ask your Admin to set it up in Approval Setup."}</div>${role==="admin"?'<button class="b" data-a="setup">Set up workflow</button>':""}</div>`).join("");
+  $("#tabWait").textContent=`Waiting (${items.length})`;$("#tabDone").textContent=`Decided by me (${decided})`;
+  const actionable=items.filter(ok).length;
+  $("#sbBadge").textContent=actionable;$("#sbBadge").style.display=actionable?"":"none";
+  const L=$("#list");
+  if(tab==="done"){L.innerHTML=`<div class="empty"><b>${decided} decided</b>Same "Decided by me" list as today, now covering every request type.</div>`;return}
+  const rows=items.filter(i=>filter==="all"||i.t===filter);
+  if(!rows.length){L.innerHTML=`<div class="empty"><b>You're all caught up</b>Leave, work from home, regularization and expense requests waiting for you will show up here.</div>`;return}
+  L.innerHTML=`<div class="row head"><span>Employee</span><span>Request</span><span>When</span><span style="text-align:right">Action</span></div>`+
+  rows.map(i=>`<div class="rowwrap"><div class="row">
+    <div class="who"><span class="av">${ini(i.n)}</span><div style="min-width:0"><div class="nm">${i.n}</div><div class="sub">${i.e}</div></div></div>
+    <span><span class="tp ${TYPES[i.t][1]}"><i></i>${TYPES[i.t][0]}</span>${ok(i)?"":'<span class="nowf">Workflow not set</span>'}</span>
+    <div><div class="when">${i.when}${i.od?'<span class="over">Overdue</span>':""}</div><div class="meta">${i.meta}${ok(i)?" · Step "+(i.at+1)+" of "+stepsOf(i).length+": "+stepsOf(i)[i.at]:""}</div></div>
+    <div class="act"><button class="eye ${open.has(i.id)?"on":""}" data-a="eye" data-id="${i.id}" title="Show reason and details" aria-label="Show reason and details" aria-expanded="${open.has(i.id)}">${EYE}</button>
+      <button class="b" data-a="review" data-id="${i.id}">Review</button>
+      <button class="b ok" data-a="ok" data-id="${i.id}" ${ok(i)?"":'disabled title="Set an approval workflow first"'}>Approve</button>
+      <button class="b no" data-a="no" data-id="${i.id}" ${ok(i)?"":'disabled title="Set an approval workflow first"'}>Reject</button></div></div>
+    ${open.has(i.id)?`<div class="peek"><div><div class="k">Reason</div><div class="v">${i.why}</div></div><div>${i.extra.map(([k,v])=>`<div class="k">${k}</div><div class="v">${v}</div>`).join("")}</div></div>`:""}
+  </div>`).join("")+
+  `<div class="foot">Showing <b>${rows.length}</b> waiting request${rows.length===1?"":"s"}</div>`;
+}
+function openDrawer(i){
+  cur=i;$("#dT").textContent=TYPES[i.t][0];
+  $("#dB").innerHTML=`<div class="who"><span class="av">${ini(i.n)}</span><div><div class="nm">${i.n}</div><div class="sub">${i.e}</div></div></div>
+   <div class="sec reason"><h4>Reason</h4><p>${i.why}</p></div>
+   <div class="sec"><h4>Details</h4><div class="kv"><span>When</span><span>${i.when}</span>${i.extra.map(([k,v])=>`<span>${k}</span><span>${v}</span>`).join("")}</div></div>
+   <div class="sec"><h4>Approval steps (set by your organisation)</h4>${stepsHtml(i)}</div>`;
+  $("#dF").innerHTML=ok(i)?`<button class="b no" data-a="no" data-id="${i.id}">Reject</button><button class="b ok" data-a="ok" data-id="${i.id}">Approve</button>`
+    :(role==="admin"?`<button class="b" data-a="setup">Set up workflow</button>`:`<span class="meta">Ask your Admin to set up the workflow.</span>`);
+  $("#drawer").classList.add("on");
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2400)}
+document.addEventListener("change",e=>{if(e.target.id==="roleSel"){role=e.target.value;render();if(cur&&$("#drawer").classList.contains("on"))openDrawer(cur)}});
+document.addEventListener("click",e=>{
+  const s=e.target.closest("#seg button");
+  if(s){document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===s));
+    document.querySelectorAll(".stage").forEach(x=>x.classList.toggle("on",x.id==="s-"+s.dataset.s));return}
+  if(e.target.id==="dX"){$("#drawer").classList.remove("on");return}
+  const c=e.target.closest(".chip");if(c){filter=c.dataset.f;render();return}
+  const t=e.target.closest(".tab");if(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b===t));tab=t.dataset.tab;render();return}
+  const b=e.target.closest("[data-a]");
+  if(b&&!b.disabled){const a=b.dataset.a,it=items.find(x=>x.id==b.dataset.id);
+    if(a==="setup"){toast("Opens Admin → Approval Setup, on the card for this request type");return}
+    if(a==="eye"){open.has(it.id)?open.delete(it.id):open.add(it.id);render();return}
+    if(a==="review"){openDrawer(it);return}
+    if(a==="ok"){items=items.filter(x=>x!==it);decided++;$("#drawer").classList.remove("on");toast(TYPES[it.t][0]+" approved — "+it.n);render();return}
+    if(a==="no"){pend=it;$("#rejT").textContent="Reject "+TYPES[it.t][0].toLowerCase();$("#rejS").textContent=it.n+" · "+it.when;$("#rejR").value="";$("#rej").classList.add("on");return}}
+  if(e.target.id==="rejC")$("#rej").classList.remove("on");
+  if(e.target.id==="rejOk"){if(!$("#rejR").value.trim()){$("#rejR").style.borderColor="#B3372A";return}
+    items=items.filter(x=>x!==pend);decided++;$("#rej").classList.remove("on");$("#drawer").classList.remove("on");toast(TYPES[pend.t][0]+" rejected");render()}
+});
+render();
+</script>
+</body>
+</html>
