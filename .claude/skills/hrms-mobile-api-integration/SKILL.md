@@ -400,8 +400,9 @@ Never encrypted (see §2). Two shapes, both under the `detail` key:
   "message": "..."}}`. Show `message`; branch on `code`. One more to know: **`409 APPROVAL_WORKFLOW_NOT_SET`**,
   `{"code": "APPROVAL_WORKFLOW_NOT_SET", "request_type": "Regularization|WFH|ShiftChange", "message": "Your organisation
   hasn't set up approval for <type> requests yet. Ask your Admin to set it up."}`, from `POST /attendance/requests`,
-  `POST /attendance/requests/wfh` and `POST /shifts/me/change-requests` when the Admin hasn't set that kind's approval up
-  (nothing is created). Check `GET /attendance/me/request-approval-setup` first so the employee isn't surprised, and keep
+  `POST /attendance/requests/wfh` and `POST /shifts/me/change-requests` when the Admin has unpublished that kind's approval
+  (nothing is created). It is now rare: an organisation that never set a kind up gets the default (the reporting manager and HR
+  asked together, the first to respond decides) switched on by the first request, so the submit just works. Check `GET /attendance/me/request-approval-setup` first so the employee isn't surprised, and keep
   what they typed if they do hit it. `detail` can therefore be a string, a list or an object: check before assuming.
 
 Common status codes you'll see building the app: `401` (no/expired/superseded token —
@@ -444,7 +445,7 @@ sees their own data).
 | Attendance | `GET /attendance/me/analytics` | Period (day/week/month) aggregate. |
 | Attendance | `GET /attendance/me/this-month` | Month summary card. |
 | Attendance | `GET /attendance/me/requests` | The caller's own attendance requests — regularizations and WFH (`?request_type=Regularization\|WFH`, `?status=`). Each row has `request_type`; a WFH row has `to_date` and `punch: null`. |
-| Attendance | `GET /attendance/me/request-approval-setup` | **Call before opening the regularization, work-from-home or shift-change form.** `{items: [{request_type: "Regularization"\|"WFH"\|"ShiftChange", set_up, message}]}`. When `set_up` is false the organisation's Admin hasn't set up approval for that kind of request, so a submit is refused (409 `APPROVAL_WORKFLOW_NOT_SET`, below): disable the entry point and show `message` ("Your organisation hasn't set up approval for work from home requests yet. Ask your Admin to set it up."). Ungated, plain JSON like every `/me/*` read. |
+| Attendance | `GET /attendance/me/request-approval-setup` | **Call before opening the regularization, work-from-home or shift-change form.** `{items: [{request_type: "Regularization"\|"WFH"\|"ShiftChange", set_up, message}]}`. When `set_up` is false the organisation's Admin has unpublished approval for that kind of request (a kind nobody ever set up reports `set_up: true`, since its first request switches the default on), so a submit is refused (409 `APPROVAL_WORKFLOW_NOT_SET`, below): disable the entry point and show `message` ("Your organisation hasn't set up approval for work from home requests yet. Ask your Admin to set it up."). Ungated, plain JSON like every `/me/*` read. |
 | Attendance | `GET /attendance/me/wfh-setup` | Before showing the work-from-home form: `{approver, remote_site_name}`. If either is null the request would be refused (no approver / no remote work location), so say so and disable submit. |
 | Attendance | `POST /attendance/requests/wfh` | Raise a work-from-home request for a date range — `{from_date, to_date, reason}`, ≤ 31 days. Self-service. 422 when there is no approver or the organisation has no remote work location, or on overlap with another WFH request or leave. Approval moves those days' work location to the remote site — it has no attendance or payroll effect, and an Approved request can't be cancelled. |
 | Attendance | `POST /attendance/requests/{id}/cancel` | Cancel the caller's own **Pending** request (regularization or WFH). Shift changes are cancelled through `/shifts/me/change-requests/{id}/cancel`. |
