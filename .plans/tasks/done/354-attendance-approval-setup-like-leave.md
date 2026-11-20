@@ -1,7 +1,7 @@
 ---
 task: 354
 title: Approval Setup for regularization, WFH and shift change works like leave (HR together + switched on by default)
-status: ongoing
+status: done
 depends_on: []
 ---
 
@@ -117,3 +117,7 @@ browser check (last criterion) hasn't been done, and two points below differ fro
 - Tests: `test_attendance_approval_routing.py` + `test_attendance_approvals.py` updated/extended, 60 passed. Neighbouring suites (my shifts, WFH,
   attendance, regularize range): 396 passed, 6 failed, the same 6 fail with these changes stashed (holiday calendar, daily shape, time-of-day).
 - Not covered by a test: two simultaneous first requests (the advisory lock is a copy of leave's, which has none either).
+
+Closed by the user's instruction with two acceptance criteria not verified (the browser check, and a test for two simultaneous first requests; see the unticked boxes above).
+
+Completed: 2026-11-20
